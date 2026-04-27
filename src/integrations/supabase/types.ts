@@ -83,6 +83,33 @@ export type Database = {
         }
         Relationships: []
       }
+      commerce_cart_items: {
+        Row: {
+          product_id: string
+          product_name: string
+          quantity: number
+          unit_price: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          product_id: string
+          product_name: string
+          quantity?: number
+          unit_price: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          product_id?: string
+          product_name?: string
+          quantity?: number
+          unit_price?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       commerce_order_items: {
         Row: {
           created_at: string

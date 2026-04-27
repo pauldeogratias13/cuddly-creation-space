@@ -47,6 +47,12 @@ function AppLayout() {
             <span className="font-bold tracking-tight text-lg">NEXUS</span>
           </Link>
           <div className="flex items-center gap-4">
+            <Link
+              to="/app/profile"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Profile
+            </Link>
             <span className="hidden sm:inline text-sm text-muted-foreground">
               Signed in as <span className="text-foreground">{name}</span>
             </span>

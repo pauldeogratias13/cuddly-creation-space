@@ -18,19 +18,45 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const { session, loading } = useAuth();
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup" | "forgot">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [passwordRecovery, setPasswordRecovery] = useState(false);
 
   useEffect(() => {
-    if (!loading && session) navigate({ to: "/app" });
-  }, [loading, session, navigate]);
+    if (typeof window !== "undefined" && window.location.hash.includes("type=recovery")) {
+      setPasswordRecovery(true);
+    }
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") setPasswordRecovery(true);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!loading && session && !passwordRecovery) navigate({ to: "/app" });
+  }, [loading, session, navigate, passwordRecovery]);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (busy) return;
+    if (mode === "forgot") {
+      setBusy(true);
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/auth`,
+      });
+      setBusy(false);
+      if (error) return toast.error(error.message);
+      toast.success("Check your email for a reset link.");
+      setMode("signin");
+      return;
+    }
     setBusy(true);
     if (mode === "signup") {
       const { error } = await supabase.auth.signUp({
@@ -60,6 +86,65 @@ function AuthPage() {
     if (result.error) toast.error("Google sign-in failed");
   };
 
+  const onSetNewPassword = async (e: FormEvent) => {
+    e.preventDefault();
+    if (busy) return;
+    if (newPassword.length < 8) return toast.error("Password must be at least 8 characters");
+    if (newPassword !== confirmNewPassword) return toast.error("Passwords do not match");
+    setBusy(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Password updated.");
+    setPasswordRecovery(false);
+    setNewPassword("");
+    setConfirmNewPassword("");
+    navigate({ to: "/app" });
+  };
+
+  if (passwordRecovery) {
+    return (
+      <div className="min-h-screen bg-background text-foreground grid-bg">
+        <div className="mx-auto max-w-md px-6 py-20">
+          <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
+            ← Back to NEXUS
+          </Link>
+          <div className="mt-10 rounded-2xl border border-border bg-surface/60 backdrop-blur p-8">
+            <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-3">Reset password</p>
+            <h1 className="text-3xl font-bold tracking-tight">Choose a new password</h1>
+            <form onSubmit={onSetNewPassword} className="mt-8 space-y-3">
+              <input
+                type="password"
+                required
+                minLength={8}
+                placeholder="New password (min 8 chars)"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full px-4 py-3 rounded-md bg-background border border-border placeholder:text-muted-foreground focus:outline-none focus:border-primary"
+              />
+              <input
+                type="password"
+                required
+                minLength={8}
+                placeholder="Confirm new password"
+                value={confirmNewPassword}
+                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                className="w-full px-4 py-3 rounded-md bg-background border border-border placeholder:text-muted-foreground focus:outline-none focus:border-primary"
+              />
+              <button
+                type="submit"
+                disabled={busy}
+                className="w-full inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground px-5 py-3 text-sm font-semibold hover:opacity-90 transition shadow-glow-cyan disabled:opacity-60"
+              >
+                {busy ? "Saving…" : "Update password"}
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground grid-bg">
       <div className="mx-auto max-w-md px-6 py-20">
@@ -69,16 +154,21 @@ function AuthPage() {
 
         <div className="mt-10 rounded-2xl border border-border bg-surface/60 backdrop-blur p-8">
           <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-3">
-            {mode === "signup" ? "Claim your handle" : "Welcome back"}
+            {mode === "signup" ? "Claim your handle" : mode === "forgot" ? "Account recovery" : "Welcome back"}
           </p>
           <h1 className="text-3xl font-bold tracking-tight">
-            {mode === "signup" ? "Create your NEXUS account" : "Sign in to NEXUS"}
+            {mode === "signup"
+              ? "Create your NEXUS account"
+              : mode === "forgot"
+                ? "Reset your password"
+                : "Sign in to NEXUS"}
           </h1>
 
           <button
             type="button"
             onClick={onGoogle}
-            className="mt-8 w-full inline-flex items-center justify-center gap-3 rounded-md border border-border bg-surface-elevated px-4 py-3 text-sm font-medium hover:bg-surface transition-colors"
+            disabled={mode === "forgot"}
+            className="mt-8 w-full inline-flex items-center justify-center gap-3 rounded-md border border-border bg-surface-elevated px-4 py-3 text-sm font-medium hover:bg-surface transition-colors disabled:opacity-50"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden>
               <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z"/>
@@ -111,33 +201,79 @@ function AuthPage() {
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 rounded-md bg-background border border-border placeholder:text-muted-foreground focus:outline-none focus:border-primary"
             />
-            <input
-              type="password"
-              required
-              minLength={8}
-              placeholder="Password (min 8 chars)"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-md bg-background border border-border placeholder:text-muted-foreground focus:outline-none focus:border-primary"
-            />
+            {mode !== "forgot" && (
+              <input
+                type="password"
+                required
+                minLength={8}
+                placeholder="Password (min 8 chars)"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 rounded-md bg-background border border-border placeholder:text-muted-foreground focus:outline-none focus:border-primary"
+              />
+            )}
             <button
               type="submit"
               disabled={busy}
               className="w-full inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground px-5 py-3 text-sm font-semibold hover:opacity-90 transition shadow-glow-cyan disabled:opacity-60"
             >
-              {busy ? "Working…" : mode === "signup" ? "Create account" : "Sign in"}
+              {busy
+                ? "Working…"
+                : mode === "signup"
+                  ? "Create account"
+                  : mode === "forgot"
+                    ? "Send reset link"
+                    : "Sign in"}
             </button>
           </form>
 
+          {mode === "signin" && (
+            <p className="mt-4 text-sm text-center">
+              <button
+                type="button"
+                onClick={() => setMode("forgot")}
+                className="text-muted-foreground hover:text-primary transition-colors"
+              >
+                Forgot password?
+              </button>
+            </p>
+          )}
+
           <p className="mt-6 text-sm text-center text-muted-foreground">
-            {mode === "signup" ? "Already have an account?" : "New to NEXUS?"}{" "}
-            <button
-              type="button"
-              onClick={() => setMode(mode === "signup" ? "signin" : "signup")}
-              className="text-foreground hover:text-primary transition-colors font-medium"
-            >
-              {mode === "signup" ? "Sign in" : "Create one"}
-            </button>
+            {mode === "forgot" ? (
+              <>
+                Remember your password?{" "}
+                <button
+                  type="button"
+                  onClick={() => setMode("signin")}
+                  className="text-foreground hover:text-primary transition-colors font-medium"
+                >
+                  Sign in
+                </button>
+              </>
+            ) : mode === "signup" ? (
+              <>
+                Already have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => setMode("signin")}
+                  className="text-foreground hover:text-primary transition-colors font-medium"
+                >
+                  Sign in
+                </button>
+              </>
+            ) : (
+              <>
+                New to NEXUS?{" "}
+                <button
+                  type="button"
+                  onClick={() => setMode("signup")}
+                  className="text-foreground hover:text-primary transition-colors font-medium"
+                >
+                  Create one
+                </button>
+              </>
+            )}
           </p>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import heroImg from "@/assets/nexus-hero.jpg";
+import { DEMO_VIDEO_HERO_PREVIEW } from "@/lib/demo-videos";
 
 export function Hero() {
   return (
@@ -66,6 +67,29 @@ export function Hero() {
           >
             Explore the seven pillars →
           </a>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.55 }}
+          className="mx-auto mt-14 w-full max-w-3xl text-left"
+        >
+          <p className="mb-2 text-center text-xs font-mono-display uppercase tracking-widest text-muted-foreground">
+            Sample stream (test video)
+          </p>
+          <div className="overflow-hidden rounded-xl border border-border bg-black shadow-card-elevated">
+            <video
+              className="aspect-video w-full object-contain"
+              controls
+              playsInline
+              preload="metadata"
+              src={DEMO_VIDEO_HERO_PREVIEW}
+            />
+          </div>
+          <p className="mt-2 break-all text-center font-mono text-[10px] text-muted-foreground">
+            {DEMO_VIDEO_HERO_PREVIEW}
+          </p>
         </motion.div>
 
         <motion.div

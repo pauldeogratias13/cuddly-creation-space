@@ -18,9 +18,7 @@ function Dashboard() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <p className="text-xs font-mono-display uppercase tracking-widest text-primary">
-          § Dashboard
-        </p>
+        <p className="text-xs font-mono-display uppercase tracking-widest text-primary">Dashboard</p>
         <h1 className="mt-3 text-4xl sm:text-5xl font-bold tracking-tight">
           Welcome back, <span className="text-gradient-aurora">{name}</span>.
         </h1>
