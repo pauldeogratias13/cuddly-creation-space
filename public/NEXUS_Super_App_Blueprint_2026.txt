@@ -1,0 +1,700 @@
+NEXUS · All-In-One Super-App Blueprint · 2026 Edition
+======================================================
+
+Confidential — Internal Use Only
+
+NEXUS
+The World's First True Super-App
+Chat · Commerce · Social · Streaming · Gaming · App Ecosystem · AI
+
+Architecture Blueprint · v4.0 · 2026 Edition
+
+======================================================
+
+01 · Platform Vision & Core Pillars
+==================================
+
+NEXUS is engineered to outcompete every incumbent — social, streaming, commerce, and AI — in a
+single platform. It is AI-first, streaming-native, privacy-preserving, and built to be unmissable.
+
+- Intent-First Feed: Users set mood & intent (learn / create / explore / chill). Feed serves
+  exclusively matching content — no algorithmic bait-and-switch.
+
+- AI Identity Layer: Every user has an AI twin that learns their style, drafts replies,
+  summarises their feed, and acts as an autonomous agent.
+
+- Evolving Content: Posts can be forked, remixed, and evolved. Content is a living tree tracked
+  like a Git repository — full provenance chain.
+
+- Reputation Graph: Trust scores replace vanity metrics. Influence in 'design' is separate from
+  'coding.' Earned, not bought.
+
+- Micro-Communities: Auto-forming ephemeral rooms around trending topics. They appear,
+  peak, and dissolve — preventing stagnation.
+
+- Long-Form Streaming: Full-length movies, series, and live events streamed at cinema quality with
+  adaptive bitrate, spatial audio, and chapter navigation.
+
+- Watch Together: Real-time synchronized watch parties with spatial audio, live reactions,
+  and AI-hosted commentary overlays.
+
+======================================================
+
+02 · Super-App Vision — One App, Every Experience
+================================================
+
+NEXUS is not a feature aggregation. It is a living digital ecosystem — a single application that
+replaces a dozen. Every pillar below is a first-class, natively built experience with no external app
+dependencies.
+
+▸ The Seven Pillars of the NEXUS Super-App
+
+📱 Messaging & Chat
+   End-to-end encrypted real-time messaging, voice notes, calls, group channels, and AI-assisted
+   replies — all Signal-protocol-secured.
+
+🛒 E-Commerce & Shopping
+   Integrated storefront, product discovery via AI, in-app checkout, escrow payments, seller
+   dashboards, and delivery tracking.
+
+👥 Social Experience
+   Full social graph: posts, stories, reels, long-form articles, polls, spaces — without linking
+   or importing from other platforms.
+
+🎬 Streaming & Cinema
+   Long-form movies, series, live events, and podcasts. 4K HDR, Dolby Atmos, Watch Together parties.
+
+🌐 Web Browse & Sites
+   Subscribers can browse external sites inside NEXUS via a built-in privacy browser, and publish
+   their own sites visible to NEXUS users.
+
+🎮 Gaming & Sports Hub
+   Game discovery, downloads, live esports tournaments, sports scores, fantasy leagues, and
+   creator game streaming.
+
+📱 App Ecosystem (NexOS)
+   Paid subscribers can commission bespoke apps (web or mobile) built by the NEXUS team, hosted
+   inside the platform and visible to relevant users.
+
+NEXUS never integrates third-party apps via APIs. Every experience is built natively or hosted
+inside the NexOS sandbox — giving users a single, consistent, private environment.
+
+▸ 02A · Messaging & Chat Engine
+
+- E2E Encryption: Signal Protocol (Double Ratchet + X3DH). Server is zero-knowledge to
+  message content. Keys stored in device Secure Enclave / Android Keystore.
+
+- AI Chat Assistant: Inline AI twin suggests replies, summarises long threads, and composes
+  messages in the user's personal voice.
+
+- Group Channels: Up to 100,000-member channels with threaded replies, polls, pinned content,
+  and role-based permissions.
+
+- Voice & Video Calls: WebRTC-based HD calls with noise cancellation (Krisp/Dolby), background
+  blur, and spatial audio in group rooms.
+
+- Cross-Context Chat: Chat is context-aware: watching a stream together spawns a synced
+  watch-party chat. Shopping a product generates a buyer-seller direct thread.
+
+- Message Expiry: Per-message or per-conversation auto-delete (1h / 24h / 7d / custom).
+  Compliant with right-to-erasure requirements.
+
+▸ 02B · E-Commerce & Shopping
+
+- Storefront Builder: Drag-and-drop storefront builder for sellers. Custom domain mapping for
+  paid tiers. Auto SEO metadata generation.
+
+- AI Product Discovery: Vision-based product search ('find a jacket like this photo'). Semantic
+  search powered by CLIP embeddings.
+
+- Checkout & Payments: In-app Stripe integration. Buy Now Pay Later (Affirm/Klarna) for premium
+  plans. Cryptocurrency payments (stablecoin) optional.
+
+- Seller Dashboard: Real-time analytics: views, conversion, revenue, returns. Inventory
+  management with low-stock alerts and auto-reorder triggers.
+
+- Escrow & Protection: All transactions go through NEXUS escrow. Funds released on delivery
+  confirmation. Dispute resolution via AI triage + human review.
+
+- Social Commerce: Products can be tagged in posts, stories, and streams. Live shopping
+  events with real-time add-to-cart during broadcast.
+
+- Logistics API: Integrated shipping label generation (FedEx / DHL / local carriers).
+  Real-time tracking surfaced inside NEXUS.
+
+▸ 02C · Social Experience — No Third-Party Needed
+
+- Feed & Discovery: Intent-first, mood-aware feed. No rage-bait, no algorithmic manipulation —
+  users control their content diet.
+
+- Content Formats: Short-form clips, long-form articles, photo carousels, audio stories, polls,
+  Q&As, and live broadcasts all natively supported.
+
+- Creator Economy: Direct monetisation: paid subscriptions, tip jars, gated content, brand
+  partnerships brokered in-platform.
+
+- Community Spaces: Ephemeral and persistent topic-based spaces. AI moderates; humans escalate.
+  Anti-toxicity scoring built in.
+
+- Reputation & Trust: Domain-specific trust scores (e.g., 'Photography 92/100'). Verified
+  creator badges. Reputation is portable within NEXUS.
+
+- Privacy Controls: Granular audience controls per post. Anonymous mode. Persona switching
+  without cross-contamination.
+
+▸ 02D · Web Browse & Site Hosting (Paid Plans)
+
+Subscribed users unlock a secure in-app browser and a hosted site builder. This turns NEXUS into
+a web gateway — but on the user's terms.
+
+- In-App Privacy Browser: Chromium-based sandboxed browser embedded in NEXUS. Tracker-blocking,
+  fingerprint spoofing, and cookie isolation by default.
+
+- Site Hosting: Users publish web pages visible to NEXUS users or the public internet.
+  Drag-and-drop builder with custom domain support.
+
+- Business Pages: Businesses can create verified pages with product catalogues, booking widgets,
+  contact forms, and customer chat — all inside NEXUS.
+
+- Responsive Intent Guard: The browser and site-view engine never interrupts a user's stated
+  intent with irrelevant ads. Content served respects the active mood context.
+
+- Analytics for Publishers: Page owners see visitor analytics, engagement heatmaps, and
+  conversion stats — privacy-preserving (no third-party trackers).
+
+The browse feature is responsive and intent-aware. If a user is in 'chill' mode, NEXUS will not
+serve disruptive ads or redirect them away from their current context.
+
+▸ 02E · Gaming & Sports Hub
+
+- Game Discovery: Curated game marketplace: mobile, web, and cloud-streamed PC games. AI
+  recommends based on play history and mood.
+
+- Cloud Gaming: WebRTC-based game streaming for casual titles. No install required. 60fps at
+  1080p on 15Mbps+ connections.
+
+- Esports & Tournaments: In-app bracket creation, live tournament streams, prize pool
+  management, and leaderboard tracking.
+
+- Sports Hub: Live scores, match highlights, stats, fantasy leagues, and sports community
+  spaces — all in one feed.
+
+- Game Creator Tools: Indie developers can publish browser-based games via the NexOS sandbox.
+  Revenue share model for distributed games.
+
+- Party Gaming: Friends can launch casual multiplayer games directly from a chat thread or
+  watch-party room.
+
+======================================================
+
+03 · NexOS — The App Ecosystem Inside NEXUS
+============================================
+
+NexOS is NEXUS's most powerful differentiator: a platform-within-a-platform. Paying subscribers
+can commission bespoke web or mobile applications built by the NEXUS engineering team and
+hosted inside the NEXUS environment.
+
+▸ How NexOS Works
+
+1. Request & Tender: Subscribed user submits an app brief via a guided wizard: purpose, audience,
+   features, branding. The NEXUS team reviews and prices the build.
+
+2. Build & Sandbox: The NEXUS team builds the app in an isolated NexOS sandbox container. Both
+   web and mobile (WebView wrapper) formats are supported.
+
+3. App Launch Inside NEXUS: The finished app appears in the user's NexOS dashboard and in
+   NEXUS's app directory — visible to relevant users based on recommendations or sponsorship.
+
+4. Visibility Rules: Apps are shown to users based on interest graph, geographic proximity, and
+   explicit subscription/follow. No spam distribution.
+
+5. Revenue & Billing: App owner sets pricing: free, freemium, one-time purchase, or
+   subscription. NEXUS takes a 20% platform fee. Payouts via Stripe.
+
+6. Web + Mobile Parity: Every NexOS app is responsive. Web version runs in the in-app browser.
+   Mobile version is a sandboxed WebView within the NEXUS app shell.
+
+7. Update & Maintenance: App owners can request updates via the same tender flow. NEXUS team
+   maintains infrastructure, security patching, and uptime SLAs.
+
+▸ NexOS Technical Architecture
+
+- Sandbox Runtime: Each NexOS app runs in a V8 isolate (Cloudflare Workers model) or Docker
+  container with strict resource quotas (CPU, memory, egress).
+
+- App Storage: Per-app PostgreSQL schema or object storage bucket. Isolated — no app can read
+  another's data.
+
+- Auth Bridge: NEXUS SSO: users authenticate once and access NexOS apps with their NEXUS
+  identity. Apps never see raw credentials.
+
+- API Access: NexOS apps can consume approved NEXUS APIs: user profile, social graph,
+  payments, notifications. Access scoped by OAuth 2.1 consent.
+
+- Domain & Routing: Each app gets a subdomain (appname.nexus.app) and optionally maps a
+  custom domain. TLS managed by NEXUS.
+
+- Monitoring: NexOS app health, latency, and error rates are visible to the app owner in a
+  self-serve dashboard. NEXUS SRE handles P0 incidents.
+
+NexOS turns NEXUS into a 'house with everything.' A user can have their business website, their
+booking app, and their loyalty programme — all inside NEXUS, all connected to their NEXUS
+identity and payments.
+
+======================================================
+
+04 · Advertising Engine — Smart, Respectful, Profitable
+======================================================
+
+NEXUS advertising is built on a founding principle: ads must serve the user's current intent, not
+interrupt it. An ad shown to someone in 'learning' mode about photography should be a camera —
+not a pizza delivery coupon. This intent-matching is NEXUS's core ad differentiator.
+
+▸ Ad Philosophy & Intent-Matching Guard
+
+- Intent Lock: Ads are always contextually matched to the user's declared mood/intent. A user
+  in 'Gaming' mode sees gaming gear; 'Shopping' mode sees product ads; 'Chill' mode sees
+  lifestyle brands.
+
+- Ad Density Control: Free tier: max 1 ad per 8 feed items. Standard tier: 1 per 15. Premium
+  tier: 0 ads (ad-free). Ads never interrupt video playback mid-stream.
+
+- Frequency Cap: No user sees the same ad more than 3x per day. Cross-surface frequency
+  managed globally (feed + browse + stories counted together).
+
+- Negative Signals: A 'Not Interested' tap suppresses that brand for 30 days. Three taps =
+  permanent suppression. User trust is non-negotiable.
+
+- Transparency Log: Users can open 'Why am I seeing this?' on any ad. Full log of signals
+  used. Data usage is auditable by the user.
+
+▸ Ad Formats
+
+- Native Feed Cards: Sponsored content blends with organic feed. Clearly labelled 'Sponsored.'
+  Same aspect ratios as organic posts.
+
+- Stream Pre-Roll: 6-second non-skippable pre-roll OR 15-second skippable (after 5s). No
+  mid-roll on content under 20 minutes.
+
+- Commerce Spotlight: Product cards in shopping feed. Click-to-purchase in one tap.
+  Commission-based pricing for advertisers.
+
+- Site / Browse Banner: Non-intrusive banner ads in the in-app browser (top strip only). Never
+  full-screen; never pop-over.
+
+- Gaming Interstitial: Rewarded ads in the gaming hub: 'Watch 30s for 50 XP.' Opt-in only.
+  Zero interstitials during active gameplay.
+
+- Creator Sponsored Post: Brands partner with NEXUS creators. Content is co-reviewed.
+  Disclosure labels auto-applied per FTC/ASA guidelines.
+
+- NexOS App Promotion: NexOS app owners can promote their app to relevant users. CPC and CPM
+  models available.
+
+▸ Ad Targeting & Privacy Stack
+
+- Contextual First: Primary signal is current session context (intent, content category, search
+  terms) — not personal data. GDPR-safe by design.
+
+- Interest Cohorts: Users grouped into interest cohorts (never individually profiled
+  externally). Advertisers bid on cohorts, not people.
+
+- On-Device Inference: Interest inference runs on-device via Core ML / ML Kit. Raw behaviour
+  data never leaves the device.
+
+- No Third-Party Cookies: Zero third-party tracking. No Facebook Pixel, no Google Tag Manager.
+  NEXUS is a walled, privacy-first garden.
+
+- Consent Framework: IAB TCF 2.2 compliant. First-party consent managed in NEXUS settings.
+  Granular controls per ad category.
+
+======================================================
+
+05 · Subscription Plans & Advertising Tiers
+============================================
+
+NEXUS operates a freemium model for users and a tiered self-serve + managed model for advertisers.
+Both are designed so free users remain valuable (ad-supported revenue) while paid users get an
+exceptional, uninterrupted experience.
+
+▸ User Subscription Plans
+
+┌─────────────┬──────────────┬──────────────┬──────────────┐
+│    FREE      │  STANDARD   │   PREMIUM    │   BUSINESS   │
+│  €0/month   │ €9.99/month │ €19.99/month │ €49.99/month │
+├─────────────┼──────────────┼──────────────┼──────────────┤
+│ Social feed  │ Everything  │ Everything   │ Everything   │
+│ & posting    │ in Free     │ in Standard  │ in Premium   │
+├─────────────┼──────────────┼──────────────┼──────────────┤
+│ Messaging   │ HD streaming│ 4K HDR,      │ Up to 5      │
+│ (up to 10   │ (1080p,     │ Dolby Atmos  │ team members │
+│ groups)     │ fewer ads)  │ (no ads)     │              │
+├─────────────┼──────────────┼──────────────┼──────────────┤
+│ Streaming   │ Unlimited    │ Offline      │ NexOS:       │
+│ (SD quality,│ groups &    │ downloads    │ unlimited    │
+│ ads)        │ DMs         │ (25 titles)  │ app commissions│
+├─────────────┼──────────────┼──────────────┼──────────────┤
+│ Basic       │ Full social │ AI Twin full │ Verified     │
+│ shopping    │ features    │ features     │ business     │
+│ browsing    │             │              │ badge        │
+├─────────────┼──────────────┼──────────────┼──────────────┤
+│ 1 storefront│ Store:      │ NexOS: 1 app│ Custom       │
+│ (10 products)│ unlimited  │ commission/yr│ domain for   │
+│             │ products    │              │ site         │
+├─────────────┼──────────────┼──────────────┼──────────────┤
+│ Community   │ In-app      │ Advanced ad  │ API access   │
+│ spaces      │ privacy     │ campaign     │ (NEXUS data) │
+│ (read)      │ browser     │ tools        │              │
+├─────────────┼──────────────┼──────────────┼──────────────┤
+│ —           │ NexOS: 1    │ Creator      │ Advanced     │
+│             │ app          │ monetisation │ analytics    │
+│             │ commission/yr│ tools        │ dashboard    │
+├─────────────┼──────────────┼──────────────┼──────────────┤
+│ —           │ —            │ NexOS:       │ Dedicated    │
+│             │              │ unlimited    │ account      │
+│             │              │ app          │ manager      │
+│             │              │ commissions  │              │
+├─────────────┼──────────────┼──────────────┼──────────────┤
+│ —           │ —            │ Early        │ Custom SLA   │
+│             │              │ feature      │ (99.9%       │
+│             │              │ access       │ uptime)      │
+├─────────────┼──────────────┼──────────────┼──────────────┤
+│ —           │ —            │ Quarterly    │ —            │
+│             │              │ roadmap      │              │
+│             │              │ briefings    │              │
+└─────────────┴──────────────┴──────────────┴──────────────┘
+
+▸ Advertiser Plans
+
+┌─────────────────┬─────────────────┬─────────────────┬─────────────────┐
+│ FREE ADS        │ STARTER         │ GROWTH          │ ENTERPRISE      │
+│ Community/      │ €49/month min.  │ €299/month min. │ Custom/Managed  │
+│ Creator        │ spend           │ spend           │                 │
+├─────────────────┼─────────────────┼─────────────────┼─────────────────┤
+│ For: creators  │ For: SMBs &     │ For: scale-ups  │ For: brands &   │
+│ & small        │ indie brands   │ & agencies      │ media buyers    │
+│ businesses     │                 │                 │                 │
+├─────────────────┼─────────────────┼─────────────────┼─────────────────┤
+│ Promote 1      │ Feed cards +    │ All formats     │ Managed service │
+│ post/week for  │ story ads      │ incl. pre-roll  │ + strategy      │
+│ free           │                 │ video           │                 │
+├─────────────────┼─────────────────┼─────────────────┼─────────────────┤
+│ Audience: your │ Intent-cohort  │ Advanced cohort │ Homepage        │
+│ followers      │ targeting      │ targeting       │ takeover        │
+│ only           │                 │                 │ formats         │
+├─────────────────┼─────────────────┼─────────────────┼─────────────────┤
+│ Basic reach    │ Geographic     │ Lookalike      │ Sponsored       │
+│ analytics      │ targeting      │ audiences      │ NexOS app       │
+│                 │                 │                 │ placements      │
+├─────────────────┼─────────────────┼─────────────────┼─────────────────┤
+│ Native feed    │ A/B creative   │ Retargeting     │ Real-time       │
+│ card format    │ testing (2     │ (NEXUS-only,   │ analytics       │
+│                 │ variants)      │ no PII)        │                 │
+├─────────────────┼─────────────────┼─────────────────┼─────────────────┤
+│ Up to 3 active │ Unlimited      │ Watch party     │ Guaranteed      │
+│ campaigns      │ campaigns      │ sponsorship     │ impression      │
+│                 │                 │                 │ packages        │
+├─────────────────┼─────────────────┼─────────────────┼─────────────────┤
+│ Standard       │ Self-serve     │ Self-serve      │ Dedicated ads   │
+│ analytics (7-  │ dashboard      │ dashboard      │ support         │
+│ day lag)       │                 │                 │                 │
+├─────────────────┼─────────────────┼─────────────────┼─────────────────┤
+│ NEXUS          │ Creator        │ Creator        │ Custom          │
+│ Community      │ partnership    │ partnership     │ reporting &     │
+│ Guidelines     │ brokerage      │ brokerage      │ data exports   │
+│ apply          │                 │                 │                 │
+└─────────────────┴─────────────────┴─────────────────┴─────────────────┘
+
+All ad plans are subject to NEXUS's Intent-Match Guard: ads are only served to users in a
+contextually relevant state. Enterprise clients receive an Intent Suitability Score report
+before campaign launch.
+
+▸ Revenue Architecture
+
+- CPM (Display): Cost-per-thousand impressions for native feed cards and browse banners.
+  Floor price: €2.50 CPM (free tier), €6.00 CPM (standard tier — higher-quality audience).
+
+- CPV (Video Pre-Roll): Cost-per-view. Charged only on 80%+ completion (non-skip) or any
+  skip after 5s. Floor price: €0.04/view.
+
+- CPC (Commerce Cards): Cost-per-click for product cards and app promotions. Floor: €0.15/click.
+  Attribution window: 7-day click, 1-day view.
+
+- Revenue Share (Creators): Creators receive 60% of ad revenue generated on their content.
+  Platform retains 40%. Paid out monthly via Stripe.
+
+- NexOS App Commission: 20% platform fee on all NexOS app revenue (subscriptions + one-time
+  purchases). App owner receives 80%.
+
+- Subscription Revenue: 100% of subscription fees retained by NEXUS minus payment processing
+  (~2.9% Stripe). No revenue share on subscription tier.
+
+======================================================
+
+06 · Mobile — iOS & Android
+===========================
+
+Native performance. On-device AI. Cinema-grade playback.
+
+▸ iOS — Swift 6 + SwiftUI 5
+
+- SwiftUI + TCA: The Composable Architecture for unidirectional state flow. Predictable,
+  testable, zero side-effect leaks.
+
+- Swift Concurrency: async/await + Actors for safe parallelism. Eliminate data races at
+  compile time.
+
+- Metal / RealityKit: GPU-accelerated feed animations, AR filters, spatial content previews,
+  and hardware-accelerated video decoding. visionOS-ready.
+
+- AVFoundation Pro: HLS & DASH adaptive playback engine with Picture-in-Picture, AirPlay 2,
+  Dolby Atmos passthrough, and offline download manager.
+
+- Core ML On-Device: Content embedding, nudge prediction, and moderation run locally. Zero
+  round-trip latency, full privacy.
+
+- WidgetKit + Live Activities: Dynamic Island feed snippets, live reaction counters, real-time
+  story progress — system-level engagement hooks.
+
+▸ Android — Kotlin 2.0 + Jetpack Compose
+
+- Jetpack Compose: Declarative UI with Material You dynamic theming. 60fps guaranteed via
+  Compose compiler metrics.
+
+- Kotlin Coroutines + Flow: Structured concurrency everywhere. StateFlow for UI state,
+  SharedFlow for events.
+
+- Media3 + ExoPlayer: Google Media3 ExoPlayer with DASH/HLS adaptive streaming, HDR10+,
+  Dolby Vision, offline download, and DRM (Widevine L1).
+
+- KMP Shared Modules: Share domain logic, networking, ML inference between Android and iOS
+  — single source of truth.
+
+- ML Kit + ONNX Runtime: On-device NLP, image classification, and smart reply without cloud
+  dependency.
+
+- Baseline Profiles: Pre-compiled critical code paths. App startup under 400ms. Video
+  first-frame render under 300ms.
+
+======================================================
+
+07 · Video Streaming Platform — Long-Form & Cinema
+=================================================
+
+4K HDR · Dolby Atmos · Adaptive bitrate · Global CDN · Offline-first · DRM-protected
+
+▸ Ingest & Transcoding Pipeline
+
+- Multi-Format Ingest: Accept ProRes, MXF, MP4, MKV, and RAW camera formats. Automated scene
+  detection, chapter extraction, and metadata enrichment on upload.
+
+- AV1 Primary Codec: AV1 (libaom/SVT-AV1) for 30-50% bandwidth savings over H.264 at same
+  quality. H.265/HEVC for legacy devices. HDR10, HDR10+, Dolby Vision, HLG profiles.
+
+- Per-Title Encoding: ML-driven per-title bitrate ladders (Netflix-style). Each movie analysed
+  for complexity; action scenes get higher bitrate slots automatically.
+
+- Parallel Transcoding: FFmpeg 7 pipelines run on GPU clusters (NVIDIA A100). A 2-hour 4K
+  movie transcodes to all quality variants in under 8 minutes.
+
+- VMAF Quality Gate: Every output segment scored with VMAF. Minimum VMAF 93 enforced —
+  segments that fail auto-retry at higher bitrate.
+
+- Audio Processing: Dolby Atmos (EC-3/AC-4), multi-track audio (5.1, 7.1, stereo), audio
+  normalisation to -14 LUFS, and automatic loudness metering per EBU R128.
+
+- Subtitle & Caption: Auto-generated SRT/WebVTT via Whisper Large v3. Forced narrative
+  captions embedded as separate tracks. SDH and closed captions to FCC/CVAA compliance.
+
+▸ DRM & Content Protection
+
+- Multi-DRM Stack: Widevine (Android/Chrome) · FairPlay (Apple) · PlayReady (Windows/Xbox).
+  Single CENC encryption, multiple license servers.
+
+- Hardware Security Level: Widevine L1 (TEE-backed) required for 4K/HDR playback. L3 allowed
+  for 1080p. Hardware DRM coverage: 85%+ of active devices.
+
+- Offline Downloads: Secure offline download with license-bound decryption. Expiry enforced at
+  client. Downloaded content encrypted with device-bound key.
+
+- Watermarking: Forensic watermarking embeds invisible user identifier in video stream. Leak
+  source traceable to specific account within 30 seconds of clip.
+
+======================================================
+
+08 · Backend Services
+=====================
+
+Microservices. gRPC-native. Failure-tolerant. Event-sourced.
+
+▸ User & Identity Service — Go
+
+- Passkeys (WebAuthn): Passwordless authentication. FIDO2 hardware-bound keys. Phishing-proof
+  by design.
+
+- Decentralised Identity: Optional DID (Decentralised Identifiers) for self-sovereign identity
+  — portable across platforms.
+
+- Zero-Knowledge Proofs: Age verification and credential checks without revealing underlying
+  data (zk-SNARKs via gnark).
+
+- Multi-Persona Vault: Cryptographically isolated personas. Switching identity generates a new
+  ephemeral session token.
+
+- Adaptive MFA: Risk-scored MFA: low-risk logins skip 2FA, high-risk enforce hardware key.
+
+▸ Feed Ranking Engine — Rust
+
+- Two-Tower Neural Retrieval: Candidate retrieval via approximate nearest-neighbour on 512-dim
+  user + content embeddings. Sub-5ms retrieval at 1B items.
+
+- Multi-Armed Bandit Re-Ranker: Thompson Sampling balances exploit (known preferences) vs
+  explore (serendipity). Boredom detected in <10 interactions.
+
+- Real-Time Feature Pipeline: User signals (dwell time, replays, skips) update embeddings in
+  real time via Kafka → Flink → feature store.
+
+- WASM Plugin System: Third-party ranking plugins compiled to WebAssembly — safe sandboxed
+  execution inside the ranker with microsecond overhead.
+
+======================================================
+
+09 · AI & ML Systems
+====================
+
+AI is load-bearing infrastructure, not a bolt-on. Every interaction is a training signal.
+
+- Style Mimic LLM: Fine-tuned LLaMA 3 / Mistral on user post history. Generates replies,
+  captions, and summaries in the user's voice.
+
+- Autonomous Agent Mode: AI twin can browse feed, react, comment, and schedule posts when user
+  is offline (opt-in).
+
+- Persona Isolation: Each persona has a separate embedding space. Public/anonymous/creator
+  voices never bleed.
+
+- Memory Graph: Structured memory: RAG over personal knowledge graph. AI remembers your
+  opinions, relationships, and history.
+
+- Video Content AI: AI generates per-user 'For You' video clips (short highlight reels from
+  long-form content based on taste graph).
+
+- Multi-modal Embeddings: CLIP / SigLIP unifies text, image, audio, and video into a shared
+  semantic space for cross-modal search.
+
+- Toxicity & Safety: Llama Guard 3 + custom classifiers. Multi-label: hate / NSFW /
+  misinformation / spam.
+
+======================================================
+
+10 · Data Architecture
+======================
+
+Polyglot persistence. Event-sourced. Zero-copy analytics pipeline.
+
+- PostgreSQL 16: Users, metadata, payments, moderation, content catalogue, entitlements.
+  pgvector extension. Citus for horizontal sharding.
+
+- Cassandra 5 / ScyllaDB: Feed events, interaction logs, notification history, video view
+  events. 1M+ writes/sec per node with ScyllaDB.
+
+- ClickHouse: Analytics, A/B test results, funnel analysis, video QoE metrics, CDN logs.
+  100x faster aggregations than PostgreSQL.
+
+- Redis 7 Cluster: Sessions, feed cache, rate limit counters, pub/sub for real-time events.
+  Redis Stack adds search + JSON + TimeSeries.
+
+- Qdrant: Vector similarity search for content recommendations, semantic search, and
+  in-video scene retrieval.
+
+- Neo4j AuraDB: Social graph traversal. Cypher queries for friend-of-friend, interest
+  clustering, and trust propagation.
+
+======================================================
+
+11 · Infrastructure & DevOps
+============================
+
+Multi-region active-active. GitOps. eBPF-native. Immutable OS.
+
+- Multi-Region Active-Active: Traffic split across 3+ regions. Global load balancing via
+  Anycast. Failover in <30 seconds.
+
+- Cilium eBPF Networking: eBPF-based CNI replaces iptables. Transparent WireGuard encryption,
+  network policy, and 10x throughput uplift.
+
+- KEDA Autoscaling: Event-driven autoscaling: Kafka consumer lag, Redis queue depth, HTTP
+  RPS, and CDN bandwidth usage drive HPA decisions.
+
+- GitOps with Flux CD: All cluster state is code. Every change is a Git commit. Drift
+  detection and auto-remediation.
+
+- GPU Transcoding Nodes: Dedicated GPU node pool (NVIDIA A100/H100) for transcoding workloads.
+  KEDA scales transcode workers from 0 on upload queue depth.
+
+- Observability Stack: Prometheus + Thanos · Jaeger/Tempo (traces) · Loki (logs) · Grafana
+  dashboards · Video QoE per CDN PoP.
+
+======================================================
+
+12 · Security Architecture
+===========================
+
+Zero-trust. E2E encrypted. SLSA Level 3. DRM-hardened.
+
+- Zero-Trust Network: No implicit trust. Every request authenticated and authorised. mTLS
+  between all services.
+
+- Supply Chain Security: SLSA Level 3. SBOM for every build. Cosign signs all container images.
+  Dependabot + Renovate.
+
+- Secret Management: HashiCorp Vault with dynamic secrets. DB credentials rotate every 15
+  minutes. No long-lived credentials in env vars.
+
+- E2E Encrypted Chat: Signal Protocol (Double Ratchet + X3DH). Server is blind to message
+  content. Keys never leave devices.
+
+- DRM Security: Widevine L1 TEE for 4K. Forensic watermarking (user-ID embedded). Screen
+  capture API blocking.
+
+- DDoS / Bot Defence: Cloudflare Turnstile (invisible CAPTCHA) · ML-based bot fingerprinting ·
+  Token bucket rate limiting.
+
+- Ad Fraud Prevention: ML-based click fraud detection. Invalid Traffic (IVT) scoring per
+  impression. Advertisers credited for fraudulent impressions.
+
+======================================================
+
+13 · Engineering Principles
+============================
+
+- Default to Open Standards: Prefer IETF/W3C/CNCF over proprietary lock-in. Every vendor
+  choice must have an open alternative.
+
+- Design for Failure: Every service assumes dependencies will fail. Circuit breakers, retries
+  with exponential backoff, and fallback paths are mandatory.
+
+- Data Minimisation: Collect only what is needed. Retention policies enforced at storage
+  layer, not just in policy documents.
+
+- Progressive Delivery: Feature flags for 100% of releases. Dark launches, canary at
+  1% → 10% → 50% → GA. Rollback in <60 seconds.
+
+- Async Everything: Synchronous calls only for user-facing critical path. Everything else:
+  message queue, event stream, or background job.
+
+- Measure Everything: SLIs for every external API. Error budget burn rate alerts. Chaos tests
+  in staging weekly. Video QoE tracked per CDN PoP.
+
+- Streaming-Native Design: Video is a first-class primitive, not an afterthought. QoE metrics
+  gate every deploy.
+
+- Intent Respect Principle: No feature, ad, or notification may interrupt a user who has
+  declared their current intent. Mood context gates all push surfaces.
+
+Build the platform users can't imagine living without.
+
+======================================================
+
+NEXUS Architecture v4.0 · Confidential · 2026 Edition
+======================================================
