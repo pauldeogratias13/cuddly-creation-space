@@ -7,7 +7,6 @@ import { NexOS } from "@/components/nexus/NexOS";
 import { Pricing } from "@/components/nexus/Pricing";
 import { CTA } from "@/components/nexus/CTA";
 import { Footer } from "@/components/nexus/Footer";
-import { Toaster } from "@/components/ui/sonner";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -26,7 +25,6 @@ function Index() {
         <CTA />
       </main>
       <Footer />
-      <Toaster />
     </div>
   );
 }
