@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Nav } from "@/components/nexus/Nav";
 import { VideoFeed } from "@/components/nexus/VideoFeed";
@@ -8,7 +9,6 @@ import { NexOS } from "@/components/nexus/NexOS";
 import { Pricing } from "@/components/nexus/Pricing";
 import { CTA } from "@/components/nexus/CTA";
 import { Footer } from "@/components/nexus/Footer";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/")({
@@ -22,12 +22,12 @@ function Index() {
     return (
       <div className="relative h-screen w-full overflow-hidden">
         <VideoFeed />
-        <div className="absolute top-16 left-4 z-20">
+        <div className="absolute left-4 top-16 z-20">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setShowFeed(false)}
-            className="text-white bg-black/30 backdrop-blur hover:bg-black/50"
+            className="bg-black/30 text-white backdrop-blur hover:bg-black/50"
           >
             ← Explore NEXUS
           </Button>
@@ -49,8 +49,9 @@ function Index() {
       </main>
       <Footer />
       <button
+        type="button"
         onClick={() => setShowFeed(true)}
-        className="fixed bottom-6 right-6 z-50 rounded-full bg-primary text-primary-foreground px-5 py-3 text-sm font-semibold shadow-glow-cyan hover:scale-105 transition-all"
+        className="fixed bottom-6 right-6 z-50 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-glow-cyan transition-all hover:scale-105"
       >
         ▶ Watch Feed
       </button>

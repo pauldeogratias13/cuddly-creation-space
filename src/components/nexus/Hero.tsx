@@ -1,18 +1,13 @@
 import { motion } from "framer-motion";
 import heroImg from "@/assets/nexus-hero.jpg";
 import { DEMO_VIDEO_HERO_PREVIEW } from "@/lib/demo-videos";
+import { VideoPlayer } from "@/components/nexus/VideoPlayer";
 
 export function Hero() {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-24 pb-16">
-      {/* Background image */}
+    <section className="relative flex min-h-screen items-center justify-center overflow-hidden pb-16 pt-24">
       <div className="absolute inset-0 -z-10">
-        <img
-          src={heroImg}
-          alt=""
-          aria-hidden
-          className="h-full w-full object-cover opacity-60"
-        />
+        <img src={heroImg} alt="" aria-hidden className="h-full w-full object-cover opacity-60" />
         <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/60 to-background" />
         <div className="absolute inset-0 grid-bg" />
       </div>
@@ -22,7 +17,7 @@ export function Hero() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-2 rounded-full border border-border bg-surface/60 backdrop-blur px-4 py-1.5 text-xs font-mono-display uppercase tracking-widest text-muted-foreground mb-8"
+          className="mb-8 inline-flex items-center gap-2 rounded-full border border-border bg-surface/60 px-4 py-1.5 text-xs font-mono-display uppercase tracking-widest text-muted-foreground backdrop-blur"
         >
           <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse-glow" />
           v4.0 · 2026 Edition
@@ -32,7 +27,7 @@ export function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1 }}
-          className="text-5xl sm:text-7xl lg:text-8xl font-bold tracking-tight leading-[0.95]"
+          className="text-5xl font-bold leading-[0.95] tracking-tight sm:text-7xl lg:text-8xl"
         >
           <span className="text-foreground">The world's first</span>
           <br />
@@ -43,10 +38,10 @@ export function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.25 }}
-          className="mt-8 text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed"
+          className="mx-auto mt-8 max-w-2xl text-lg leading-relaxed text-muted-foreground sm:text-xl"
         >
-          Chat. Commerce. Social. Streaming. Gaming. An AI-first app ecosystem.
-          NEXUS replaces a dozen apps with one — natively built, privacy-preserving, unmissable.
+          Chat. Commerce. Social. Streaming. Gaming. An AI-first app ecosystem. NEXUS replaces a dozen
+          apps with one - natively built, privacy-preserving, unmissable.
         </motion.p>
 
         <motion.div
@@ -57,13 +52,13 @@ export function Hero() {
         >
           <a
             href="#waitlist"
-            className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground px-7 py-3.5 text-base font-semibold hover:opacity-90 transition-all shadow-glow-cyan hover:scale-[1.02]"
+            className="inline-flex items-center justify-center rounded-md bg-primary px-7 py-3.5 text-base font-semibold text-primary-foreground transition-all hover:scale-[1.02] hover:opacity-90 shadow-glow-cyan"
           >
             Claim your handle
           </a>
           <a
             href="#pillars"
-            className="inline-flex items-center justify-center rounded-md border border-border bg-surface/60 backdrop-blur px-7 py-3.5 text-base font-medium text-foreground hover:bg-surface-elevated transition-colors"
+            className="inline-flex items-center justify-center rounded-md border border-border bg-surface/60 px-7 py-3.5 text-base font-medium text-foreground backdrop-blur transition-colors hover:bg-surface-elevated"
           >
             Explore the seven pillars →
           </a>
@@ -79,16 +74,16 @@ export function Hero() {
             Sample stream (test video)
           </p>
           <div className="overflow-hidden rounded-xl border border-border bg-black shadow-card-elevated">
-            <video
+            <VideoPlayer
               className="aspect-video w-full object-contain"
+              poster={DEMO_VIDEO_HERO_PREVIEW.poster}
+              sources={DEMO_VIDEO_HERO_PREVIEW.sources}
               controls
-              playsInline
               preload="metadata"
-              src={DEMO_VIDEO_HERO_PREVIEW}
             />
           </div>
           <p className="mt-2 break-all text-center font-mono text-[10px] text-muted-foreground">
-            {DEMO_VIDEO_HERO_PREVIEW}
+            {DEMO_VIDEO_HERO_PREVIEW.sources[0]}
           </p>
         </motion.div>
 

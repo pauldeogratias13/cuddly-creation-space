@@ -16,8 +16,9 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { DEMO_VIDEOS } from "@/lib/demo-videos";
+import { STREAM_LIBRARY } from "@/lib/demo-videos";
 import { ProfileSettingsForm } from "@/components/nexus/profile-settings-form";
+import { VideoPlayer } from "@/components/nexus/VideoPlayer";
 import {
   AI_TWIN_BRIEFING_STORAGE_KEY,
   BLUEPRINT_KEY_THEMES,
@@ -58,7 +59,9 @@ type StreamItem = {
   title: string;
   category: "Cinema" | "Series" | "Docs";
   duration: string;
-  videoUrl: string;
+  videoSources: string[];
+  poster: string;
+  description: string;
 };
 type NotificationType = "chat" | "social_comment" | "commerce" | "profile" | string;
 type Notification = {
@@ -103,36 +106,7 @@ const shopCatalog = [
   { id: "priority-support", name: "Priority Support", price: 7 },
 ];
 
-const streamLibrary: StreamItem[] = [
-  {
-    id: "strm-01",
-    title: "Neon District",
-    category: "Cinema",
-    duration: "2h 04m",
-    videoUrl: DEMO_VIDEOS.bigBuckBunny,
-  },
-  {
-    id: "strm-02",
-    title: "Signal City",
-    category: "Series",
-    duration: "8 eps",
-    videoUrl: DEMO_VIDEOS.sintel,
-  },
-  {
-    id: "strm-03",
-    title: "Built at Scale",
-    category: "Docs",
-    duration: "58m",
-    videoUrl: DEMO_VIDEOS.elephantsDream,
-  },
-  {
-    id: "strm-04",
-    title: "Aurora Protocol",
-    category: "Cinema",
-    duration: "1h 49m",
-    videoUrl: DEMO_VIDEOS.forBiggerBlazes,
-  },
-];
+const streamLibrary: StreamItem[] = STREAM_LIBRARY;
 
 const pillarTabs = [
   { id: "chat", label: "Chat", icon: MessageSquare },
@@ -2534,14 +2508,36 @@ export function SuperAppWorkspace({ name }: { name: string }) {
               ))}
             </div>
             {playbackStream && (
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const current = filteredStreams.findIndex((item) => item.id === playbackStream.id);
+                    const next = filteredStreams[(current + 1) % filteredStreams.length];
+                    setPlaybackStreamId(next?.id ?? playbackStream.id);
+                  }}
+                  className="rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  Play next
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void toggleWatchlist(playbackStream.id)}
+                  className="rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  {watchlist.includes(playbackStream.id) ? "Remove from watchlist" : "Save current title"}
+                </button>
+              </div>
+            )}
+            {playbackStream && (
               <div className="overflow-hidden rounded-xl border border-border bg-black shadow-card-elevated">
-                <video
-                  key={playbackStream.videoUrl}
+                <VideoPlayer
+                  key={playbackStream.id}
                   className="aspect-video max-h-[min(420px,70vh)] w-full object-contain"
+                  poster={playbackStream.poster}
+                  sources={playbackStream.videoSources}
                   controls
-                  playsInline
                   preload="metadata"
-                  src={playbackStream.videoUrl}
                 />
                 <div className="space-y-1 border-t border-border bg-background/95 p-3">
                   <p className="text-sm font-medium text-foreground">
@@ -2550,8 +2546,16 @@ export function SuperAppWorkspace({ name }: { name: string }) {
                       ({playbackStream.category} · {playbackStream.duration})
                     </span>
                   </p>
-                  <p className="break-all font-mono text-[11px] text-muted-foreground">{playbackStream.videoUrl}</p>
+                  <p className="text-sm text-muted-foreground">{playbackStream.description}</p>
+                  <p className="break-all font-mono text-[11px] text-muted-foreground">
+                    {playbackStream.videoSources.join(" | ")}
+                  </p>
                 </div>
+              </div>
+            )}
+            {filteredStreams.length === 0 && (
+              <div className="rounded-lg border border-dashed border-border bg-background/40 p-6 text-sm text-muted-foreground">
+                No stream matches that filter yet. Try a different title or reset the category.
               </div>
             )}
             <div className="grid sm:grid-cols-2 gap-3">
@@ -2569,8 +2573,9 @@ export function SuperAppWorkspace({ name }: { name: string }) {
                     <p className="text-sm text-muted-foreground">
                       {item.category} · {item.duration}
                     </p>
+                    <p className="mt-2 text-sm text-muted-foreground">{item.description}</p>
                     <p className="mt-2 line-clamp-2 break-all font-mono text-[10px] text-muted-foreground">
-                      {item.videoUrl}
+                      {item.videoSources[0]}
                     </p>
                     <div className="mt-2 flex flex-wrap gap-2">
                       <button

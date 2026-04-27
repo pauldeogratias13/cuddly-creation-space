@@ -1,231 +1,164 @@
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Hls from "hls.js";
-import { DEMO_VIDEOS, DemoVideo } from "@/lib/demo-videos";
-import { Heart, MessageCircle, Share2, Pause, Play, Volume2, VolumeX } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Heart,
+  MessageCircle,
+  Pause,
+  Play,
+  Share2,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
+import { DEMO_VIDEOS } from "@/lib/demo-videos";
+import { VideoPlayer } from "@/components/nexus/VideoPlayer";
 
 export function VideoFeed() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
   const [direction, setDirection] = useState(0);
-  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
-  const hlsRefs = useRef<(Hls | null)[]>([]);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const preloadRefs = useRef<Set<number>>(new Set());
 
   const currentVideo = DEMO_VIDEOS[currentIndex];
 
-  // Initialize video with HLS adaptive streaming (NEXUS Blueprint Sec.07)
-  const initVideo = useCallback((video: HTMLVideoElement, index: number) => {
-    if (!video || hlsRefs.current[index]) return;
-
-    const videoData = DEMO_VIDEOS[index];
-    if (!videoData) return;
-
-    // HLS.js adaptive bitrate streaming
-    if (Hls.isSupported()) {
-      const hls = new Hls({
-        maxBufferLength: 30,
-        maxMaxBufferLength: 60,
-        enableWorker: true,
-        lowLatencyMode: false,
-      });
-      hlsRefs.current[index] = hls;
-
-      // For demo MP4s, load directly; for HLS streams, use HLS.js
-      if (videoData.url.includes(".m3u8")) {
-        hls.loadSource(videoData.url);
-        hls.attachMedia(video);
-      } else {
-        video.src = videoData.url;
-      }
-
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        if (index === currentIndex && isPlaying) {
-          video.play().catch(() => {});
-        }
-      });
-    } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-      video.src = videoData.url;
-    } else {
-      video.src = videoData.url;
-    }
-  }, [currentIndex, isPlaying]);
-
-  // Intersection Observer for preloading adjacent videos (NEXUS Blueprint: preload buffer)
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          const idx = Number((entry.target as HTMLElement).dataset.index);
-          if (entry.isIntersecting && !preloadRefs.current.has(idx)) {
-            preloadRefs.current.add(idx);
-            const video = videoRefs.current[idx];
-            if (video) {
-              initVideo(video, idx);
-            }
-          }
-        });
-      },
-      { root: containerRef.current, threshold: 0.1, rootMargin: "200px" }
-    );
-
-    // Observe next 2 videos for preloading
-    for (let i = currentIndex; i < Math.min(currentIndex + 3, DEMO_VIDEOS.length); i++) {
-      const el = videoRefs.current[i];
-      if (el && !preloadRefs.current.has(i)) {
-        observer.observe(el);
-      }
-    }
-
-    return () => observer.disconnect();
-  }, [currentIndex, initVideo]);
-
-  // Manage current video playback
-  useEffect(() => {
-    // Pause all except current
-    DEMO_VIDEOS.forEach((_, idx) => {
-      const video = videoRefs.current[idx];
-      if (video) {
-        if (idx === currentIndex) {
-          if (isPlaying) {
-            video.play().catch(() => {});
-          } else {
-            video.pause();
-          }
-        } else {
-          video.pause();
-        }
-      }
-    });
-  }, [currentIndex, isPlaying]);
-
-  // Initialize current video if not already
-  useEffect(() => {
-    const video = videoRefs.current[currentIndex];
-    if (video && !preloadRefs.current.has(currentIndex)) {
-      initVideo(video, currentIndex);
-    }
-  }, [currentIndex, initVideo]);
-
-  const handleScroll = useCallback(
-    (e: React.WheelEvent) => {
-      e.preventDefault();
-      if (e.deltaY > 0 && currentIndex < DEMO_VIDEOS.length - 1) {
-        setDirection(1);
-        setCurrentIndex((prev) => Math.min(prev + 1, DEMO_VIDEOS.length - 1));
-      } else if (e.deltaY < 0 && currentIndex > 0) {
-        setDirection(-1);
-        setCurrentIndex((prev) => Math.max(prev - 1, 0));
-      }
-    },
-    [currentIndex]
-  );
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    const touch = e.touches[0];
-    (e.target as HTMLElement).dataset.touchStartY = touch.clientY.toString();
+  const goToIndex = (nextIndex: number) => {
+    if (nextIndex === currentIndex || nextIndex < 0 || nextIndex >= DEMO_VIDEOS.length) return;
+    setDirection(nextIndex > currentIndex ? 1 : -1);
+    setCurrentIndex(nextIndex);
   };
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    const touch = e.changedTouches[0];
-    const startY = Number((e.target as HTMLElement).dataset.touchStartY || 0);
-    const deltaY = startY - touch.clientY;
-    if (deltaY > 50 && currentIndex < DEMO_VIDEOS.length - 1) {
-      setDirection(1);
-      setCurrentIndex((prev) => Math.min(prev + 1, DEMO_VIDEOS.length - 1));
-    } else if (deltaY < -50 && currentIndex > 0) {
-      setDirection(-1);
-      setCurrentIndex((prev) => Math.max(prev - 1, 0));
-    }
-  };
+  const goNext = () => goToIndex(currentIndex + 1);
+  const goPrevious = () => goToIndex(currentIndex - 1);
 
-  const togglePlay = () => setIsPlaying((p) => !p);
-  const toggleMute = () => setIsMuted((p) => !p);
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "ArrowDown") goNext();
+      if (event.key === "ArrowUp") goPrevious();
+      if (event.key === " ") {
+        event.preventDefault();
+        setIsPlaying((value) => !value);
+      }
+      if (event.key.toLowerCase() === "m") {
+        setIsMuted((value) => !value);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [currentIndex]);
+
+  useEffect(() => {
+    setIsPlaying(true);
+  }, [currentIndex]);
+
+  const handleScroll = (event: React.WheelEvent) => {
+    event.preventDefault();
+    if (event.deltaY > 0) goNext();
+    if (event.deltaY < 0) goPrevious();
+  };
 
   const formatCount = (num: number) => {
-    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+    if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
+    if (num >= 1_000) return `${(num / 1_000).toFixed(1)}K`;
     return num.toString();
   };
 
   return (
-    <div
-      ref={containerRef}
-      className="relative h-screen w-full bg-black overflow-hidden"
-      onWheel={handleScroll}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-    >
+    <div className="relative h-screen w-full overflow-hidden bg-black" onWheel={handleScroll}>
       <AnimatePresence mode="wait" custom={direction}>
         <motion.div
-          key={currentIndex}
+          key={currentVideo.id}
           custom={direction}
           initial={{ y: direction > 0 ? "100%" : "-100%", opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: direction > 0 ? "-100%" : "100%", opacity: 0 }}
-          transition={{ duration: 0.4, ease: "easeInOut" }}
-          className="absolute inset-0 flex items-center justify-center"
+          transition={{ duration: 0.35, ease: "easeInOut" }}
+          className="absolute inset-0"
         >
-          <video
-            ref={(el) => {
-              videoRefs.current[currentIndex] = el;
-            }}
+          <VideoPlayer
+            sources={currentVideo.sources}
+            poster={currentVideo.poster}
             className="h-full w-full object-cover"
+            autoPlay={isPlaying}
             loop
             muted={isMuted}
-            playsInline
-            onClick={togglePlay}
+            preload="auto"
+            onClick={() => setIsPlaying((value) => !value)}
           />
 
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/70" />
 
           <button
-            onClick={togglePlay}
-            className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
+            type="button"
+            onClick={() => setIsPlaying((value) => !value)}
+            className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity hover:opacity-100"
           >
             {isPlaying ? (
-              <Pause className="h-16 w-16 text-white/70" />
+              <Pause className="h-16 w-16 text-white/75" />
             ) : (
-              <Play className="h-16 w-16 text-white/70" />
+              <Play className="h-16 w-16 text-white/75" />
             )}
           </button>
 
-          {/* Right side actions */}
-          <div className="absolute right-3 bottom-32 flex flex-col items-center gap-5">
-            <button className="flex flex-col items-center gap-1">
-              <div className="h-10 w-10 rounded-full bg-white/10 backdrop-blur flex items-center justify-center">
+          <div className="absolute left-4 top-4 z-10 rounded-full bg-black/40 px-3 py-1 text-xs font-medium text-white/80 backdrop-blur">
+            NEXUS Feed
+          </div>
+
+          <div className="absolute right-3 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-3">
+            <button
+              type="button"
+              onClick={goPrevious}
+              disabled={currentIndex === 0}
+              className="rounded-full bg-black/35 p-2 text-white backdrop-blur disabled:cursor-not-allowed disabled:opacity-35"
+              aria-label="Previous video"
+            >
+              <ChevronUp className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={goNext}
+              disabled={currentIndex === DEMO_VIDEOS.length - 1}
+              className="rounded-full bg-black/35 p-2 text-white backdrop-blur disabled:cursor-not-allowed disabled:opacity-35"
+              aria-label="Next video"
+            >
+              <ChevronDown className="h-5 w-5" />
+            </button>
+          </div>
+
+          <div className="absolute bottom-24 right-3 flex flex-col items-center gap-5">
+            <div className="flex flex-col items-center gap-1">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 backdrop-blur">
                 <img
                   src={currentVideo.avatar}
-                  alt=""
+                  alt={`${currentVideo.author} avatar`}
                   className="h-9 w-9 rounded-full border-2 border-white"
                 />
               </div>
-            </button>
+            </div>
 
-            <button className="flex flex-col items-center gap-1 group">
-              <Heart className="h-8 w-8 text-white group-hover:text-red-500 transition-colors" />
-              <span className="text-xs text-white font-semibold">
+            <button type="button" className="flex flex-col items-center gap-1">
+              <Heart className="h-8 w-8 text-white transition-colors hover:text-red-500" />
+              <span className="text-xs font-semibold text-white">
                 {formatCount(currentVideo.likes)}
               </span>
             </button>
 
-            <button className="flex flex-col items-center gap-1 group">
-              <MessageCircle className="h-8 w-8 text-white group-hover:text-blue-400 transition-colors" />
-              <span className="text-xs text-white font-semibold">
+            <button type="button" className="flex flex-col items-center gap-1">
+              <MessageCircle className="h-8 w-8 text-white transition-colors hover:text-blue-400" />
+              <span className="text-xs font-semibold text-white">
                 {formatCount(currentVideo.comments)}
               </span>
             </button>
 
-            <button className="flex flex-col items-center gap-1 group">
-              <Share2 className="h-8 w-8 text-white group-hover:text-green-400 transition-colors" />
-              <span className="text-xs text-white font-semibold">
+            <button type="button" className="flex flex-col items-center gap-1">
+              <Share2 className="h-8 w-8 text-white transition-colors hover:text-green-400" />
+              <span className="text-xs font-semibold text-white">
                 {formatCount(currentVideo.shares)}
               </span>
             </button>
 
-            <button onClick={toggleMute} className="flex flex-col items-center gap-1">
+            <button type="button" onClick={() => setIsMuted((value) => !value)} className="flex flex-col items-center gap-1">
               {isMuted ? (
                 <VolumeX className="h-7 w-7 text-white" />
               ) : (
@@ -234,20 +167,24 @@ export function VideoFeed() {
             </button>
           </div>
 
-          {/* Bottom info */}
-          <div className="absolute bottom-20 left-3 right-16 text-white">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="font-bold text-sm">@{currentVideo.author}</span>
+          <div className="absolute bottom-16 left-4 right-20 text-white">
+            <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-white/60">
+              <span>{currentVideo.category}</span>
+              <span className="h-1 w-1 rounded-full bg-white/40" />
+              <span>{currentVideo.durationLabel}</span>
             </div>
-            <h3 className="text-base font-semibold mb-1">{currentVideo.title}</h3>
-            <p className="text-sm text-white/80 line-clamp-2">{currentVideo.description}</p>
+            <p className="text-sm font-semibold">@{currentVideo.author}</p>
+            <h3 className="mt-1 text-xl font-semibold">{currentVideo.title}</h3>
+            <p className="mt-2 max-w-xl text-sm text-white/80">{currentVideo.description}</p>
+            <p className="mt-3 text-xs text-white/55">
+              Use mouse wheel, swipe, or arrow keys to move through the feed. Press M to mute.
+            </p>
           </div>
 
-          {/* Progress indicator */}
-          <div className="absolute top-4 right-3 text-white/60 text-xs font-mono">
+          <div className="absolute right-3 top-4 text-xs font-mono text-white/65">
             {currentIndex + 1} / {DEMO_VIDEOS.length}
           </div>
-          <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/15">
             <div
               className="h-full bg-primary transition-all duration-300"
               style={{ width: `${((currentIndex + 1) / DEMO_VIDEOS.length) * 100}%` }}
@@ -255,13 +192,6 @@ export function VideoFeed() {
           </div>
         </motion.div>
       </AnimatePresence>
-
-      {/* NEXUS Feed Header */}
-      <div className="absolute top-4 left-4 z-10">
-        <h2 className="text-white font-bold text-xl tracking-tight">
-          <span className="text-gradient-aurora">NEXUS</span> Feed
-        </h2>
-      </div>
     </div>
   );
 }

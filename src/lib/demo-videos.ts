@@ -1,58 +1,151 @@
-/**
- * 100 verified working demo video URLs for TikTok-style feed
- * Sources: lorem.video, placeholdervideo.dev
- */
 export interface DemoVideo {
   id: string;
   title: string;
   author: string;
   avatar: string;
-  url: string;
+  sources: string[];
+  poster: string;
   thumbnail: string;
   likes: number;
   comments: number;
   shares: number;
   description: string;
+  durationLabel: string;
+  category: "Cinema" | "Series" | "Docs";
 }
 
-const baseEntries = [
-  { title: "City Road 1080p", author: "NEXUS_Official", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=N1", url: "https://lorem.video/1920x1080_10s_h264_23crf", thumbnail: "", description: "H264 1080p stream" },
-  { title: "Ocean Bike 4K", author: "TechVibes", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=T1", url: "https://lorem.video/bunny_4k_h265_30fps_60s_23crf_aac_192kbps.mp4", thumbnail: "", description: "HEVC 4K stream" },
-  { title: "Cat Video 480p", author: "CinemaGold", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=C1", url: "https://lorem.video/cat_480p_h264_30fps_15s_26crf_aac_96kbps.mp4", thumbnail: "", description: "Mobile 480p" },
-  { title: "720p Standard", author: "AI_Creator", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=A1", url: "https://lorem.video/1280x720_15s_h264_25crf", thumbnail: "", description: "Standard 720p" },
-  { title: "360p Low BW", author: "StreamLife", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=S1", url: "https://lorem.video/640x360_10s_h264_28crf", thumbnail: "", description: "Low-bandwidth 360p" },
-  { title: "AV1 Codec Test", author: "DigitalNomad", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=D1", url: "https://lorem.video/720p_av1", thumbnail: "", description: "AV1 codec test" },
-  { title: "VP9 WebM Test", author: "FutureTech", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=F1", url: "https://lorem.video/test_1080p_vp9_30fps_30s_25crf_opus_128kbps.webm", thumbnail: "", description: "VP9 codec" },
-  { title: "Bunny 720p 10s", author: "CodeWizard", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=CW1", url: "https://lorem.video/720p_h264_10s", thumbnail: "", description: "Bunny 720p" },
-  { title: "H265 HEVC 1080p", author: "PixelArt", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=P1", url: "https://lorem.video/bunny_1080p_h265_30fps_60s_23crf_aac_192kbps.mp4", thumbnail: "", description: "HEVC 1080p" },
-  { title: "Audio Test AAC", author: "NeonGlow", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=NG1", url: "https://lorem.video/bunny_novideo_30s_aac_128kbps.mp4", thumbnail: "", description: "Audio-only" },
-  { title: "City 1080p", author: "NEXUS_Official", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=N2", url: "https://placeholdervideo.dev/1920x1080", thumbnail: "", description: "Placeholder 1080p" },
-  { title: "Park 720p", author: "TechVibes", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=T2", url: "https://placeholdervideo.dev/1280x720", thumbnail: "", description: "720p HD" },
-  { title: "Mobile 360p", author: "CinemaGold", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=C2", url: "https://placeholdervideo.dev/640x360", thumbnail: "", description: "Mobile 360p" },
-  { title: "Square Insta", author: "AI_Creator", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=A2", url: "https://placeholdervideo.dev/1080x1080", thumbnail: "", description: "Square" },
-  { title: "Vertical Reel", author: "StreamLife", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=S2", url: "https://placeholdervideo.dev/1080x1920", thumbnail: "", description: "Vertical 9:16" },
-  { title: "4K Ultra HD", author: "DigitalNomad", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=D2", url: "https://placeholdervideo.dev/3840x2160", thumbnail: "", description: "4K UHD" },
-  { title: "QHD 1440p", author: "FutureTech", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=F2", url: "https://placeholdervideo.dev/2560x1440", thumbnail: "", description: "QHD" },
-  { title: "VGA 640x480", author: "CodeWizard", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=CW2", url: "https://placeholdervideo.dev/640x480", thumbnail: "", description: "VGA" },
-  { title: "WVGA 800x480", author: "PixelArt", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=P2", url: "https://placeholdervideo.dev/800x480", thumbnail: "", description: "WVGA" },
-  { title: "720p 16:9", author: "NeonGlow", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=NG2", url: "https://placeholdervideo.dev/1280x720", thumbnail: "", description: "16:9" },
+type DemoSeed = {
+  slug: string;
+  title: string;
+  author: string;
+  description: string;
+  poster: string;
+  category: DemoVideo["category"];
+  durationLabel: string;
+  sources: string[];
+};
+
+const DEMO_SEEDS: DemoSeed[] = [
+  {
+    slug: "big-buck-bunny",
+    title: "Big Buck Bunny",
+    author: "NEXUS_Official",
+    description: "Open demo film used as a reliable default playback test.",
+    poster: "https://peach.blender.org/wp-content/uploads/title_anouncement.jpg?x11217",
+    category: "Cinema",
+    durationLabel: "9m 56s",
+    sources: [
+      "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+    ],
+  },
+  {
+    slug: "elephants-dream",
+    title: "Elephant's Dream",
+    author: "CinemaGold",
+    description: "Stylized open movie for full-screen playback and player controls.",
+    poster: "https://storage.googleapis.com/gtv-videos-bucket/sample/images/ElephantsDream.jpg",
+    category: "Cinema",
+    durationLabel: "10m 53s",
+    sources: [
+      "https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+    ],
+  },
+  {
+    slug: "for-bigger-blazes",
+    title: "For Bigger Blazes",
+    author: "StreamLife",
+    description: "Short promo clip for quick player health checks and faster loading.",
+    poster: "https://storage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerBlazes.jpg",
+    category: "Series",
+    durationLabel: "15s",
+    sources: [
+      "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+    ],
+  },
+  {
+    slug: "for-bigger-escapes",
+    title: "For Bigger Escape",
+    author: "DigitalNomad",
+    description: "Compact test asset with a second CDN fallback source.",
+    poster: "https://storage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerEscapes.jpg",
+    category: "Series",
+    durationLabel: "15s",
+    sources: [
+      "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+    ],
+  },
+  {
+    slug: "for-bigger-fun",
+    title: "For Bigger Fun",
+    author: "AI_Creator",
+    description: "Bright test footage used for autoplay, mute, and resume behavior.",
+    poster: "https://storage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerFun.jpg",
+    category: "Docs",
+    durationLabel: "1m",
+    sources: [
+      "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+    ],
+  },
+  {
+    slug: "for-bigger-joyrides",
+    title: "For Bigger Joyrides",
+    author: "TechVibes",
+    description: "Promo-style sample clip for the carousel and watchlist flows.",
+    poster: "https://storage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerJoyrides.jpg",
+    category: "Docs",
+    durationLabel: "15s",
+    sources: [
+      "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
+    ],
+  },
 ];
 
-const allVideos: typeof baseEntries = [];
-for (let i = 0; i < 100; i++) {
-  const base = baseEntries[i % baseEntries.length];
-  allVideos.push({
-    ...base,
-    title: i < baseEntries.length ? base.title : `${base.title} #${Math.floor(i / baseEntries.length)}`,
-  });
+function hashSeed(input: string) {
+  return [...input].reduce((acc, char, index) => acc + char.charCodeAt(0) * (index + 17), 0);
 }
 
-export const DEMO_VIDEOS: DemoVideo[] = allVideos.map((v, i) => ({
-  id: `video_${i + 1}`,
-  ...v,
-  likes: Math.floor(Math.random() * 100000) + 1000,
-  comments: Math.floor(Math.random() * 5000) + 100,
-  shares: Math.floor(Math.random() * 10000) + 500,
+function metric(seed: string, min: number, span: number) {
+  return min + (hashSeed(seed) % span);
+}
+
+export const DEMO_VIDEOS: DemoVideo[] = Array.from({ length: 18 }, (_, index) => {
+  const seed = DEMO_SEEDS[index % DEMO_SEEDS.length];
+  const variant = Math.floor(index / DEMO_SEEDS.length);
+  const title = variant === 0 ? seed.title : `${seed.title} Cut ${variant + 1}`;
+  const id = `${seed.slug}-${index + 1}`;
+  const seedKey = `${seed.slug}-${index}`;
+
+  return {
+    id,
+    title,
+    author: variant === 0 ? seed.author : `${seed.author}_${variant + 1}`,
+    avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seedKey)}`,
+    sources: seed.sources,
+    poster: seed.poster,
+    thumbnail: seed.poster,
+    likes: metric(`${seedKey}-likes`, 1500, 85000),
+    comments: metric(`${seedKey}-comments`, 80, 6000),
+    shares: metric(`${seedKey}-shares`, 30, 12000),
+    description: seed.description,
+    durationLabel: seed.durationLabel,
+    category: seed.category,
+  };
+});
+
+export const STREAM_LIBRARY = DEMO_VIDEOS.slice(0, 6).map((video, index) => ({
+  id: `stream-${index + 1}`,
+  title: video.title,
+  category: video.category,
+  duration: video.durationLabel,
+  videoSources: video.sources,
+  poster: video.poster,
+  description: video.description,
 }));
 
-export const DEMO_VIDEO_HERO_PREVIEW = DEMO_VIDEOS[0].url;
+export const DEMO_VIDEO_HERO_PREVIEW = DEMO_VIDEOS[0];
