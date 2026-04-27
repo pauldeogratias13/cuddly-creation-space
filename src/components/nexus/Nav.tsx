@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
 
 const links = [
   { label: "Pillars", href: "#pillars" },
@@ -10,6 +11,7 @@ const links = [
 
 export function Nav() {
   const [scrolled, setScrolled] = useState(false);
+  const { session } = useAuth();
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 16);
     onScroll();
@@ -47,18 +49,29 @@ export function Nav() {
           ))}
         </nav>
         <div className="flex items-center gap-3">
-          <a
-            href="#pricing"
-            className="hidden sm:inline-flex text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Sign in
-          </a>
-          <a
-            href="#waitlist"
-            className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-semibold hover:opacity-90 transition-opacity shadow-glow-cyan"
-          >
-            Get early access
-          </a>
+          {session ? (
+            <Link
+              to="/app"
+              className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-semibold hover:opacity-90 transition-opacity shadow-glow-cyan"
+            >
+              Open NEXUS
+            </Link>
+          ) : (
+            <>
+              <Link
+                to="/auth"
+                className="hidden sm:inline-flex text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Sign in
+              </Link>
+              <Link
+                to="/auth"
+                className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-semibold hover:opacity-90 transition-opacity shadow-glow-cyan"
+              >
+                Get early access
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </header>
