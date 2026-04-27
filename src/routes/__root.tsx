@@ -37,6 +37,10 @@ export const Route = createRootRoute({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "NEXUS — The World's First True Super-App" },
+      { name: "twitter:description", content: "Chat, commerce, social, streaming, gaming and an AI-first app ecosystem — one app, every experience." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/ad801b80-2cb8-41ee-8b47-5809432347c3" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/ad801b80-2cb8-41ee-8b47-5809432347c3" },
     ],
     links: [
       {
