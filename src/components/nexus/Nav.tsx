@@ -54,7 +54,7 @@ export function Nav() {
             Sign in
           </a>
           <a
-            href="#pricing"
+            href="#waitlist"
             className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-semibold hover:opacity-90 transition-opacity shadow-glow-cyan"
           >
             Get early access
