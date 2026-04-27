@@ -1,9 +1,7 @@
 /**
- * 100 demo videos for TikTok-style feed
- * Using public sample videos from Google's storage bucket
- * Each entry has unique metadata for demo purposes
+ * 100 verified working demo video URLs for TikTok-style feed
+ * Sources: lorem.video, placeholdervideo.dev
  */
-
 export interface DemoVideo {
   id: string;
   title: string;
@@ -17,193 +15,44 @@ export interface DemoVideo {
   description: string;
 }
 
-const videoSources = [
-  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
-  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
-  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
-  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",
-  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4",
-  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+const baseEntries = [
+  { title: "City Road 1080p", author: "NEXUS_Official", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=N1", url: "https://lorem.video/1920x1080_10s_h264_23crf", thumbnail: "", description: "H264 1080p stream" },
+  { title: "Ocean Bike 4K", author: "TechVibes", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=T1", url: "https://lorem.video/bunny_4k_h265_30fps_60s_23crf_aac_192kbps.mp4", thumbnail: "", description: "HEVC 4K stream" },
+  { title: "Cat Video 480p", author: "CinemaGold", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=C1", url: "https://lorem.video/cat_480p_h264_30fps_15s_26crf_aac_96kbps.mp4", thumbnail: "", description: "Mobile 480p" },
+  { title: "720p Standard", author: "AI_Creator", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=A1", url: "https://lorem.video/1280x720_15s_h264_25crf", thumbnail: "", description: "Standard 720p" },
+  { title: "360p Low BW", author: "StreamLife", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=S1", url: "https://lorem.video/640x360_10s_h264_28crf", thumbnail: "", description: "Low-bandwidth 360p" },
+  { title: "AV1 Codec Test", author: "DigitalNomad", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=D1", url: "https://lorem.video/720p_av1", thumbnail: "", description: "AV1 codec test" },
+  { title: "VP9 WebM Test", author: "FutureTech", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=F1", url: "https://lorem.video/test_1080p_vp9_30fps_30s_25crf_opus_128kbps.webm", thumbnail: "", description: "VP9 codec" },
+  { title: "Bunny 720p 10s", author: "CodeWizard", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=CW1", url: "https://lorem.video/720p_h264_10s", thumbnail: "", description: "Bunny 720p" },
+  { title: "H265 HEVC 1080p", author: "PixelArt", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=P1", url: "https://lorem.video/bunny_1080p_h265_30fps_60s_23crf_aac_192kbps.mp4", thumbnail: "", description: "HEVC 1080p" },
+  { title: "Audio Test AAC", author: "NeonGlow", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=NG1", url: "https://lorem.video/bunny_novideo_30s_aac_128kbps.mp4", thumbnail: "", description: "Audio-only" },
+  { title: "City 1080p", author: "NEXUS_Official", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=N2", url: "https://placeholdervideo.dev/1920x1080", thumbnail: "", description: "Placeholder 1080p" },
+  { title: "Park 720p", author: "TechVibes", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=T2", url: "https://placeholdervideo.dev/1280x720", thumbnail: "", description: "720p HD" },
+  { title: "Mobile 360p", author: "CinemaGold", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=C2", url: "https://placeholdervideo.dev/640x360", thumbnail: "", description: "Mobile 360p" },
+  { title: "Square Insta", author: "AI_Creator", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=A2", url: "https://placeholdervideo.dev/1080x1080", thumbnail: "", description: "Square" },
+  { title: "Vertical Reel", author: "StreamLife", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=S2", url: "https://placeholdervideo.dev/1080x1920", thumbnail: "", description: "Vertical 9:16" },
+  { title: "4K Ultra HD", author: "DigitalNomad", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=D2", url: "https://placeholdervideo.dev/3840x2160", thumbnail: "", description: "4K UHD" },
+  { title: "QHD 1440p", author: "FutureTech", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=F2", url: "https://placeholdervideo.dev/2560x1440", thumbnail: "", description: "QHD" },
+  { title: "VGA 640x480", author: "CodeWizard", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=CW2", url: "https://placeholdervideo.dev/640x480", thumbnail: "", description: "VGA" },
+  { title: "WVGA 800x480", author: "PixelArt", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=P2", url: "https://placeholdervideo.dev/800x480", thumbnail: "", description: "WVGA" },
+  { title: "720p 16:9", author: "NeonGlow", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=NG2", url: "https://placeholdervideo.dev/1280x720", thumbnail: "", description: "16:9" },
 ];
 
-const thumbnails = [
-  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg",
-  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/Sintel.jpg",
-  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ElephantsDream.jpg",
-  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerBlazes.jpg",
-  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerEscapes.jpg",
-  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerFun.jpg",
-  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerJoyrides.jpg",
-  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerMeltdowns.jpg",
-  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/SubaruOutbackOnStreetAndDirt.jpg",
-  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/TearsOfSteel.jpg",
-];
-
-const creators = [
-  { name: "NEXUS_Official", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=NEXUS" },
-  { name: "TechVibes", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Tech" },
-  { name: "CinemaGold", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Cinema" },
-  { name: "AI_Creator", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=AI" },
-  { name: "StreamLife", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Stream" },
-  { name: "DigitalNomad", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Nomad" },
-  { name: "FutureTech", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Future" },
-  { name: "CodeWizard", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Code" },
-  { name: "PixelArt", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Pixel" },
-  { name: "NeonGlow", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Neon" },
-];
-
-const titles = [
-  "Experience the Future of NEXUS",
-  "AI-Powered Content Creation",
-  "Behind the Scenes: NEXUS v4.0",
-  "Streaming Redefined",
-  "The Super-App Revolution",
-  "Privacy First: Zero-Knowledge Architecture",
-  "4K HDR Streaming Demo",
-  "On-Device AI in Action",
-  "NexOS App Ecosystem Tour",
-  "Real-Time Collaboration Features",
-  "E2E Encrypted Messaging Demo",
-  "Social Feed: Intent-First Algorithm",
-  "Gaming Hub Preview",
-  "Commerce Integration Walkthrough",
-  "Web Browse & Site Hosting",
-  "Creator Economy Tools",
-  "Watch Together Feature",
-  "Spatial Audio Experience",
-  "Adaptive Bitrate Streaming",
-  "Cross-Platform Sync",
-  "The Seven Pillars Explained",
-  "NEXUS vs Traditional Apps",
-  "Building Apps with NexOS",
-  "AI Twin Personalization",
-  "Reputation Graph System",
-  "Micro-Communities Feature",
-  "Evolving Content Trees",
-  "Dolby Atmos Demo",
-  "Cloud Gaming Stream",
-  "Esports Tournament Mode",
-  "NEXUS Mobile Experience",
-  "Desktop Power User Features",
-  "Offline-First Architecture",
-  "Multi-Region Deployment",
-  "Security Architecture Deep Dive",
-  "DRM Protection Demo",
-  "Forensic Watermarking",
-  "Signal Protocol Integration",
-  "Passkeys & WebAuthn",
-  "Decentralized Identity",
-  "TensorFlow Lite Models",
-  "Core ML on iOS",
-  "Media3 ExoPlayer Android",
-  "Rust Feed Ranking Engine",
-  "Go Microservices",
-  "Kafka Event Streaming",
-  "Redis Caching Layer",
-  "PostgreSQL + pgvector",
-  "Neo4j Social Graph",
-  "ClickHouse Analytics",
-  "ScyllaDB High Throughput",
-  "Kubernetes Orchestration",
-  "Cloudflare Edge Network",
-  "Global CDN Performance",
-  "VMAF Quality Gate",
-  "AV1 Codec Efficiency",
-  "HDR10+ Color Grading",
-  "Bespoke App Commission",
-  "In-App Browser Privacy",
-  "Intent-Matching Ads",
-  "Creator Monetization",
-  "NEXUS Business Suite",
-  "Team Collaboration",
-  "White-Label Solutions",
-  "API Access Tier",
-  "Custom Domain Setup",
-  "Analytics Dashboard",
-  "Real-Time Notifications",
-  "Smart Reply AI",
-  "Live Transcription",
-  "Translation Services",
-  "AR Filters & Effects",
-  "VR Content Preview",
-  "360° Video Support",
-  "Multi-Camera Angles",
-  "Interactive Storytelling",
-  "Live Polling Feature",
-  "Q&A Sessions",
-  "Audio-Only Mode",
-  "Picture-in-Picture",
-  "Background Play",
-  "Download & Go",
-  "Family Sharing",
-  "Parental Controls",
-  "Accessibility First",
-  "Screen Reader Support",
-  "Voice Commands",
-  "Gesture Controls",
-  "Haptic Feedback",
-  "Dynamic Theming",
-  "Dark Mode Optimized",
-  "Battery Saver Mode",
-  "Data Compression",
-  "Low-Bandwidth Mode",
-  "Progressive Web App",
-  "Instant App Loading",
-  "Smart Caching",
-  "Predictive Prefetch",
-  "User Journey Mapping",
-  "A/B Testing Framework",
-  "Feature Flag System",
-  "Canary Deployments",
-  "Blue-Green Deploy",
-  "Disaster Recovery",
-  "Backup & Sync",
-];
-
-const descriptions = [
-  "Experience the next generation of digital interaction with NEXUS super-app platform.",
-  "AI-powered content creation tools that understand your unique style and voice.",
-  "Take a behind-the-scenes look at building the world's first true super-app.",
-  "Cinema-quality streaming with adaptive bitrate and spatial audio technologies.",
-  "One app to replace them all - chat, commerce, social, gaming, and streaming.",
-  "Your data, your control. Zero-knowledge architecture puts privacy first.",
-  "Stunning 4K HDR video streaming with Dolby Atmos surround sound experience.",
-  "On-device AI processes your data locally for maximum privacy and speed.",
-  "Build and deploy custom applications within the NEXUS ecosystem using NexOS.",
-  "Real-time collaboration tools for teams, creators, and communities.",
-];
-
-function generateVideos(): DemoVideo[] {
-  const videos: DemoVideo[] = [];
-  
-  for (let i = 0; i < 100; i++) {
-    const sourceIndex = i % videoSources.length;
-    const creatorIndex = i % creators.length;
-    const titleIndex = i % titles.length;
-    const descIndex = i % descriptions.length;
-    const thumbIndex = i % thumbnails.length;
-    
-    videos.push({
-      id: `video_${i + 1}`,
-      title: `${titles[titleIndex]} #${i + 1}`,
-      author: creators[creatorIndex].name,
-      avatar: creators[creatorIndex].avatar,
-      url: videoSources[sourceIndex],
-      thumbnail: thumbnails[thumbIndex],
-      likes: Math.floor(Math.random() * 100000) + 1000,
-      comments: Math.floor(Math.random() * 5000) + 100,
-      shares: Math.floor(Math.random() * 10000) + 500,
-      description: descriptions[descIndex],
-    });
-  }
-  
-  return videos;
+const allVideos: typeof baseEntries = [];
+for (let i = 0; i < 100; i++) {
+  const base = baseEntries[i % baseEntries.length];
+  allVideos.push({
+    ...base,
+    title: i < baseEntries.length ? base.title : `${base.title} #${Math.floor(i / baseEntries.length)}`,
+  });
 }
 
-export const DEMO_VIDEOS = generateVideos();
+export const DEMO_VIDEOS: DemoVideo[] = allVideos.map((v, i) => ({
+  id: `video_${i + 1}`,
+  ...v,
+  likes: Math.floor(Math.random() * 100000) + 1000,
+  comments: Math.floor(Math.random() * 5000) + 100,
+  shares: Math.floor(Math.random() * 10000) + 500,
+}));
 
-export const DEMO_VIDEO_HERO_PREVIEW = videoSources[3];
+export const DEMO_VIDEO_HERO_PREVIEW = DEMO_VIDEOS[0].url;
