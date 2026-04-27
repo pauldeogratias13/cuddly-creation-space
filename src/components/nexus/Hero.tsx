@@ -55,7 +55,7 @@ export function Hero() {
           className="mt-10 flex flex-wrap items-center justify-center gap-4"
         >
           <a
-            href="#pricing"
+            href="#waitlist"
             className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground px-7 py-3.5 text-base font-semibold hover:opacity-90 transition-all shadow-glow-cyan hover:scale-[1.02]"
           >
             Claim your handle
