@@ -264,6 +264,8 @@ export function SuperAppWorkspace({ name }: { name: string }) {
     duration: r.durationLabel ?? "—",
     videoSources: [r.source],
     poster: r.poster ?? "",
+    pageUrl: r.origin,
+    provider: new URL(r.origin).hostname.replace(/^www\./, "") || "unknown",
   });
 
   // Page 1: debounced search. Resets the list and pagination state.

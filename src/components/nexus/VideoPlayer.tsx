@@ -101,11 +101,8 @@ export function VideoPlayer({
 
     setHasError(true);
     setIsLoading(false);
-<<<<<<< HEAD
     onPlaybackFailed?.();
-=======
     onAllSourcesFailed?.();
->>>>>>> 16a613186dedb36b1cc9b3b0f934f04ae65530b7
   };
 
   if (!safeSources.length) {
@@ -137,13 +134,12 @@ export function VideoPlayer({
         poster={poster}
         onClick={onClick}
         onLoadedMetadata={(event) => {
-<<<<<<< HEAD
           const target = event.currentTarget;
           const width = target.videoWidth;
           const height = target.videoHeight;
           if (width > 0 && height > 0) {
             onMetadata?.({ width, height, aspectRatio: width / height });
-=======
+          }
           const v = event.currentTarget;
           if (v.videoWidth && v.videoHeight) {
             const ratio = v.videoWidth / v.videoHeight;
@@ -153,7 +149,6 @@ export function VideoPlayer({
               height: v.videoHeight,
               aspectRatio: ratio,
             });
->>>>>>> 16a613186dedb36b1cc9b3b0f934f04ae65530b7
           }
         }}
         onLoadedData={() => {
