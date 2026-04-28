@@ -106,7 +106,17 @@ const shopCatalog = [
   { id: "priority-support", name: "Priority Support", price: 7 },
 ];
 
-const streamLibrary: StreamItem[] = STREAM_LIBRARY;
+const seedStreamLibrary: StreamItem[] = STREAM_LIBRARY;
+
+type RemoteVideoHit = {
+  id: string;
+  title: string;
+  description?: string;
+  poster?: string;
+  source: string;
+  origin: string;
+  durationLabel?: string;
+};
 
 const pillarTabs = [
   { id: "chat", label: "Chat", icon: MessageSquare },
