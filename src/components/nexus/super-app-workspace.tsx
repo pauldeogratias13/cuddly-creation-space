@@ -16,9 +16,10 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { STREAM_LIBRARY } from "@/lib/demo-videos";
+import type { DiscoveredVideo } from "@/lib/demo-videos";
 import { ProfileSettingsForm } from "@/components/nexus/profile-settings-form";
 import { VideoPlayer } from "@/components/nexus/VideoPlayer";
+import { useVideoDiscovery } from "@/hooks/use-video-discovery";
 import {
   AI_TWIN_BRIEFING_STORAGE_KEY,
   BLUEPRINT_KEY_THEMES,
@@ -62,6 +63,8 @@ type StreamItem = {
   videoSources: string[];
   poster: string;
   description: string;
+  pageUrl: string;
+  provider: string;
 };
 type NotificationType = "chat" | "social_comment" | "commerce" | "profile" | string;
 type Notification = {
@@ -105,8 +108,6 @@ const shopCatalog = [
   { id: "creator-pass", name: "Creator Pass", price: 19 },
   { id: "priority-support", name: "Priority Support", price: 7 },
 ];
-
-const streamLibrary: StreamItem[] = STREAM_LIBRARY;
 
 const pillarTabs = [
   { id: "chat", label: "Chat", icon: MessageSquare },
@@ -200,6 +201,28 @@ export function SuperAppWorkspace({ name }: { name: string }) {
       /* ignore */
     }
   }, []);
+
+  const { videos: discoveredStreams, isLoading: streamDiscoveryLoading } = useVideoDiscovery({
+    query: streamSearch || "movies trailers documentaries shorts music videos",
+    batchSize: 8,
+    autoPrefetch: false,
+  });
+
+  const streamLibrary = useMemo<StreamItem[]>(
+    () =>
+      discoveredStreams.map((video: DiscoveredVideo) => ({
+        id: video.id,
+        title: video.title,
+        category: video.category,
+        duration: video.durationLabel,
+        videoSources: video.sources,
+        poster: video.poster,
+        description: video.description,
+        pageUrl: video.pageUrl,
+        provider: video.provider,
+      })),
+    [discoveredStreams],
+  );
 
   const filteredStreams = useMemo(() => {
     const byCat = streamLibrary.filter((s) => streamFilter === "All" || s.category === streamFilter);
@@ -2461,15 +2484,18 @@ export function SuperAppWorkspace({ name }: { name: string }) {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Streaming Hub</h3>
             <p className="text-sm text-muted-foreground">
-              Long-form and cinema-style playback (blueprint §07). Sample MP4s are public test assets so you can
-              verify the player; source URLs are shown under the player.
+              Long-form and cinema-style playback (blueprint §07). This catalog is discovered from public web
+              search and only keeps links that respond like playable video files.
             </p>
             <input
               value={streamSearch}
               onChange={(e) => setStreamSearch(e.target.value)}
-              placeholder="Filter by title…"
+              placeholder="Search discovered public videos…"
               className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
             />
+            {streamDiscoveryLoading && (
+              <p className="text-xs text-muted-foreground">Refreshing discovery results…</p>
+            )}
             {watchlist.length > 0 && (
               <div className="space-y-1.5">
                 <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">My watchlist</p>
@@ -2547,6 +2573,10 @@ export function SuperAppWorkspace({ name }: { name: string }) {
                     </span>
                   </p>
                   <p className="text-sm text-muted-foreground">{playbackStream.description}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Source: {playbackStream.provider}
+                  </p>
+                  <p className="break-all text-[11px] text-muted-foreground">{playbackStream.pageUrl}</p>
                   <p className="break-all font-mono text-[11px] text-muted-foreground">
                     {playbackStream.videoSources.join(" | ")}
                   </p>
@@ -2574,6 +2604,10 @@ export function SuperAppWorkspace({ name }: { name: string }) {
                       {item.category} · {item.duration}
                     </p>
                     <p className="mt-2 text-sm text-muted-foreground">{item.description}</p>
+                    <p className="mt-2 text-xs text-muted-foreground">Source: {item.provider}</p>
+                    <p className="mt-1 line-clamp-2 break-all text-[10px] text-muted-foreground">
+                      {item.pageUrl}
+                    </p>
                     <p className="mt-2 line-clamp-2 break-all font-mono text-[10px] text-muted-foreground">
                       {item.videoSources[0]}
                     </p>

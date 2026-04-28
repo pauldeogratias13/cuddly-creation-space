@@ -25,17 +25,38 @@ export function useVideoDiscovery(options?: UseVideoDiscoveryOptions) {
   const query = (options?.query?.trim() || DEFAULT_DISCOVERY_QUERY).slice(0, 120);
   const batchSize = options?.batchSize ?? 6;
   const autoPrefetch = options?.autoPrefetch ?? true;
+  const [debouncedQuery, setDebouncedQuery] = useState(query);
   const [videos, setVideos] = useState<DiscoveredVideo[]>([]);
   const [cursor, setCursor] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const requestIdRef = useRef(0);
+  const cursorRef = useRef(0);
+  const hasMoreRef = useRef(true);
+  const loadingRef = useRef(false);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setDebouncedQuery(query), 250);
+    return () => window.clearTimeout(timeout);
+  }, [query]);
+
+  useEffect(() => {
+    cursorRef.current = cursor;
+  }, [cursor]);
+
+  useEffect(() => {
+    hasMoreRef.current = hasMore;
+  }, [hasMore]);
+
+  useEffect(() => {
+    loadingRef.current = isLoading;
+  }, [isLoading]);
 
   const loadMore = useCallback(
     async (reset = false) => {
-      if (isLoading) return;
-      if (!reset && !hasMore) return;
+      if (loadingRef.current) return;
+      if (!reset && !hasMoreRef.current) return;
 
       const requestId = ++requestIdRef.current;
       setIsLoading(true);
@@ -44,8 +65,8 @@ export function useVideoDiscovery(options?: UseVideoDiscoveryOptions) {
       try {
         const response = await fetchDiscoveredVideos({
           data: {
-            query,
-            cursor: reset ? 0 : cursor,
+            query: debouncedQuery,
+            cursor: reset ? 0 : cursorRef.current,
             limit: batchSize,
           },
         });
@@ -62,7 +83,7 @@ export function useVideoDiscovery(options?: UseVideoDiscoveryOptions) {
         if (requestId === requestIdRef.current) setIsLoading(false);
       }
     },
-    [batchSize, cursor, hasMore, isLoading, query],
+    [batchSize, debouncedQuery],
   );
 
   useEffect(() => {
@@ -70,9 +91,11 @@ export function useVideoDiscovery(options?: UseVideoDiscoveryOptions) {
     setCursor(0);
     setHasMore(true);
     setError(null);
+    cursorRef.current = 0;
+    hasMoreRef.current = true;
     requestIdRef.current += 1;
     void loadMore(true);
-  }, [query]);
+  }, [debouncedQuery, loadMore]);
 
   const removeVideo = useCallback((id: string) => {
     setVideos((prev) => prev.filter((video) => video.id !== id));
@@ -86,10 +109,10 @@ export function useVideoDiscovery(options?: UseVideoDiscoveryOptions) {
       error,
       loadMore,
       removeVideo,
-      query,
+      query: debouncedQuery,
       autoPrefetch,
     }),
-    [autoPrefetch, error, hasMore, isLoading, loadMore, query, removeVideo, videos],
+    [autoPrefetch, debouncedQuery, error, hasMore, isLoading, loadMore, removeVideo, videos],
   );
 
   return state;

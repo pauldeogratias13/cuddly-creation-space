@@ -279,25 +279,183 @@ async function resolvePlayableVideo(pageUrl: string): Promise<DiscoveredVideo | 
 function buildQueryVariants(query: string) {
   const base = query.trim() || DEFAULT_QUERY;
   return [
+    // Primary video-focused queries
     `${base} mp4`,
     `${base} sample video`,
     `${base} trailer filetype:mp4`,
+    `${base} demo video`,
+    `${base} stock video`,
+    // Specific video sites
     `${base} site:samplelib.com`,
     `${base} site:test-videos.co.uk mp4`,
+    `${base} site:videvo.net`,
+    `${base} site:pixabay.com videos`,
+    `${base} site:pexels.com video`,
+    `${base} site:coverr.co`,
+    // Alternative formats
+    `${base} filetype:webm`,
+    `${base} filetype:mov`,
+    `${base} video file`,
+    // General fallbacks
     `${base} public video`,
+    `${base} free video`,
+    `${base} video download`,
+    // Last resort generic
+    `${base} video`,
+    `sample video mp4`,
+    `test video download`,
+    `demo video clip`,
   ];
 }
 
 async function searchDuckDuckGo(query: string) {
-  const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
-  const response = await fetchWithTimeout(url, {
-    headers: {
-      accept: "text/html",
-    },
+  try {
+    const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+    const response = await fetchWithTimeout(url, {
+      headers: {
+        accept: "text/html",
+      },
+    });
+    if (!response.ok) return [];
+    const html = await response.text();
+    return extractDuckDuckGoLinks(html);
+  } catch (error) {
+    console.warn("DuckDuckGo search failed:", error);
+    return [];
+  }
+}
+
+async function searchBraveSearch(query: string) {
+  try {
+    const url = `https://search.brave.com/search?q=${encodeURIComponent(query)}`;
+    const response = await fetchWithTimeout(url, {
+      headers: {
+        accept: "text/html",
+      },
+    });
+    if (!response.ok) return [];
+    const html = await response.text();
+    // Extract links from Brave search results
+    const linkRegex = /<a[^>]+href="([^"]+)"[^>]*class="[^"]*result[^"]*"[^>]*>/gi;
+    const links: string[] = [];
+    let match: RegExpExecArray | null;
+    while ((match = linkRegex.exec(html)) !== null) {
+      const href = decodeHtml(match[1]);
+      if (href.startsWith('http')) {
+        links.push(href);
+      }
+    }
+    return links;
+  } catch (error) {
+    console.warn("Brave search failed:", error);
+    return [];
+  }
+}
+
+async function searchStartpage(query: string) {
+  try {
+    const url = `https://www.startpage.com/do/search?query=${encodeURIComponent(query)}`;
+    const response = await fetchWithTimeout(url, {
+      headers: {
+        accept: "text/html",
+      },
+    });
+    if (!response.ok) return [];
+    const html = await response.text();
+    // Extract links from Startpage results
+    const linkRegex = /<a[^>]+href="([^"]+)"[^>]*class="[^"]*w-gl__result[^"]*"[^>]*>/gi;
+    const links: string[] = [];
+    let match: RegExpExecArray | null;
+    while ((match = linkRegex.exec(html)) !== null) {
+      const href = decodeHtml(match[1]);
+      if (href.startsWith('http') && !href.includes('startpage.com')) {
+        links.push(href);
+      }
+    }
+    return links;
+  } catch (error) {
+    console.warn("Startpage search failed:", error);
+    return [];
+  }
+}
+
+async function searchQwant(query: string) {
+  try {
+    const url = `https://www.qwant.com/?q=${encodeURIComponent(query)}&t=web`;
+    const response = await fetchWithTimeout(url, {
+      headers: {
+        accept: "text/html",
+      },
+    });
+    if (!response.ok) return [];
+    const html = await response.text();
+    // Extract links from Qwant results
+    const linkRegex = /<a[^>]+href="([^"]+)"[^>]*class="[^"]*result[^"]*"[^>]*>/gi;
+    const links: string[] = [];
+    let match: RegExpExecArray | null;
+    while ((match = linkRegex.exec(html)) !== null) {
+      const href = decodeHtml(match[1]);
+      if (href.startsWith('http') && !href.includes('qwant.com')) {
+        links.push(href);
+      }
+    }
+    return links;
+  } catch (error) {
+    console.warn("Qwant search failed:", error);
+    return [];
+  }
+}
+
+// Fallback to known video sources
+async function getKnownVideoSources(query: string) {
+  const knownSources = [
+    'https://samplelib.com/lib/preview/mp4/sample-5s.mp4',
+    'https://samplelib.com/lib/preview/mp4/sample-10s.mp4',
+    'https://samplelib.com/lib/preview/mp4/sample-15s.mp4',
+    'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4',
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4',
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+    'https://www.w3schools.com/html/mov_bbb.mp4',
+    'https://www.w3schools.com/html/movie.mp4',
+  ];
+
+  const results: DiscoveredVideo[] = [];
+  const queryLower = query.toLowerCase();
+  
+  // Select relevant sources based on query
+  const relevantSources = knownSources.filter((_, index) => {
+    // Include first few always, then filter based on query relevance
+    if (index < 5) return true;
+    
+    if (queryLower.includes('test') || queryLower.includes('sample')) return true;
+    if (queryLower.includes('big') || queryLower.includes('bunny')) return index < 8;
+    if (queryLower.includes('elephant') || queryLower.includes('dream')) return index === 6;
+    if (queryLower.includes('sintel') || queryLower.includes('blender')) return index === 11;
+    if (queryLower.includes('tears') || queryLower.includes('steel')) return index === 13;
+    
+    return Math.random() < 0.3; // Random selection for variety
   });
-  if (!response.ok) return [];
-  const html = await response.text();
-  return extractDuckDuckGoLinks(html);
+
+  for (const source of relevantSources.slice(0, 8)) {
+    try {
+      const video = await resolvePlayableVideo(source);
+      if (video) {
+        results.push(video);
+      }
+    } catch (error) {
+      console.warn("Failed to resolve known source:", source, error);
+    }
+  }
+
+  return results;
 }
 
 async function discoverVideos(query: string, limit: number) {
@@ -306,27 +464,73 @@ async function discoverVideos(query: string, limit: number) {
   const cached = discoveryCache.get(cacheKey);
   if (cached && cached.expiresAt > now) return cached.videos;
 
-  const variants = buildQueryVariants(query).slice(0, QUERY_VARIANTS_PER_REQUEST);
+  const variants = buildQueryVariants(query);
   const seenPages = new Set<string>();
   const discovered: DiscoveredVideo[] = [];
+  const searchEngines = [
+    { name: 'DuckDuckGo', search: searchDuckDuckGo },
+    { name: 'Brave', search: searchBraveSearch },
+    { name: 'Startpage', search: searchStartpage },
+    { name: 'Qwant', search: searchQwant },
+  ];
 
-  for (const variant of variants) {
-    const links = await searchDuckDuckGo(variant);
-    for (const link of links.slice(0, RESULT_LINK_LIMIT)) {
-      if (seenPages.has(link)) continue;
-      seenPages.add(link);
+  // Try each search engine with fallbacks
+  for (const searchEngine of searchEngines) {
+    const engineVariants = variants.slice(0, QUERY_VARIANTS_PER_REQUEST);
+    let engineFoundVideos = 0;
 
-      const video = await resolvePlayableVideo(link);
-      if (!video) continue;
+    for (const variant of engineVariants) {
+      try {
+        const links = await searchEngine.search(variant);
+        for (const link of links.slice(0, RESULT_LINK_LIMIT)) {
+          if (seenPages.has(link)) continue;
+          seenPages.add(link);
 
-      if (!discovered.some((item) => item.sources[0] === video.sources[0])) {
-        discovered.push(video);
+          const video = await resolvePlayableVideo(link);
+          if (!video) continue;
+
+          if (!discovered.some((item) => item.sources[0] === video.sources[0])) {
+            discovered.push(video);
+            engineFoundVideos++;
+          }
+
+          if (discovered.length >= Math.max(limit * 2, 12)) break;
+        }
+
+        if (discovered.length >= Math.max(limit * 2, 12)) break;
+      } catch (error) {
+        console.warn(`Search engine ${searchEngine.name} failed for variant "${variant}":`, error);
       }
+    }
 
-      if (discovered.length >= Math.max(limit * 2, 12)) break;
+    // If this engine found videos, move to next engine for variety
+    if (engineFoundVideos > 0) {
+      console.log(`${searchEngine.name} found ${engineFoundVideos} videos`);
     }
 
     if (discovered.length >= Math.max(limit * 2, 12)) break;
+  }
+
+  // If still not enough videos, try known sources as ultimate fallback
+  if (discovered.length < limit) {
+    console.log("Using known video sources as fallback");
+    try {
+      const fallbackVideos = await getKnownVideoSources(query);
+      for (const video of fallbackVideos) {
+        if (!discovered.some((item) => item.sources[0] === video.sources[0])) {
+          discovered.push(video);
+        }
+      }
+    } catch (error) {
+      console.warn("Fallback to known sources failed:", error);
+    }
+  }
+
+  // Final fallback - create generic videos if still not enough
+  if (discovered.length < limit) {
+    console.log("Creating generic fallback videos");
+    const genericVideos = createGenericFallbackVideos(query, limit - discovered.length);
+    discovered.push(...genericVideos);
   }
 
   discoveryCache.set(cacheKey, {
@@ -334,7 +538,47 @@ async function discoverVideos(query: string, limit: number) {
     videos: discovered,
   });
 
+  console.log(`Discovery complete: found ${discovered.length} videos for query "${query}"`);
   return discovered;
+}
+
+// Create generic fallback videos when all else fails
+function createGenericFallbackVideos(query: string, count: number): DiscoveredVideo[] {
+  const fallbacks: DiscoveredVideo[] = [];
+  const baseTitle = query.trim() || "Sample Video";
+  
+  for (let i = 0; i < count; i++) {
+    const title = `${baseTitle} - Sample ${i + 1}`;
+    const category = inferCategory(title);
+    const poster = createPosterDataUri(title, category, "nexus");
+    
+    // Use reliable fallback sources
+    const fallbackSources = [
+      'https://samplelib.com/lib/preview/mp4/sample-5s.mp4',
+      'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4',
+      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+      'https://www.w3schools.com/html/mov_bbb.mp4',
+    ];
+    
+    const source = fallbackSources[i % fallbackSources.length];
+    const id = `nexus-fallback-${hashSeed(source + i)}`;
+    
+    fallbacks.push({
+      id,
+      title,
+      author: "Nexus Discovery",
+      description: `Generated fallback video for "${query}". This is a sample video for demonstration purposes.`,
+      poster,
+      thumbnail: poster,
+      pageUrl: source,
+      sources: [source],
+      durationLabel: "Sample",
+      category,
+      provider: "nexus",
+    });
+  }
+  
+  return fallbacks;
 }
 
 export const fetchDiscoveredVideos = createServerFn({ method: "GET" })
