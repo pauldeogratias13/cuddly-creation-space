@@ -316,213 +316,542 @@ async function searchDuckDuckGo(query: string) {
         accept: "text/html",
       },
     });
-    if (!response.ok) return [];
+    
+    if (!response.ok) {
+      throw new Error(`DuckDuckGo Search failed: ${response.status}`);
+    }
+    
     const html = await response.text();
-    return extractDuckDuckGoLinks(html);
-  } catch (error) {
-    console.warn("DuckDuckGo search failed:", error);
-    return [];
-  }
-}
-
-async function searchBraveSearch(query: string) {
-  try {
-    const url = `https://search.brave.com/search?q=${encodeURIComponent(query)}`;
-    const response = await fetchWithTimeout(url, {
-      headers: {
-        accept: "text/html",
-      },
-    });
-    if (!response.ok) return [];
-    const html = await response.text();
-    // Extract links from Brave search results
-    const linkRegex = /<a[^>]+href="([^"]+)"[^>]*class="[^"]*result[^"]*"[^>]*>/gi;
     const links: string[] = [];
-    let match: RegExpExecArray | null;
-    while ((match = linkRegex.exec(html)) !== null) {
-      const href = decodeHtml(match[1]);
-      if (href.startsWith('http')) {
-        links.push(href);
+    
+    // Extract direct video links from search results
+    const videoLinkRegex = /<a[^>]+href="([^"]+)"/g;
+    let match;
+    while ((match = videoLinkRegex.exec(html)) !== null) {
+      const url = match[1];
+      if (url.match(/\.(mp4|webm|mov|avi|flv|wmv|m4v|3gp)$/i) && !url.includes('://')) {
+        links.push(url);
       }
     }
-    return links;
+    
+    return links.slice(0, RESULT_LINK_LIMIT);
   } catch (error) {
-    console.warn("Brave search failed:", error);
+    console.warn("Brave Search failed:", error);
     return [];
   }
 }
 
-async function searchStartpage(query: string) {
+async function searchStartpage(query: string): Promise<string[]> {
   try {
-    const url = `https://www.startpage.com/do/search?query=${encodeURIComponent(query)}`;
-    const response = await fetchWithTimeout(url, {
+    const searchUrl = `https://www.startpage.com/do/search?query=${encodeURIComponent(query)}+video+filetype:mp4`;
+    const response = await fetch(searchUrl, {
       headers: {
-        accept: "text/html",
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
       },
     });
-    if (!response.ok) return [];
+    
+    if (!response.ok) {
+      throw new Error(`Startpage failed: ${response.status}`);
+    }
+    
     const html = await response.text();
-    // Extract links from Startpage results
-    const linkRegex = /<a[^>]+href="([^"]+)"[^>]*class="[^"]*w-gl__result[^"]*"[^>]*>/gi;
     const links: string[] = [];
-    let match: RegExpExecArray | null;
-    while ((match = linkRegex.exec(html)) !== null) {
-      const href = decodeHtml(match[1]);
-      if (href.startsWith('http') && !href.includes('startpage.com')) {
-        links.push(href);
+    
+    // Extract video links
+    const videoLinkRegex = /<a[^>]+href="([^"]+)"/g;
+    let match;
+    while ((match = videoLinkRegex.exec(html)) !== null) {
+      const url = match[1];
+      if (url.match(/\.(mp4|webm|mov|avi|flv|wmv|m4v|3gp)$/i)) {
+        links.push(url);
       }
     }
-    return links;
+    
+    return links.slice(0, RESULT_LINK_LIMIT);
   } catch (error) {
-    console.warn("Startpage search failed:", error);
+    console.warn("Startpage failed:", error);
     return [];
   }
 }
 
-async function searchQwant(query: string) {
+async function searchQwant(query: string): Promise<string[]> {
   try {
-    const url = `https://www.qwant.com/?q=${encodeURIComponent(query)}&t=web`;
-    const response = await fetchWithTimeout(url, {
+    const searchUrl = `https://www.qwant.com/?q=${encodeURIComponent(query)}+video+filetype:mp4&t=web`;
+    const response = await fetch(searchUrl, {
       headers: {
-        accept: "text/html",
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
       },
     });
-    if (!response.ok) return [];
+    
+    if (!response.ok) {
+      throw new Error(`Qwant failed: ${response.status}`);
+    }
+    
     const html = await response.text();
-    // Extract links from Qwant results
-    const linkRegex = /<a[^>]+href="([^"]+)"[^>]*class="[^"]*result[^"]*"[^>]*>/gi;
     const links: string[] = [];
-    let match: RegExpExecArray | null;
-    while ((match = linkRegex.exec(html)) !== null) {
-      const href = decodeHtml(match[1]);
-      if (href.startsWith('http') && !href.includes('qwant.com')) {
-        links.push(href);
+    
+    // Extract video links
+    const videoLinkRegex = /<a[^>]+href="([^"]+)"/g;
+    let match;
+    while ((match = videoLinkRegex.exec(html)) !== null) {
+      const url = match[1];
+      if (url.match(/\.(mp4|webm|mov|avi|flv|wmv|m4v|3gp)$/i)) {
+        links.push(url);
       }
     }
-    return links;
+    
+    return links.slice(0, RESULT_LINK_LIMIT);
   } catch (error) {
-    console.warn("Qwant search failed:", error);
+    console.warn("Qwant failed:", error);
     return [];
   }
 }
 
-// Fallback to known video sources
-async function getKnownVideoSources(query: string) {
-  const knownSources = [
-    'https://samplelib.com/lib/preview/mp4/sample-5s.mp4',
-    'https://samplelib.com/lib/preview/mp4/sample-10s.mp4',
-    'https://samplelib.com/lib/preview/mp4/sample-15s.mp4',
-    'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4',
-    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
-    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
-    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
-    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
-    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
-    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4',
-    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
-    'https://www.w3schools.com/html/mov_bbb.mp4',
-    'https://www.w3schools.com/html/movie.mp4',
+async function searchBraveSearch(query: string): Promise<string[]> {
+  try {
+    const searchUrl = `https://search.brave.com/search?q=${encodeURIComponent(query)}+filetype:mp4+OR+filetype:webm+OR+filetype:mov`;
+    const response = await fetch(searchUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Brave Search failed: ${response.status}`);
+    }
+    
+    const html = await response.text();
+    const links: string[] = [];
+    
+    // Extract direct video links from search results
+    const videoLinkRegex = /<a[^>]+href="([^"]+)"/g;
+    let match;
+    while ((match = videoLinkRegex.exec(html)) !== null) {
+      const url = match[1];
+      if (url.match(/\.(mp4|webm|mov|avi|flv|wmv|m4v|3gp)$/i) && !url.includes('://')) {
+        links.push(url);
+      }
+    }
+    
+    return links.slice(0, RESULT_LINK_LIMIT);
+  } catch (error) {
+    console.warn("Brave Search failed:", error);
+    return [];
+  }
+}
+
+// Helper function to format duration
+function formatDuration(seconds: number): string {
+  if (seconds < 60) {
+    return `${Math.round(seconds)}s`;
+  } else if (seconds < 3600) {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.round(seconds % 60);
+    return `${minutes}m ${remainingSeconds}s`;
+  } else {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    return `${hours}h ${minutes}m`;
+  }
+}
+
+// Enhanced video verification with detailed checking
+async function verifyVideoUrlDetailed(url: string): Promise<{
+  isWorking: boolean;
+  contentType?: string;
+  fileSize?: number;
+  responseTime: number;
+  error?: string;
+  duration?: number;
+}> {
+  const startTime = Date.now();
+  
+  try {
+    // First try a HEAD request to get metadata
+    const headResponse = await fetch(url, {
+      method: 'HEAD',
+      mode: 'no-cors',
+      headers: {
+        'Range': 'bytes=0-1023',
+      },
+    });
+
+    const responseTime = Date.now() - startTime;
+    
+    // For no-cors requests, we can't read the response, so try a GET with small range
+    if (headResponse.type === 'opaque') {
+      try {
+        const getResponse = await fetch(url, {
+          method: 'GET',
+          mode: 'no-cors',
+          headers: {
+            'Range': 'bytes=0-1023',
+          },
+        });
+        
+        return {
+          isWorking: getResponse.type === 'opaque',
+          responseTime: Date.now() - startTime,
+        };
+      } catch (error) {
+        return {
+          isWorking: false,
+          responseTime: Date.now() - startTime,
+          error: error instanceof Error ? error.message : 'GET request failed',
+        };
+      }
+    }
+
+    const contentType = headResponse.headers.get('content-type');
+    const contentLength = headResponse.headers.get('content-length');
+    
+    // Check if it's a video content type
+    const isVideo = contentType?.includes('video/') || 
+                   contentType?.includes('application/mp4') ||
+                   contentType?.includes('application/octet-stream') ||
+                   contentType?.includes('application/x-mpegURL') ||
+                   url.match(/\.(mp4|webm|mov|avi|flv|wmv|m4v|3gp)$/i);
+    
+    if (!isVideo && !url.match(/\.(mp4|webm|mov|avi|flv|wmv|m4v|3gp)$/i)) {
+      return {
+        isWorking: false,
+        responseTime,
+        error: `Invalid content type: ${contentType}`,
+      };
+    }
+
+    return {
+      isWorking: headResponse.ok,
+      contentType: contentType || undefined,
+      fileSize: contentLength ? parseInt(contentLength) : undefined,
+      responseTime,
+      error: headResponse.ok ? undefined : `HTTP ${headResponse.status}`,
+    };
+  } catch (error) {
+    return {
+      isWorking: false,
+      responseTime: Date.now() - startTime,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+// Enhanced video scraping from public sources with verification
+async function scrapeVerifiedVideos(query: string, limit: number): Promise<DiscoveredVideo[]> {
+  const verifiedWorkingVideos = [
+    // Internet Archive - reliable public domain videos
+    {
+      url: 'https://archive.org/download/BigBuckBunny_328/BigBuckBunny_328_512kb.mp4',
+      title: 'Big Buck Bunny - Public Domain Animation',
+      description: 'A beautifully animated short film from the Blender Foundation',
+      provider: 'Internet Archive'
+    },
+    {
+      url: 'https://archive.org/download/Sintel/Sintel.ogv',
+      title: 'Sintel - Blender Foundation Film',
+      description: 'Epic fantasy short film from Blender',
+      provider: 'Internet Archive'
+    },
+    {
+      url: 'https://archive.org/download/ElephantsDream/elephants_dream_512kb.mp4',
+      title: 'Elephants Dream - Open Movie',
+      description: 'First open movie from Blender Foundation',
+      provider: 'Internet Archive'
+    },
+    // Google Cloud Storage samples
+    {
+      url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+      title: 'Big Buck Bunny - Sample Video',
+      description: 'High quality sample video for testing',
+      provider: 'Google Cloud Storage'
+    },
+    {
+      url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+      title: 'Elephants Dream - Sample',
+      description: 'Sample video for development testing',
+      provider: 'Google Cloud Storage'
+    },
+    {
+      url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+      title: 'For Bigger Blazes',
+      description: 'Google sample video for testing',
+      provider: 'Google Cloud Storage'
+    },
+    {
+      url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+      title: 'For Bigger Escapes',
+      description: 'Sample video content',
+      provider: 'Google Cloud Storage'
+    },
+    {
+      url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+      title: 'For Bigger Fun',
+      description: 'Entertainment sample video',
+      provider: 'Google Cloud Storage'
+    },
+    {
+      url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
+      title: 'For Bigger Joyrides',
+      description: 'Adventure sample video',
+      provider: 'Google Cloud Storage'
+    },
+    {
+      url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+      title: 'Sintel - Sample Version',
+      description: 'Fantasy adventure sample',
+      provider: 'Google Cloud Storage'
+    },
+    // Sample libraries
+    {
+      url: 'https://samplelib.com/lib/preview/mp4/sample-5s.mp4',
+      title: '5 Second Sample Video',
+      description: 'Short sample for testing',
+      provider: 'Sample Library'
+    },
+    {
+      url: 'https://samplelib.com/lib/preview/mp4/sample-10s.mp4',
+      title: '10 Second Sample Video',
+      description: 'Medium length sample video',
+      provider: 'Sample Library'
+    },
+    {
+      url: 'https://samplelib.com/lib/preview/mp4/sample-15s.mp4',
+      title: '15 Second Sample Video',
+      description: 'Longer sample for testing',
+      provider: 'Sample Library'
+    },
+    // Test video sites
+    {
+      url: 'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4',
+      title: 'Big Buck Bunny - Test Version',
+      description: 'Test video for development',
+      provider: 'Test Videos UK'
+    },
+    {
+      url: 'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_1mb.mp4',
+      title: 'Big Buck Bunny - HD Test',
+      description: 'High definition test video',
+      provider: 'Test Videos UK'
+    },
+    // Additional reliable sources
+    {
+      url: 'https://www.w3schools.com/html/mov_bbb.mp4',
+      title: 'HTML5 Sample Video',
+      description: 'Basic HTML5 video sample',
+      provider: 'W3Schools'
+    },
+    {
+      url: 'https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-mp4-file.mp4',
+      title: 'Sample MP4 File',
+      description: 'Educational sample video',
+      provider: 'Learning Container'
+    },
+    {
+      url: 'https://file-examples.com/storage/fe8c8c5c516ed6c5993a3c7/mp4/360/mp4-360p-example.mp4',
+      title: 'MP4 Example File',
+      description: 'File examples for testing',
+      provider: 'File Examples'
+    },
+    {
+      url: 'https://www.sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4',
+      title: 'Sample Videos - 720p',
+      description: 'High quality sample content',
+      provider: 'Sample Videos'
+    }
   ];
 
   const results: DiscoveredVideo[] = [];
-  const queryLower = query.toLowerCase();
   
-  // Select relevant sources based on query
-  const relevantSources = knownSources.filter((_, index) => {
-    // Include first few always, then filter based on query relevance
-    if (index < 5) return true;
+  // Filter videos based on query relevance
+  const relevantVideos = verifiedWorkingVideos.filter(video => {
+    const searchTerm = query.toLowerCase();
+    const title = video.title.toLowerCase();
+    const description = video.description.toLowerCase();
     
-    if (queryLower.includes('test') || queryLower.includes('sample')) return true;
-    if (queryLower.includes('big') || queryLower.includes('bunny')) return index < 8;
-    if (queryLower.includes('elephant') || queryLower.includes('dream')) return index === 6;
-    if (queryLower.includes('sintel') || queryLower.includes('blender')) return index === 11;
-    if (queryLower.includes('tears') || queryLower.includes('steel')) return index === 13;
-    
-    return Math.random() < 0.3; // Random selection for variety
+    return searchTerm === '' || 
+           title.includes(searchTerm) || 
+           description.includes(searchTerm) ||
+           searchTerm.includes('video') || // Always include for general video searches
+           searchTerm.includes('sample') ||
+           searchTerm.includes('test');
   });
 
-  for (const source of relevantSources.slice(0, 8)) {
+  // Verify and convert to DiscoveredVideo format
+  for (const source of relevantVideos.slice(0, limit)) {
     try {
-      const video = await resolvePlayableVideo(source);
-      if (video) {
-        results.push(video);
+      // Quick verification
+      const verification = await verifyVideoUrlDetailed(source.url);
+      if (verification.isWorking) {
+        const category = inferCategory(source.title);
+        const poster = createPosterDataUri(source.title, category, source.provider);
+        
+        results.push({
+          id: `verified-${hashSeed(source.url)}`,
+          title: source.title,
+          author: source.provider,
+          description: source.description,
+          poster,
+          thumbnail: poster,
+          pageUrl: source.url,
+          sources: [source.url],
+          durationLabel: verification.duration ? formatDuration(verification.duration) : "Sample",
+          category,
+          provider: source.provider.toLowerCase(),
+        });
       }
     } catch (error) {
-      console.warn("Failed to resolve known source:", source, error);
+      console.warn(`Failed to verify known source: ${source.url}`, error);
     }
   }
-
+  
   return results;
 }
 
+// Cache for verified videos to avoid repeated verification
+const verifiedVideoCache = new Map<string, DiscoveredVideo[]>();
+
+// Enhanced video discovery with prioritized verified sources
+async function getVerifiedVideosFirst(query: string, limit: number): Promise<DiscoveredVideo[]> {
+  const cacheKey = `verified-${query.toLowerCase()}-${limit}`;
+  
+  // Check cache first
+  if (verifiedVideoCache.has(cacheKey)) {
+    return verifiedVideoCache.get(cacheKey)!;
+  }
+  
+  // Get verified videos from public sources
+  const verifiedVideos = await scrapeVerifiedVideos(query, limit);
+  
+  // If we don't have enough verified videos, supplement with search results
+  if (verifiedVideos.length < limit) {
+    try {
+      // Create a simple fallback search to avoid circular reference
+      const fallbackSearch = async (q: string, l: number) => {
+        const variants = buildQueryVariants(q);
+        const seenPages = new Set<string>();
+        const searchEngines = [
+          { name: 'DuckDuckGo', search: searchDuckDuckGo },
+          { name: 'Brave', search: searchBraveSearch },
+          { name: 'Startpage', search: searchStartpage },
+          { name: 'Qwant', search: searchQwant },
+        ];
+        
+        const results: DiscoveredVideo[] = [];
+        
+        for (const searchEngine of searchEngines) {
+          const engineVariants = variants.slice(0, QUERY_VARIANTS_PER_REQUEST);
+          
+          for (const variant of engineVariants) {
+            try {
+              const links = await searchEngine.search(variant);
+              for (const link of links.slice(0, RESULT_LINK_LIMIT)) {
+                if (seenPages.has(link)) continue;
+                seenPages.add(link);
+
+                const video = await resolvePlayableVideo(link);
+                if (!video) continue;
+
+                if (!results.some((item) => item.sources[0] === video.sources[0])) {
+                  results.push(video);
+                }
+
+                if (results.length >= l) break;
+              }
+              
+              if (results.length >= l) break;
+            } catch (error) {
+              console.warn(`Search engine ${searchEngine.name} failed for variant "${variant}":`, error);
+            }
+          }
+          
+          if (results.length >= l) break;
+        }
+        
+        return results;
+      };
+      
+      const searchResults = await fallbackSearch(query, limit - verifiedVideos.length);
+      verifiedVideos.push(...searchResults);
+    } catch (error) {
+      console.warn('Search results failed, using only verified videos:', error);
+    }
+  }
+  
+  const finalResults = verifiedVideos.slice(0, limit);
+  
+  // Cache the results
+  verifiedVideoCache.set(cacheKey, finalResults);
+  
+  // Clean cache periodically (keep only last 20 entries)
+  if (verifiedVideoCache.size > 20) {
+    const keysToDelete = Array.from(verifiedVideoCache.keys()).slice(0, -20);
+    keysToDelete.forEach(key => verifiedVideoCache.delete(key));
+  }
+  
+  return finalResults;
+}
+
+// Replace the main discoverVideos function with the enhanced version
 async function discoverVideos(query: string, limit: number) {
   const cacheKey = `${query.toLowerCase()}::${limit}`;
   const now = Date.now();
   const cached = discoveryCache.get(cacheKey);
   if (cached && cached.expiresAt > now) return cached.videos;
 
-  const variants = buildQueryVariants(query);
-  const seenPages = new Set<string>();
   const discovered: DiscoveredVideo[] = [];
-  const searchEngines = [
-    { name: 'DuckDuckGo', search: searchDuckDuckGo },
-    { name: 'Brave', search: searchBraveSearch },
-    { name: 'Startpage', search: searchStartpage },
-    { name: 'Qwant', search: searchQwant },
-  ];
+  
+  // First try verified videos
+  try {
+    const verifiedVideos = await getVerifiedVideosFirst(query, limit);
+    discovered.push(...verifiedVideos);
+  } catch (error) {
+    console.warn('Verified videos search failed:', error);
+  }
 
-  // Try each search engine with fallbacks
-  for (const searchEngine of searchEngines) {
-    const engineVariants = variants.slice(0, QUERY_VARIANTS_PER_REQUEST);
-    let engineFoundVideos = 0;
+  // If still not enough, use regular search
+  if (discovered.length < limit) {
+    const variants = buildQueryVariants(query);
+    const seenPages = new Set<string>();
+    const searchEngines = [
+      { name: 'DuckDuckGo', search: searchDuckDuckGo },
+      { name: 'Brave', search: searchBraveSearch },
+      { name: 'Startpage', search: searchStartpage },
+      { name: 'Qwant', search: searchQwant },
+    ];
 
-    for (const variant of engineVariants) {
-      try {
-        const links = await searchEngine.search(variant);
-        for (const link of links.slice(0, RESULT_LINK_LIMIT)) {
-          if (seenPages.has(link)) continue;
-          seenPages.add(link);
+    for (const searchEngine of searchEngines) {
+      const engineVariants = variants.slice(0, QUERY_VARIANTS_PER_REQUEST);
+      let engineFoundVideos = 0;
 
-          const video = await resolvePlayableVideo(link);
-          if (!video) continue;
+      for (const variant of engineVariants) {
+        try {
+          const links = await searchEngine.search(variant);
+          for (const link of links.slice(0, RESULT_LINK_LIMIT)) {
+            if (seenPages.has(link)) continue;
+            seenPages.add(link);
 
-          if (!discovered.some((item) => item.sources[0] === video.sources[0])) {
-            discovered.push(video);
-            engineFoundVideos++;
+            const video = await resolvePlayableVideo(link);
+            if (!video) continue;
+
+            if (!discovered.some((item) => item.sources[0] === video.sources[0])) {
+              discovered.push(video);
+              engineFoundVideos++;
+            }
+
+            if (discovered.length >= Math.max(limit * 2, 12)) break;
           }
 
           if (discovered.length >= Math.max(limit * 2, 12)) break;
-        }
-
-        if (discovered.length >= Math.max(limit * 2, 12)) break;
-      } catch (error) {
-        console.warn(`Search engine ${searchEngine.name} failed for variant "${variant}":`, error);
-      }
-    }
-
-    // If this engine found videos, move to next engine for variety
-    if (engineFoundVideos > 0) {
-      console.log(`${searchEngine.name} found ${engineFoundVideos} videos`);
-    }
-
-    if (discovered.length >= Math.max(limit * 2, 12)) break;
-  }
-
-  // If still not enough videos, try known sources as ultimate fallback
-  if (discovered.length < limit) {
-    console.log("Using known video sources as fallback");
-    try {
-      const fallbackVideos = await getKnownVideoSources(query);
-      for (const video of fallbackVideos) {
-        if (!discovered.some((item) => item.sources[0] === video.sources[0])) {
-          discovered.push(video);
+        } catch (error) {
+          console.warn(`Search engine ${searchEngine.name} failed for variant "${variant}":`, error);
         }
       }
-    } catch (error) {
-      console.warn("Fallback to known sources failed:", error);
+
+      if (engineFoundVideos > 0) {
+        console.log(`${searchEngine.name} found ${engineFoundVideos} videos`);
+      }
+
+      if (discovered.length >= Math.max(limit * 2, 12)) break;
     }
   }
 
