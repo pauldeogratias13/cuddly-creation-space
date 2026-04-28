@@ -114,9 +114,7 @@ const shopCatalog = [
   { id: "priority-support", name: "Priority Support", price: 7 },
 ];
 
-<<<<<<< HEAD
-=======
-const seedStreamLibrary: StreamItem[] = STREAM_LIBRARY;
+const seedStreamLibrary: StreamItem[] = [];
 
 type RemoteVideoHit = {
   id: string;
@@ -127,8 +125,6 @@ type RemoteVideoHit = {
   origin: string;
   durationLabel?: string;
 };
-
->>>>>>> 16a613186dedb36b1cc9b3b0f934f04ae65530b7
 const pillarTabs = [
   { id: "chat", label: "Chat", icon: MessageSquare },
   { id: "commerce", label: "Commerce", icon: ShoppingBag },
@@ -243,22 +239,7 @@ export function SuperAppWorkspace({ name }: { name: string }) {
     autoPrefetch: false,
   });
 
-  const streamLibrary = useMemo<StreamItem[]>(
-    () =>
-      discoveredStreams.map((video: DiscoveredVideo) => ({
-        id: video.id,
-        title: video.title,
-        category: video.category,
-        duration: video.durationLabel,
-        videoSources: video.sources,
-        poster: video.poster,
-        description: video.description,
-        pageUrl: video.pageUrl,
-        provider: video.provider,
-      })),
-    [discoveredStreams],
-  );
-
+  
   const filteredStreams = useMemo(() => {
     const byCat = streamLibrary.filter((s) => streamFilter === "All" || s.category === streamFilter);
     const q = streamSearch.trim().toLowerCase();
@@ -2618,25 +2599,13 @@ export function SuperAppWorkspace({ name }: { name: string }) {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Streaming Hub</h3>
             <p className="text-sm text-muted-foreground">
-<<<<<<< HEAD
-              Long-form and cinema-style playback (blueprint §07). This catalog is discovered from public web
-              search and only keeps links that respond like playable video files.
-=======
               Live-discovered video sources. NEXUS searches public catalogs (Internet Archive + curated CDNs) in
               real time, HEAD-verifies each URL on the server, and the player auto-removes any source that still
               fails to play.
->>>>>>> 16a613186dedb36b1cc9b3b0f934f04ae65530b7
             </p>
             <input
               value={streamSearch}
               onChange={(e) => setStreamSearch(e.target.value)}
-<<<<<<< HEAD
-              placeholder="Search discovered public videos…"
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-            />
-            {streamDiscoveryLoading && (
-              <p className="text-xs text-muted-foreground">Refreshing discovery results…</p>
-=======
               placeholder="Search any movie, doc, or topic…"
               className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
             />
@@ -2647,7 +2616,6 @@ export function SuperAppWorkspace({ name }: { name: string }) {
               <p className="text-xs text-destructive">
                 Live search failed ({streamSearchError}). Showing always-on demo sources.
               </p>
->>>>>>> 16a613186dedb36b1cc9b3b0f934f04ae65530b7
             )}
             {watchlist.length > 0 && (
               <div className="space-y-1.5">

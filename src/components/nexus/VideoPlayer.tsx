@@ -13,16 +13,13 @@ type VideoPlayerProps = {
   preload?: "none" | "metadata" | "auto";
   onClick?: () => void;
   onPlaybackReady?: () => void;
-<<<<<<< HEAD
   onPlaybackFailed?: () => void;
   onMetadata?: (payload: { width: number; height: number; aspectRatio: number }) => void;
-=======
   onAllSourcesFailed?: () => void;
   onDimensions?: (dims: { width: number; height: number; aspectRatio: number }) => void;
   /** Initial known aspect ratio (W/H) so the box reserves space before the
    *  video metadata loads — avoids layout jumps. Defaults to 16/9. */
   initialAspectRatio?: number;
->>>>>>> 16a613186dedb36b1cc9b3b0f934f04ae65530b7
   emptyLabel?: string;
 };
 
@@ -38,29 +35,22 @@ export function VideoPlayer({
   preload = "metadata",
   onClick,
   onPlaybackReady,
-<<<<<<< HEAD
   onPlaybackFailed,
   onMetadata,
-=======
   onAllSourcesFailed,
   onDimensions,
   initialAspectRatio = 16 / 9,
->>>>>>> 16a613186dedb36b1cc9b3b0f934f04ae65530b7
   emptyLabel = "No video source available.",
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [sourceIndex, setSourceIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-<<<<<<< HEAD
-  const safeSources = useMemo(() => Array.from(new Set(sources.filter(Boolean))), [sources]);
-=======
   const [aspectRatio, setAspectRatio] = useState<number>(initialAspectRatio);
   const safeSources = useMemo(
     () => Array.from(new Set(sources.filter(Boolean))),
     [sources],
   );
->>>>>>> 16a613186dedb36b1cc9b3b0f934f04ae65530b7
   const activeSource = safeSources[sourceIndex] ?? "";
 
   useEffect(() => {
