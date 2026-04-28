@@ -1,9 +1,12 @@
 import { motion } from "framer-motion";
 import heroImg from "@/assets/nexus-hero.jpg";
-import { DEMO_VIDEO_HERO_PREVIEW } from "@/lib/demo-videos";
 import { VideoPlayer } from "@/components/nexus/VideoPlayer";
+import { useVideoDiscovery } from "@/hooks/use-video-discovery";
 
 export function Hero() {
+  const { videos } = useVideoDiscovery({ batchSize: 1 });
+  const heroVideo = videos[0] ?? null;
+
   return (
     <section className="relative flex min-h-screen items-center justify-center overflow-hidden pb-16 pt-24">
       <div className="absolute inset-0 -z-10">
@@ -71,20 +74,28 @@ export function Hero() {
           className="mx-auto mt-14 w-full max-w-3xl text-left"
         >
           <p className="mb-2 text-center text-xs font-mono-display uppercase tracking-widest text-muted-foreground">
-            Sample stream (test video)
+            Live discovery preview
           </p>
           <div className="overflow-hidden rounded-xl border border-border bg-black shadow-card-elevated">
-            <VideoPlayer
-              className="aspect-video w-full object-contain"
-              poster={DEMO_VIDEO_HERO_PREVIEW.poster}
-              sources={DEMO_VIDEO_HERO_PREVIEW.sources}
-              controls
-              preload="metadata"
-            />
+            {heroVideo ? (
+              <VideoPlayer
+                className="aspect-video w-full object-contain"
+                poster={heroVideo.poster}
+                sources={heroVideo.sources}
+                controls
+                preload="metadata"
+              />
+            ) : (
+              <div className="flex aspect-video items-center justify-center text-sm text-muted-foreground">
+                Searching the public web for playable videos…
+              </div>
+            )}
           </div>
-          <p className="mt-2 break-all text-center font-mono text-[10px] text-muted-foreground">
-            {DEMO_VIDEO_HERO_PREVIEW.sources[0]}
-          </p>
+          {heroVideo && (
+            <p className="mt-2 break-all text-center font-mono text-[10px] text-muted-foreground">
+              {heroVideo.sources[0]}
+            </p>
+          )}
         </motion.div>
 
         <motion.div
@@ -95,9 +106,9 @@ export function Hero() {
         >
           <span>Signal-grade E2E</span>
           <span className="h-1 w-1 rounded-full bg-border" />
-          <span>4K HDR · Atmos</span>
+          <span>Adaptive discovery</span>
           <span className="h-1 w-1 rounded-full bg-border" />
-          <span>On-device AI</span>
+          <span>Responsive playback</span>
           <span className="h-1 w-1 rounded-full bg-border" />
           <span>Zero-knowledge</span>
         </motion.div>

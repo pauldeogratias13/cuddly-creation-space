@@ -13,6 +13,8 @@ type VideoPlayerProps = {
   preload?: "none" | "metadata" | "auto";
   onClick?: () => void;
   onPlaybackReady?: () => void;
+  onPlaybackFailed?: () => void;
+  onMetadata?: (payload: { width: number; height: number; aspectRatio: number }) => void;
   emptyLabel?: string;
 };
 
@@ -28,16 +30,15 @@ export function VideoPlayer({
   preload = "metadata",
   onClick,
   onPlaybackReady,
+  onPlaybackFailed,
+  onMetadata,
   emptyLabel = "No video source available.",
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [sourceIndex, setSourceIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const safeSources = useMemo(
-    () => Array.from(new Set(sources.filter(Boolean))),
-    [sources],
-  );
+  const safeSources = useMemo(() => Array.from(new Set(sources.filter(Boolean))), [sources]);
   const activeSource = safeSources[sourceIndex] ?? "";
 
   useEffect(() => {
@@ -49,7 +50,6 @@ export function VideoPlayer({
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !activeSource) return;
-
     video.load();
   }, [activeSource]);
 
@@ -88,6 +88,7 @@ export function VideoPlayer({
 
     setHasError(true);
     setIsLoading(false);
+    onPlaybackFailed?.();
   };
 
   if (!safeSources.length) {
@@ -111,6 +112,14 @@ export function VideoPlayer({
         preload={preload}
         poster={poster}
         onClick={onClick}
+        onLoadedMetadata={(event) => {
+          const target = event.currentTarget;
+          const width = target.videoWidth;
+          const height = target.videoHeight;
+          if (width > 0 && height > 0) {
+            onMetadata?.({ width, height, aspectRatio: width / height });
+          }
+        }}
         onLoadedData={() => {
           setIsLoading(false);
           setHasError(false);
