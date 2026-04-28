@@ -191,6 +191,18 @@ export function SuperAppWorkspace({ name }: { name: string }) {
   const [streamLibrary, setStreamLibrary] = useState<StreamItem[]>(seedStreamLibrary);
   const [streamLoading, setStreamLoading] = useState(false);
   const [streamSearchError, setStreamSearchError] = useState<string | null>(null);
+  const [streamPage, setStreamPage] = useState(1);
+  const [streamHasMore, setStreamHasMore] = useState(true);
+  const [streamLoadingMore, setStreamLoadingMore] = useState(false);
+  /** Cache intrinsic dimensions per video id so the grid + player can reserve
+   *  the correct aspect-ratio box on subsequent mounts (no layout jumps). */
+  const [videoDimensions, setVideoDimensions] = useState<
+    Record<string, { width: number; height: number; aspectRatio: number }>
+  >({});
+  const recordDimensions = (id: string, dims: { width: number; height: number; aspectRatio: number }) => {
+    setVideoDimensions((prev) => (prev[id] ? prev : { ...prev, [id]: dims }));
+  };
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
   const [chatInput, setChatInput] = useState("");
   const [postInput, setPostInput] = useState("");
   const [appInput, setAppInput] = useState("");
@@ -231,40 +243,47 @@ export function SuperAppWorkspace({ name }: { name: string }) {
     );
   }, [streamFilter, streamSearch]);
 
-  // Live video discovery — debounced fetch to /api/videos/search.
-  // Hits the always-on CDN catalog instantly + Internet Archive when reachable.
-  // Server HEAD-verifies each URL; player drops anything that still fails.
+  // Map a remote API hit to the local StreamItem shape.
+  const mapHit = (r: RemoteVideoHit): StreamItem => ({
+    id: r.id,
+    title: r.title,
+    description: r.description ?? "Live source verified by NEXUS.",
+    category:
+      /trailer|short|clip|news/i.test(r.title) ? "Series"
+        : /doc|nature|space|history/i.test(`${r.title} ${r.description ?? ""}`) ? "Docs"
+        : "Cinema",
+    duration: r.durationLabel ?? "—",
+    videoSources: [r.source],
+    poster: r.poster ?? "",
+  });
+
+  // Page 1: debounced search. Resets the list and pagination state.
+  // The CDN seed renders instantly, so the first paint is never blocked
+  // waiting on the network.
   useEffect(() => {
     const ac = new AbortController();
     const timer = window.setTimeout(async () => {
       setStreamLoading(true);
       setStreamSearchError(null);
+      setStreamPage(1);
+      setStreamHasMore(true);
       try {
         const params = new URLSearchParams({
           q: streamSearch.trim(),
-          limit: "16",
+          limit: "12",
+          page: "1",
         });
         const res = await fetch(`/api/videos/search?${params}`, { signal: ac.signal });
         if (!res.ok) throw new Error(`Search failed (${res.status})`);
-        const data = (await res.json()) as { results: RemoteVideoHit[] };
-        const mapped: StreamItem[] = data.results.map((r) => ({
-          id: r.id,
-          title: r.title,
-          description: r.description ?? "Live source verified by NEXUS.",
-          category:
-            /trailer|short|clip|news/i.test(r.title) ? "Series"
-              : /doc|nature|space|history/i.test(`${r.title} ${r.description ?? ""}`) ? "Docs"
-              : "Cinema",
-          duration: r.durationLabel ?? "—",
-          videoSources: [r.source],
-          poster: r.poster ?? "",
-        }));
-        // Keep at least the seed library if the search returned nothing.
+        const data = (await res.json()) as { results: RemoteVideoHit[]; hasMore?: boolean };
+        const mapped = data.results.map(mapHit);
         setStreamLibrary(mapped.length ? mapped : seedStreamLibrary);
+        setStreamHasMore(Boolean(data.hasMore) && mapped.length > 0);
       } catch (err) {
         if ((err as { name?: string }).name === "AbortError") return;
         setStreamSearchError(err instanceof Error ? err.message : "Search failed");
         setStreamLibrary(seedStreamLibrary);
+        setStreamHasMore(false);
       } finally {
         setStreamLoading(false);
       }
@@ -274,6 +293,48 @@ export function SuperAppWorkspace({ name }: { name: string }) {
       ac.abort();
     };
   }, [streamSearch]);
+
+  // Infinite scroll: when the sentinel becomes visible, fetch the next page
+  // and append to the existing library. Uses IntersectionObserver so it does
+  // not block the main thread or run on every scroll event.
+  useEffect(() => {
+    if (activeTab !== "streaming") return;
+    if (!streamHasMore || streamLoading || streamLoadingMore) return;
+    const node = sentinelRef.current;
+    if (!node || typeof IntersectionObserver === "undefined") return;
+
+    const observer = new IntersectionObserver(
+      async (entries) => {
+        if (!entries[0]?.isIntersecting) return;
+        setStreamLoadingMore(true);
+        const nextPage = streamPage + 1;
+        try {
+          const params = new URLSearchParams({
+            q: streamSearch.trim(),
+            limit: "12",
+            page: String(nextPage),
+          });
+          const res = await fetch(`/api/videos/search?${params}`);
+          if (!res.ok) throw new Error(`Search failed (${res.status})`);
+          const data = (await res.json()) as { results: RemoteVideoHit[]; hasMore?: boolean };
+          const mapped = data.results.map(mapHit);
+          setStreamLibrary((prev) => {
+            const seen = new Set(prev.map((s) => s.id));
+            return [...prev, ...mapped.filter((m) => !seen.has(m.id))];
+          });
+          setStreamPage(nextPage);
+          setStreamHasMore(Boolean(data.hasMore) && mapped.length > 0);
+        } catch {
+          setStreamHasMore(false);
+        } finally {
+          setStreamLoadingMore(false);
+        }
+      },
+      { rootMargin: "400px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [activeTab, streamHasMore, streamLoading, streamLoadingMore, streamPage, streamSearch]);
 
   // Drop a stream item whose every source failed to load in the player.
   const removeBrokenStream = (id: string) => {
