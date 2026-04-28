@@ -183,6 +183,9 @@ export function SuperAppWorkspace({ name }: { name: string }) {
   const [booting, setBooting] = useState(true);
   const [streamFilter, setStreamFilter] = useState<StreamItem["category"] | "All">("All");
   const [streamSearch, setStreamSearch] = useState("");
+  const [streamLibrary, setStreamLibrary] = useState<StreamItem[]>(seedStreamLibrary);
+  const [streamLoading, setStreamLoading] = useState(false);
+  const [streamSearchError, setStreamSearchError] = useState<string | null>(null);
   const [chatInput, setChatInput] = useState("");
   const [postInput, setPostInput] = useState("");
   const [appInput, setAppInput] = useState("");
@@ -222,6 +225,56 @@ export function SuperAppWorkspace({ name }: { name: string }) {
         s.id.toLowerCase().includes(q),
     );
   }, [streamFilter, streamSearch]);
+
+  // Live video discovery — debounced fetch to /api/videos/search.
+  // Hits the always-on CDN catalog instantly + Internet Archive when reachable.
+  // Server HEAD-verifies each URL; player drops anything that still fails.
+  useEffect(() => {
+    const ac = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setStreamLoading(true);
+      setStreamSearchError(null);
+      try {
+        const params = new URLSearchParams({
+          q: streamSearch.trim(),
+          limit: "16",
+        });
+        const res = await fetch(`/api/videos/search?${params}`, { signal: ac.signal });
+        if (!res.ok) throw new Error(`Search failed (${res.status})`);
+        const data = (await res.json()) as { results: RemoteVideoHit[] };
+        const mapped: StreamItem[] = data.results.map((r) => ({
+          id: r.id,
+          title: r.title,
+          description: r.description ?? "Live source verified by NEXUS.",
+          category:
+            /trailer|short|clip|news/i.test(r.title) ? "Series"
+              : /doc|nature|space|history/i.test(`${r.title} ${r.description ?? ""}`) ? "Docs"
+              : "Cinema",
+          duration: r.durationLabel ?? "—",
+          videoSources: [r.source],
+          poster: r.poster ?? "",
+        }));
+        // Keep at least the seed library if the search returned nothing.
+        setStreamLibrary(mapped.length ? mapped : seedStreamLibrary);
+      } catch (err) {
+        if ((err as { name?: string }).name === "AbortError") return;
+        setStreamSearchError(err instanceof Error ? err.message : "Search failed");
+        setStreamLibrary(seedStreamLibrary);
+      } finally {
+        setStreamLoading(false);
+      }
+    }, 250);
+    return () => {
+      window.clearTimeout(timer);
+      ac.abort();
+    };
+  }, [streamSearch]);
+
+  // Drop a stream item whose every source failed to load in the player.
+  const removeBrokenStream = (id: string) => {
+    setStreamLibrary((prev) => prev.filter((s) => s.id !== id));
+    setPlaybackStreamId((prev) => (prev === id ? null : prev));
+  };
   const [playbackStreamId, setPlaybackStreamId] = useState<string | null>(null);
 
   useEffect(() => {
