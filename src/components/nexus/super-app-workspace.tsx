@@ -14,7 +14,12 @@ import {
   BookOpen,
 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase as supabaseTyped } from "@/integrations/supabase/client";
+// Loose alias used for legacy tables/channels not yet in the generated
+// Database types (commerce_cart_items, postgres_changes events). Keeps the
+// existing call sites compiling while the schema catches up.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const supabase: any = supabaseTyped;
 import { useAuth } from "@/hooks/use-auth";
 import type { DiscoveredVideo } from "@/lib/demo-videos";
 import { ProfileSettingsForm } from "@/components/nexus/profile-settings-form";
@@ -109,6 +114,21 @@ const shopCatalog = [
   { id: "priority-support", name: "Priority Support", price: 7 },
 ];
 
+<<<<<<< HEAD
+=======
+const seedStreamLibrary: StreamItem[] = STREAM_LIBRARY;
+
+type RemoteVideoHit = {
+  id: string;
+  title: string;
+  description?: string;
+  poster?: string;
+  source: string;
+  origin: string;
+  durationLabel?: string;
+};
+
+>>>>>>> 16a613186dedb36b1cc9b3b0f934f04ae65530b7
 const pillarTabs = [
   { id: "chat", label: "Chat", icon: MessageSquare },
   { id: "commerce", label: "Commerce", icon: ShoppingBag },
@@ -174,6 +194,21 @@ export function SuperAppWorkspace({ name }: { name: string }) {
   const [booting, setBooting] = useState(true);
   const [streamFilter, setStreamFilter] = useState<StreamItem["category"] | "All">("All");
   const [streamSearch, setStreamSearch] = useState("");
+  const [streamLibrary, setStreamLibrary] = useState<StreamItem[]>(seedStreamLibrary);
+  const [streamLoading, setStreamLoading] = useState(false);
+  const [streamSearchError, setStreamSearchError] = useState<string | null>(null);
+  const [streamPage, setStreamPage] = useState(1);
+  const [streamHasMore, setStreamHasMore] = useState(true);
+  const [streamLoadingMore, setStreamLoadingMore] = useState(false);
+  /** Cache intrinsic dimensions per video id so the grid + player can reserve
+   *  the correct aspect-ratio box on subsequent mounts (no layout jumps). */
+  const [videoDimensions, setVideoDimensions] = useState<
+    Record<string, { width: number; height: number; aspectRatio: number }>
+  >({});
+  const recordDimensions = (id: string, dims: { width: number; height: number; aspectRatio: number }) => {
+    setVideoDimensions((prev) => (prev[id] ? prev : { ...prev, [id]: dims }));
+  };
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
   const [chatInput, setChatInput] = useState("");
   const [postInput, setPostInput] = useState("");
   const [appInput, setAppInput] = useState("");
@@ -235,6 +270,105 @@ export function SuperAppWorkspace({ name }: { name: string }) {
         s.id.toLowerCase().includes(q),
     );
   }, [streamFilter, streamSearch]);
+
+  // Map a remote API hit to the local StreamItem shape.
+  const mapHit = (r: RemoteVideoHit): StreamItem => ({
+    id: r.id,
+    title: r.title,
+    description: r.description ?? "Live source verified by NEXUS.",
+    category:
+      /trailer|short|clip|news/i.test(r.title) ? "Series"
+        : /doc|nature|space|history/i.test(`${r.title} ${r.description ?? ""}`) ? "Docs"
+        : "Cinema",
+    duration: r.durationLabel ?? "—",
+    videoSources: [r.source],
+    poster: r.poster ?? "",
+  });
+
+  // Page 1: debounced search. Resets the list and pagination state.
+  // The CDN seed renders instantly, so the first paint is never blocked
+  // waiting on the network.
+  useEffect(() => {
+    const ac = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setStreamLoading(true);
+      setStreamSearchError(null);
+      setStreamPage(1);
+      setStreamHasMore(true);
+      try {
+        const params = new URLSearchParams({
+          q: streamSearch.trim(),
+          limit: "12",
+          page: "1",
+        });
+        const res = await fetch(`/api/videos/search?${params}`, { signal: ac.signal });
+        if (!res.ok) throw new Error(`Search failed (${res.status})`);
+        const data = (await res.json()) as { results: RemoteVideoHit[]; hasMore?: boolean };
+        const mapped = data.results.map(mapHit);
+        setStreamLibrary(mapped.length ? mapped : seedStreamLibrary);
+        setStreamHasMore(Boolean(data.hasMore) && mapped.length > 0);
+      } catch (err) {
+        if ((err as { name?: string }).name === "AbortError") return;
+        setStreamSearchError(err instanceof Error ? err.message : "Search failed");
+        setStreamLibrary(seedStreamLibrary);
+        setStreamHasMore(false);
+      } finally {
+        setStreamLoading(false);
+      }
+    }, 250);
+    return () => {
+      window.clearTimeout(timer);
+      ac.abort();
+    };
+  }, [streamSearch]);
+
+  // Infinite scroll: when the sentinel becomes visible, fetch the next page
+  // and append to the existing library. Uses IntersectionObserver so it does
+  // not block the main thread or run on every scroll event.
+  useEffect(() => {
+    if (activeTab !== "streaming") return;
+    if (!streamHasMore || streamLoading || streamLoadingMore) return;
+    const node = sentinelRef.current;
+    if (!node || typeof IntersectionObserver === "undefined") return;
+
+    const observer = new IntersectionObserver(
+      async (entries) => {
+        if (!entries[0]?.isIntersecting) return;
+        setStreamLoadingMore(true);
+        const nextPage = streamPage + 1;
+        try {
+          const params = new URLSearchParams({
+            q: streamSearch.trim(),
+            limit: "12",
+            page: String(nextPage),
+          });
+          const res = await fetch(`/api/videos/search?${params}`);
+          if (!res.ok) throw new Error(`Search failed (${res.status})`);
+          const data = (await res.json()) as { results: RemoteVideoHit[]; hasMore?: boolean };
+          const mapped = data.results.map(mapHit);
+          setStreamLibrary((prev) => {
+            const seen = new Set(prev.map((s) => s.id));
+            return [...prev, ...mapped.filter((m) => !seen.has(m.id))];
+          });
+          setStreamPage(nextPage);
+          setStreamHasMore(Boolean(data.hasMore) && mapped.length > 0);
+        } catch {
+          setStreamHasMore(false);
+        } finally {
+          setStreamLoadingMore(false);
+        }
+      },
+      { rootMargin: "400px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [activeTab, streamHasMore, streamLoading, streamLoadingMore, streamPage, streamSearch]);
+
+  // Drop a stream item whose every source failed to load in the player.
+  const removeBrokenStream = (id: string) => {
+    setStreamLibrary((prev) => prev.filter((s) => s.id !== id));
+    setPlaybackStreamId((prev) => (prev === id ? null : prev));
+  };
   const [playbackStreamId, setPlaybackStreamId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -2484,17 +2618,36 @@ export function SuperAppWorkspace({ name }: { name: string }) {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Streaming Hub</h3>
             <p className="text-sm text-muted-foreground">
+<<<<<<< HEAD
               Long-form and cinema-style playback (blueprint §07). This catalog is discovered from public web
               search and only keeps links that respond like playable video files.
+=======
+              Live-discovered video sources. NEXUS searches public catalogs (Internet Archive + curated CDNs) in
+              real time, HEAD-verifies each URL on the server, and the player auto-removes any source that still
+              fails to play.
+>>>>>>> 16a613186dedb36b1cc9b3b0f934f04ae65530b7
             </p>
             <input
               value={streamSearch}
               onChange={(e) => setStreamSearch(e.target.value)}
+<<<<<<< HEAD
               placeholder="Search discovered public videos…"
               className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
             />
             {streamDiscoveryLoading && (
               <p className="text-xs text-muted-foreground">Refreshing discovery results…</p>
+=======
+              placeholder="Search any movie, doc, or topic…"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            />
+            {streamLoading && (
+              <p className="text-xs text-muted-foreground">Searching live sources for verified, playable videos…</p>
+            )}
+            {streamSearchError && !streamLoading && (
+              <p className="text-xs text-destructive">
+                Live search failed ({streamSearchError}). Showing always-on demo sources.
+              </p>
+>>>>>>> 16a613186dedb36b1cc9b3b0f934f04ae65530b7
             )}
             {watchlist.length > 0 && (
               <div className="space-y-1.5">
@@ -2564,6 +2717,9 @@ export function SuperAppWorkspace({ name }: { name: string }) {
                   sources={playbackStream.videoSources}
                   controls
                   preload="metadata"
+                  onAllSourcesFailed={() => removeBrokenStream(playbackStream.id)}
+                  initialAspectRatio={videoDimensions[playbackStream.id]?.aspectRatio ?? 16 / 9}
+                  onDimensions={(dims) => recordDimensions(playbackStream.id, dims)}
                 />
                 <div className="space-y-1 border-t border-border bg-background/95 p-3">
                   <p className="text-sm font-medium text-foreground">
@@ -2592,6 +2748,7 @@ export function SuperAppWorkspace({ name }: { name: string }) {
               {filteredStreams.map((item) => {
                 const isSaved = watchlist.includes(item.id);
                 const isPlaying = playbackStreamId === item.id;
+                const knownAspect = videoDimensions[item.id]?.aspectRatio ?? 16 / 9;
                 return (
                   <div
                     key={item.id}
@@ -2599,6 +2756,22 @@ export function SuperAppWorkspace({ name }: { name: string }) {
                       isPlaying ? "border-primary ring-1 ring-primary/40" : "border-border"
                     }`}
                   >
+                    {item.poster && (
+                      <div
+                        className="mb-2 overflow-hidden rounded-md bg-black"
+                        style={{ aspectRatio: knownAspect }}
+                      >
+                        <img
+                          src={item.poster}
+                          alt=""
+                          loading="lazy"
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).style.display = "none";
+                          }}
+                        />
+                      </div>
+                    )}
                     <p className="font-medium">{item.title}</p>
                     <p className="text-sm text-muted-foreground">
                       {item.category} · {item.duration}
@@ -2631,6 +2804,20 @@ export function SuperAppWorkspace({ name }: { name: string }) {
                 );
               })}
             </div>
+            {/* Infinite-scroll sentinel — observed only while the Stream tab is
+                active. Triggers the next page fetch when within 400px of view. */}
+            {streamHasMore && (
+              <div ref={sentinelRef} className="flex h-12 items-center justify-center">
+                {streamLoadingMore && (
+                  <span className="text-xs text-muted-foreground">Loading more videos…</span>
+                )}
+              </div>
+            )}
+            {!streamHasMore && filteredStreams.length > 0 && (
+              <p className="pt-2 text-center text-xs text-muted-foreground">
+                You've reached the end of the live results.
+              </p>
+            )}
           </div>
         )}
 

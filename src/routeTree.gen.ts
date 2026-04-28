@@ -14,6 +14,7 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppProfileRouteImport } from './routes/app.profile'
+import { Route as ApiVideosSearchRouteImport } from './routes/api.videos.search'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -40,6 +41,11 @@ const AppProfileRoute = AppProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiVideosSearchRoute = ApiVideosSearchRouteImport.update({
+  id: '/api/videos/search',
+  path: '/api/videos/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,12 +53,14 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/app/profile': typeof AppProfileRoute
   '/app/': typeof AppIndexRoute
+  '/api/videos/search': typeof ApiVideosSearchRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/app/profile': typeof AppProfileRoute
   '/app': typeof AppIndexRoute
+  '/api/videos/search': typeof ApiVideosSearchRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -61,19 +69,34 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/app/profile': typeof AppProfileRoute
   '/app/': typeof AppIndexRoute
+  '/api/videos/search': typeof ApiVideosSearchRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/app' | '/auth' | '/app/profile' | '/app/'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/auth'
+    | '/app/profile'
+    | '/app/'
+    | '/api/videos/search'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/app/profile' | '/app'
-  id: '__root__' | '/' | '/app' | '/auth' | '/app/profile' | '/app/'
+  to: '/' | '/auth' | '/app/profile' | '/app' | '/api/videos/search'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/auth'
+    | '/app/profile'
+    | '/app/'
+    | '/api/videos/search'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiVideosSearchRoute: typeof ApiVideosSearchRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -113,6 +136,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProfileRouteImport
       parentRoute: typeof AppRoute
     }
+    '/api/videos/search': {
+      id: '/api/videos/search'
+      path: '/api/videos/search'
+      fullPath: '/api/videos/search'
+      preLoaderRoute: typeof ApiVideosSearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -132,6 +162,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiVideosSearchRoute: ApiVideosSearchRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
