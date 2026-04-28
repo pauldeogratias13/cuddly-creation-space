@@ -39,7 +39,41 @@ export type Database = {
           thread_id?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "chat_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_thread_reads: {
+        Row: {
+          last_read_at: string
+          thread_id: string
+          user_id: string
+        }
+        Insert: {
+          last_read_at?: string
+          thread_id: string
+          user_id: string
+        }
+        Update: {
+          last_read_at?: string
+          thread_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_thread_reads_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "chat_threads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       chat_threads: {
         Row: {
@@ -61,51 +95,6 @@ export type Database = {
           id?: string
           is_pinned?: boolean
           title?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      chat_thread_reads: {
-        Row: {
-          last_read_at: string
-          thread_id: string
-          user_id: string
-        }
-        Insert: {
-          last_read_at?: string
-          thread_id: string
-          user_id: string
-        }
-        Update: {
-          last_read_at?: string
-          thread_id?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      commerce_cart_items: {
-        Row: {
-          product_id: string
-          product_name: string
-          quantity: number
-          unit_price: number
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          product_id: string
-          product_name: string
-          quantity?: number
-          unit_price: number
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          product_id?: string
-          product_name?: string
-          quantity?: number
-          unit_price?: number
-          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -138,7 +127,15 @@ export type Database = {
           quantity?: number
           unit_price?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "commerce_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "commerce_orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       commerce_orders: {
         Row: {
@@ -233,24 +230,6 @@ export type Database = {
         }
         Relationships: []
       }
-      social_post_likes: {
-        Row: {
-          created_at: string
-          post_id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          post_id: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          post_id?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       social_comments: {
         Row: {
           created_at: string
@@ -273,7 +252,41 @@ export type Database = {
           text?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "social_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "social_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_post_likes: {
+        Row: {
+          created_at: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_post_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "social_posts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       social_posts: {
         Row: {
@@ -295,27 +308,6 @@ export type Database = {
           id?: string
           likes_count?: number
           text?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      user_watchlist: {
-        Row: {
-          created_at: string
-          id: string
-          stream_id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          stream_id: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          stream_id?: string
           user_id?: string
         }
         Relationships: []
@@ -346,6 +338,27 @@ export type Database = {
           read_at?: string | null
           title?: string
           type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_watchlist: {
+        Row: {
+          created_at: string
+          id: string
+          stream_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          stream_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          stream_id?: string
           user_id?: string
         }
         Relationships: []
