@@ -14,7 +14,12 @@ import {
   BookOpen,
 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase as supabaseTyped } from "@/integrations/supabase/client";
+// Loose alias used for legacy tables/channels not yet in the generated
+// Database types (commerce_cart_items, postgres_changes events). Keeps the
+// existing call sites compiling while the schema catches up.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const supabase: any = supabaseTyped;
 import { useAuth } from "@/hooks/use-auth";
 import { STREAM_LIBRARY } from "@/lib/demo-videos";
 import { ProfileSettingsForm } from "@/components/nexus/profile-settings-form";
