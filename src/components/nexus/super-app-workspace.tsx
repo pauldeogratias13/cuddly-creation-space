@@ -2677,6 +2677,8 @@ export function SuperAppWorkspace({ name }: { name: string }) {
                   controls
                   preload="metadata"
                   onAllSourcesFailed={() => removeBrokenStream(playbackStream.id)}
+                  initialAspectRatio={videoDimensions[playbackStream.id]?.aspectRatio ?? 16 / 9}
+                  onDimensions={(dims) => recordDimensions(playbackStream.id, dims)}
                 />
                 <div className="space-y-1 border-t border-border bg-background/95 p-3">
                   <p className="text-sm font-medium text-foreground">
