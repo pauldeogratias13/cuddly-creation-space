@@ -106,7 +106,17 @@ const shopCatalog = [
   { id: "priority-support", name: "Priority Support", price: 7 },
 ];
 
-const streamLibrary: StreamItem[] = STREAM_LIBRARY;
+const seedStreamLibrary: StreamItem[] = STREAM_LIBRARY;
+
+type RemoteVideoHit = {
+  id: string;
+  title: string;
+  description?: string;
+  poster?: string;
+  source: string;
+  origin: string;
+  durationLabel?: string;
+};
 
 const pillarTabs = [
   { id: "chat", label: "Chat", icon: MessageSquare },
@@ -173,6 +183,9 @@ export function SuperAppWorkspace({ name }: { name: string }) {
   const [booting, setBooting] = useState(true);
   const [streamFilter, setStreamFilter] = useState<StreamItem["category"] | "All">("All");
   const [streamSearch, setStreamSearch] = useState("");
+  const [streamLibrary, setStreamLibrary] = useState<StreamItem[]>(seedStreamLibrary);
+  const [streamLoading, setStreamLoading] = useState(false);
+  const [streamSearchError, setStreamSearchError] = useState<string | null>(null);
   const [chatInput, setChatInput] = useState("");
   const [postInput, setPostInput] = useState("");
   const [appInput, setAppInput] = useState("");
@@ -212,6 +225,56 @@ export function SuperAppWorkspace({ name }: { name: string }) {
         s.id.toLowerCase().includes(q),
     );
   }, [streamFilter, streamSearch]);
+
+  // Live video discovery — debounced fetch to /api/videos/search.
+  // Hits the always-on CDN catalog instantly + Internet Archive when reachable.
+  // Server HEAD-verifies each URL; player drops anything that still fails.
+  useEffect(() => {
+    const ac = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setStreamLoading(true);
+      setStreamSearchError(null);
+      try {
+        const params = new URLSearchParams({
+          q: streamSearch.trim(),
+          limit: "16",
+        });
+        const res = await fetch(`/api/videos/search?${params}`, { signal: ac.signal });
+        if (!res.ok) throw new Error(`Search failed (${res.status})`);
+        const data = (await res.json()) as { results: RemoteVideoHit[] };
+        const mapped: StreamItem[] = data.results.map((r) => ({
+          id: r.id,
+          title: r.title,
+          description: r.description ?? "Live source verified by NEXUS.",
+          category:
+            /trailer|short|clip|news/i.test(r.title) ? "Series"
+              : /doc|nature|space|history/i.test(`${r.title} ${r.description ?? ""}`) ? "Docs"
+              : "Cinema",
+          duration: r.durationLabel ?? "—",
+          videoSources: [r.source],
+          poster: r.poster ?? "",
+        }));
+        // Keep at least the seed library if the search returned nothing.
+        setStreamLibrary(mapped.length ? mapped : seedStreamLibrary);
+      } catch (err) {
+        if ((err as { name?: string }).name === "AbortError") return;
+        setStreamSearchError(err instanceof Error ? err.message : "Search failed");
+        setStreamLibrary(seedStreamLibrary);
+      } finally {
+        setStreamLoading(false);
+      }
+    }, 250);
+    return () => {
+      window.clearTimeout(timer);
+      ac.abort();
+    };
+  }, [streamSearch]);
+
+  // Drop a stream item whose every source failed to load in the player.
+  const removeBrokenStream = (id: string) => {
+    setStreamLibrary((prev) => prev.filter((s) => s.id !== id));
+    setPlaybackStreamId((prev) => (prev === id ? null : prev));
+  };
   const [playbackStreamId, setPlaybackStreamId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -2461,15 +2524,24 @@ export function SuperAppWorkspace({ name }: { name: string }) {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Streaming Hub</h3>
             <p className="text-sm text-muted-foreground">
-              Long-form and cinema-style playback (blueprint §07). Sample MP4s are public test assets so you can
-              verify the player; source URLs are shown under the player.
+              Live-discovered video sources. NEXUS searches public catalogs (Internet Archive + curated CDNs) in
+              real time, HEAD-verifies each URL on the server, and the player auto-removes any source that still
+              fails to play.
             </p>
             <input
               value={streamSearch}
               onChange={(e) => setStreamSearch(e.target.value)}
-              placeholder="Filter by title…"
+              placeholder="Search any movie, doc, or topic…"
               className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
             />
+            {streamLoading && (
+              <p className="text-xs text-muted-foreground">Searching live sources for verified, playable videos…</p>
+            )}
+            {streamSearchError && !streamLoading && (
+              <p className="text-xs text-destructive">
+                Live search failed ({streamSearchError}). Showing always-on demo sources.
+              </p>
+            )}
             {watchlist.length > 0 && (
               <div className="space-y-1.5">
                 <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">My watchlist</p>
@@ -2538,6 +2610,7 @@ export function SuperAppWorkspace({ name }: { name: string }) {
                   sources={playbackStream.videoSources}
                   controls
                   preload="metadata"
+                  onAllSourcesFailed={() => removeBrokenStream(playbackStream.id)}
                 />
                 <div className="space-y-1 border-t border-border bg-background/95 p-3">
                   <p className="text-sm font-medium text-foreground">
