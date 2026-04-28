@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { AlertCircle, LoaderCircle, RefreshCcw } from "lucide-react";
 
 type VideoPlayerProps = {
@@ -14,6 +14,10 @@ type VideoPlayerProps = {
   onClick?: () => void;
   onPlaybackReady?: () => void;
   onAllSourcesFailed?: () => void;
+  onDimensions?: (dims: { width: number; height: number; aspectRatio: number }) => void;
+  /** Initial known aspect ratio (W/H) so the box reserves space before the
+   *  video metadata loads — avoids layout jumps. Defaults to 16/9. */
+  initialAspectRatio?: number;
   emptyLabel?: string;
 };
 
@@ -30,12 +34,15 @@ export function VideoPlayer({
   onClick,
   onPlaybackReady,
   onAllSourcesFailed,
+  onDimensions,
+  initialAspectRatio = 16 / 9,
   emptyLabel = "No video source available.",
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [sourceIndex, setSourceIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [aspectRatio, setAspectRatio] = useState<number>(initialAspectRatio);
   const safeSources = useMemo(
     () => Array.from(new Set(sources.filter(Boolean))),
     [sources],
@@ -46,6 +53,7 @@ export function VideoPlayer({
     setSourceIndex(0);
     setIsLoading(true);
     setHasError(false);
+    setAspectRatio(initialAspectRatio);
   }, [safeSources]);
 
   useEffect(() => {
@@ -95,17 +103,24 @@ export function VideoPlayer({
 
   if (!safeSources.length) {
     return (
-      <div className="flex aspect-video items-center justify-center bg-muted/20 px-4 text-center text-sm text-muted-foreground">
+      <div
+        className="flex items-center justify-center bg-muted/20 px-4 text-center text-sm text-muted-foreground"
+        style={{ aspectRatio: initialAspectRatio }}
+      >
         {emptyLabel}
       </div>
     );
   }
 
+  // Reserve the box at the current best-known aspect ratio so the layout does
+  // not jump when intrinsic dimensions arrive via `loadedmetadata`.
+  const wrapperStyle: CSSProperties = { aspectRatio };
+
   return (
-    <div className="relative">
+    <div className="relative w-full" style={wrapperStyle}>
       <video
         ref={videoRef}
-        className={className}
+        className={className ?? "h-full w-full object-contain"}
         controls={controls}
         autoPlay={autoPlay}
         loop={loop}
@@ -114,6 +129,18 @@ export function VideoPlayer({
         preload={preload}
         poster={poster}
         onClick={onClick}
+        onLoadedMetadata={(event) => {
+          const v = event.currentTarget;
+          if (v.videoWidth && v.videoHeight) {
+            const ratio = v.videoWidth / v.videoHeight;
+            setAspectRatio(ratio);
+            onDimensions?.({
+              width: v.videoWidth,
+              height: v.videoHeight,
+              aspectRatio: ratio,
+            });
+          }
+        }}
         onLoadedData={() => {
           setIsLoading(false);
           setHasError(false);
