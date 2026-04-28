@@ -37,7 +37,7 @@ export function VideoFeed() {
   // Create a default post for the video when it loads if none exists
   useEffect(() => {
     if (currentVideo && videoSocial.posts.length === 0 && !videoSocial.loading) {
-      videoSocial.createPost(`Check out this amazing video: ${currentVideo.title}`);
+      videoSocial.createPost(`Check out this amazing video: ${currentVideo.title}`).catch(console.error);
     }
   }, [currentVideo, videoSocial.posts.length, videoSocial.loading]);
 
@@ -201,7 +201,11 @@ export function VideoFeed() {
 
             <button 
               type="button" 
-              onClick={() => currentVideo && videoSocial.posts.length > 0 && videoSocial.toggleLike(videoSocial.posts[0])}
+              onClick={() => {
+                if (currentVideo && videoSocial.posts.length > 0) {
+                  videoSocial.toggleLike(videoSocial.posts[0]);
+                }
+              }}
               className="flex flex-col items-center gap-1"
             >
               <Heart 
