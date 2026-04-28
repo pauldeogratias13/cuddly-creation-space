@@ -210,14 +210,16 @@ export const Route = createFileRoute("/api/videos/search")({
         const url = new URL(request.url);
         const q = (url.searchParams.get("q") ?? "").trim().slice(0, 120);
         const limit = Math.min(Math.max(Number(url.searchParams.get("limit") ?? 12), 1), 24);
+        const page = Math.min(Math.max(Number(url.searchParams.get("page") ?? 1), 1), 50);
         const skipRemote = url.searchParams.get("skipRemote") === "1";
 
-        const localHits = filterAlwaysOn(q);
+        // Always-on CDN catalog only on page 1 to avoid duplicating it on scroll.
+        const localHits = page === 1 ? filterAlwaysOn(q) : [];
         let remote: VideoHit[] = [];
 
         if (!skipRemote) {
           try {
-            remote = await withTimeout(searchArchive(q || "feature film", limit), 9000);
+            remote = await withTimeout(searchArchive(q || "feature film", limit, page), 9000);
           } catch {
             remote = [];
           }
@@ -245,7 +247,13 @@ export const Route = createFileRoute("/api/videos/search")({
         const results = verified.filter((h): h is VideoHit => !!h).slice(0, limit);
 
         return new Response(
-          JSON.stringify({ query: q, count: results.length, results }),
+          JSON.stringify({
+            query: q,
+            page,
+            count: results.length,
+            results,
+            hasMore: results.length >= limit,
+          }),
           {
             status: 200,
             headers: { "Content-Type": "application/json", ...CORS },
