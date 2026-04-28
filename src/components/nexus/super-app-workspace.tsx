@@ -2703,6 +2703,7 @@ export function SuperAppWorkspace({ name }: { name: string }) {
               {filteredStreams.map((item) => {
                 const isSaved = watchlist.includes(item.id);
                 const isPlaying = playbackStreamId === item.id;
+                const knownAspect = videoDimensions[item.id]?.aspectRatio ?? 16 / 9;
                 return (
                   <div
                     key={item.id}
@@ -2710,6 +2711,22 @@ export function SuperAppWorkspace({ name }: { name: string }) {
                       isPlaying ? "border-primary ring-1 ring-primary/40" : "border-border"
                     }`}
                   >
+                    {item.poster && (
+                      <div
+                        className="mb-2 overflow-hidden rounded-md bg-black"
+                        style={{ aspectRatio: knownAspect }}
+                      >
+                        <img
+                          src={item.poster}
+                          alt=""
+                          loading="lazy"
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).style.display = "none";
+                          }}
+                        />
+                      </div>
+                    )}
                     <p className="font-medium">{item.title}</p>
                     <p className="text-sm text-muted-foreground">
                       {item.category} · {item.duration}
@@ -2738,6 +2755,20 @@ export function SuperAppWorkspace({ name }: { name: string }) {
                 );
               })}
             </div>
+            {/* Infinite-scroll sentinel — observed only while the Stream tab is
+                active. Triggers the next page fetch when within 400px of view. */}
+            {streamHasMore && (
+              <div ref={sentinelRef} className="flex h-12 items-center justify-center">
+                {streamLoadingMore && (
+                  <span className="text-xs text-muted-foreground">Loading more videos…</span>
+                )}
+              </div>
+            )}
+            {!streamHasMore && filteredStreams.length > 0 && (
+              <p className="pt-2 text-center text-xs text-muted-foreground">
+                You've reached the end of the live results.
+              </p>
+            )}
           </div>
         )}
 
