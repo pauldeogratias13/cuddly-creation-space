@@ -136,12 +136,12 @@ async function verify(url: string): Promise<boolean> {
  * Search the Internet Archive for free, directly-playable MP4s matching `q`.
  * Returns up to `limit` candidates with poster + a guessed direct URL.
  */
-async function searchArchive(q: string, limit: number): Promise<VideoHit[]> {
+async function searchArchive(q: string, limit: number, page = 1): Promise<VideoHit[]> {
   const url =
     `https://archive.org/advancedsearch.php?` +
     `q=${encodeURIComponent(`(${q}) AND mediatype:(movies) AND format:(MPEG4 OR h.264 OR 512Kb MPEG4)`)}` +
     `&fl[]=identifier&fl[]=title&fl[]=description&fl[]=downloads` +
-    `&sort[]=downloads desc&rows=${limit}&page=1&output=json`;
+    `&sort[]=downloads desc&rows=${limit}&page=${page}&output=json`;
 
   const res = await withTimeout(fetch(url), 6000);
   if (!res.ok) return [];
