@@ -2524,15 +2524,24 @@ export function SuperAppWorkspace({ name }: { name: string }) {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Streaming Hub</h3>
             <p className="text-sm text-muted-foreground">
-              Long-form and cinema-style playback (blueprint §07). Sample MP4s are public test assets so you can
-              verify the player; source URLs are shown under the player.
+              Live-discovered video sources. NEXUS searches public catalogs (Internet Archive + curated CDNs) in
+              real time, HEAD-verifies each URL on the server, and the player auto-removes any source that still
+              fails to play.
             </p>
             <input
               value={streamSearch}
               onChange={(e) => setStreamSearch(e.target.value)}
-              placeholder="Filter by title…"
+              placeholder="Search any movie, doc, or topic…"
               className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
             />
+            {streamLoading && (
+              <p className="text-xs text-muted-foreground">Searching live sources for verified, playable videos…</p>
+            )}
+            {streamSearchError && !streamLoading && (
+              <p className="text-xs text-destructive">
+                Live search failed ({streamSearchError}). Showing always-on demo sources.
+              </p>
+            )}
             {watchlist.length > 0 && (
               <div className="space-y-1.5">
                 <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">My watchlist</p>
