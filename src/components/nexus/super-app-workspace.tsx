@@ -2610,6 +2610,7 @@ export function SuperAppWorkspace({ name }: { name: string }) {
                   sources={playbackStream.videoSources}
                   controls
                   preload="metadata"
+                  onAllSourcesFailed={() => removeBrokenStream(playbackStream.id)}
                 />
                 <div className="space-y-1 border-t border-border bg-background/95 p-3">
                   <p className="text-sm font-medium text-foreground">
