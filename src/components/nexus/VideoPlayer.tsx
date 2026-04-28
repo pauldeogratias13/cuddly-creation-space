@@ -13,6 +13,7 @@ type VideoPlayerProps = {
   preload?: "none" | "metadata" | "auto";
   onClick?: () => void;
   onPlaybackReady?: () => void;
+  onAllSourcesFailed?: () => void;
   emptyLabel?: string;
 };
 
@@ -28,6 +29,7 @@ export function VideoPlayer({
   preload = "metadata",
   onClick,
   onPlaybackReady,
+  onAllSourcesFailed,
   emptyLabel = "No video source available.",
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -88,6 +90,7 @@ export function VideoPlayer({
 
     setHasError(true);
     setIsLoading(false);
+    onAllSourcesFailed?.();
   };
 
   if (!safeSources.length) {
