@@ -188,6 +188,14 @@ async function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   ]);
 }
 
+async function withSoftTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  try {
+    return await withTimeout(promise, ms);
+  } catch {
+    return fallback;
+  }
+}
+
 /** Verify a URL points at a real, fetchable video resource. */
 async function verify(url: string): Promise<boolean> {
   try {
@@ -305,24 +313,12 @@ export const Route = createFileRoute("/api/videos/search")({
 
         // Always-on CDN catalog only on page 1 to avoid duplicating it on scroll.
         const localHits = page === 1 ? filterAlwaysOn(q) : [];
-        let remote: VideoHit[] = [];
-
-        if (!skipRemote) {
-          try {
-            remote = await withTimeout(searchArchive(q || "feature film", limit, page), 9000);
-          } catch {
-            remote = [];
-          }
-        }
-
-        let youtube: VideoHit[] = [];
-        if (!skipRemote) {
-          try {
-            youtube = await searchYouTube(q || "trailers", Math.min(limit, 8), page);
-          } catch {
-            youtube = [];
-          }
-        }
+        const [remote, youtube] = skipRemote
+          ? [[], []]
+          : await Promise.all([
+              withSoftTimeout(searchArchive(q || "feature film", limit, page), 1400, [] as VideoHit[]),
+              withSoftTimeout(searchYouTube(q || "trailers", Math.min(limit, 8), page), 1400, [] as VideoHit[]),
+            ]);
 
         // Combine + dedupe by source URL
         const seen = new Set<string>();
