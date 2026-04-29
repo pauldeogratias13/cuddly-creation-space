@@ -24,7 +24,6 @@ import { useAuth } from "@/hooks/use-auth";
 import type { DiscoveredVideo } from "@/lib/demo-videos";
 import { ProfileSettingsForm } from "@/components/nexus/profile-settings-form";
 import { VideoPlayer } from "@/components/nexus/VideoPlayer";
-import { useVideoDiscovery } from "@/hooks/use-video-discovery";
 import {
   AI_TWIN_BRIEFING_STORAGE_KEY,
   BLUEPRINT_KEY_THEMES,
@@ -237,13 +236,6 @@ export function SuperAppWorkspace({ name }: { name: string }) {
     }
   }, []);
 
-  const { videos: discoveredStreams, isLoading: streamDiscoveryLoading } = useVideoDiscovery({
-    query: streamSearch || "movies trailers documentaries shorts music videos",
-    batchSize: 8,
-    autoPrefetch: false,
-  });
-
-  
   const filteredStreams = useMemo(() => {
     const byCat = streamLibrary.filter((s) => streamFilter === "All" || s.category === streamFilter);
     const q = streamSearch.trim().toLowerCase();
