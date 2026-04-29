@@ -3,6 +3,7 @@ import { AlertCircle, LoaderCircle, RefreshCcw } from "lucide-react";
 
 type VideoPlayerProps = {
   sources: string[];
+  embedUrl?: string;
   poster?: string;
   className?: string;
   autoPlay?: boolean;
@@ -25,6 +26,7 @@ type VideoPlayerProps = {
 
 export function VideoPlayer({
   sources,
+  embedUrl,
   poster,
   className,
   autoPlay = false,
@@ -42,6 +44,23 @@ export function VideoPlayer({
   initialAspectRatio = 16 / 9,
   emptyLabel = "No video source available.",
 }: VideoPlayerProps) {
+  if (embedUrl) {
+    return (
+      <div className="relative w-full" style={{ aspectRatio: initialAspectRatio }}>
+        <iframe
+          src={embedUrl}
+          title="Embedded video player"
+          className={className ?? "h-full w-full"}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+          loading="lazy"
+          referrerPolicy="strict-origin-when-cross-origin"
+          onLoad={() => onPlaybackReady?.()}
+        />
+      </div>
+    );
+  }
+
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [sourceIndex, setSourceIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
