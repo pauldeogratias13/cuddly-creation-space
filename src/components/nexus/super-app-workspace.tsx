@@ -2689,6 +2689,7 @@ export function SuperAppWorkspace({ name }: { name: string }) {
                   key={playbackStream.id}
                   className="aspect-video max-h-[min(420px,70vh)] w-full object-contain"
                   poster={playbackStream.poster}
+                  embedUrl={playbackStream.kind === "youtube" ? playbackStream.videoSources[0] : undefined}
                   sources={playbackStream.videoSources}
                   controls
                   preload="metadata"
