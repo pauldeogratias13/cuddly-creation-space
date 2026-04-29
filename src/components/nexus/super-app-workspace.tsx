@@ -21,7 +21,6 @@ import { supabase as supabaseTyped } from "@/integrations/supabase/client";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const supabase: any = supabaseTyped;
 import { useAuth } from "@/hooks/use-auth";
-import type { DiscoveredVideo } from "@/lib/demo-videos";
 import { ProfileSettingsForm } from "@/components/nexus/profile-settings-form";
 import { VideoPlayer } from "@/components/nexus/VideoPlayer";
 import {
