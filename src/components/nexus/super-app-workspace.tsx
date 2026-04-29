@@ -65,6 +65,7 @@ type StreamItem = {
   title: string;
   category: "Cinema" | "Series" | "Docs";
   duration: string;
+  kind?: "native" | "youtube";
   videoSources: string[];
   poster: string;
   description: string;
@@ -122,6 +123,9 @@ type RemoteVideoHit = {
   description?: string;
   poster?: string;
   source: string;
+  pageUrl?: string;
+  provider: string;
+  kind: "native" | "youtube";
   origin: string;
   durationLabel?: string;
 };
@@ -262,10 +266,11 @@ export function SuperAppWorkspace({ name }: { name: string }) {
         : /doc|nature|space|history/i.test(`${r.title} ${r.description ?? ""}`) ? "Docs"
         : "Cinema",
     duration: r.durationLabel ?? "—",
+    kind: r.kind,
     videoSources: [r.source],
     poster: r.poster ?? "",
-    pageUrl: r.origin,
-    provider: new URL(r.origin).hostname.replace(/^www\./, "") || "unknown",
+    pageUrl: r.pageUrl ?? r.source,
+    provider: r.provider || "unknown",
   });
 
   // Page 1: debounced search. Resets the list and pagination state.
