@@ -267,9 +267,12 @@ async function searchArchive(q: string, limit: number, page = 1): Promise<VideoH
           title: doc.title || doc.identifier,
           description: desc,
           source: `https://archive.org/download/${doc.identifier}/${encodeURIComponent(mp4.name)}`,
+          pageUrl: `https://archive.org/details/${doc.identifier}`,
           poster: poster
             ? `https://archive.org/download/${doc.identifier}/${encodeURIComponent(poster.name)}`
             : `https://archive.org/services/img/${doc.identifier}`,
+          provider: "Internet Archive",
+          kind: "native",
           origin: "archive",
         };
       } catch {
@@ -294,10 +297,11 @@ export const Route = createFileRoute("/api/videos/search")({
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
       GET: async ({ request }) => {
         const url = new URL(request.url);
-        const q = (url.searchParams.get("q") ?? "").trim().slice(0, 120);
-        const limit = Math.min(Math.max(Number(url.searchParams.get("limit") ?? 12), 1), 24);
-        const page = Math.min(Math.max(Number(url.searchParams.get("page") ?? 1), 1), 50);
-        const skipRemote = url.searchParams.get("skipRemote") === "1";
+        const parsed = querySchema.parse(Object.fromEntries(url.searchParams.entries()));
+        const q = parsed.q;
+        const limit = parsed.limit;
+        const page = parsed.page;
+        const skipRemote = parsed.skipRemote === "1";
 
         // Always-on CDN catalog only on page 1 to avoid duplicating it on scroll.
         const localHits = page === 1 ? filterAlwaysOn(q) : [];
@@ -311,10 +315,19 @@ export const Route = createFileRoute("/api/videos/search")({
           }
         }
 
+        let youtube: VideoHit[] = [];
+        if (!skipRemote) {
+          try {
+            youtube = await searchYouTube(q || "trailers", Math.min(limit, 8), page);
+          } catch {
+            youtube = [];
+          }
+        }
+
         // Combine + dedupe by source URL
         const seen = new Set<string>();
         const combined: VideoHit[] = [];
-        for (const hit of [...localHits, ...remote]) {
+        for (const hit of [...localHits, ...youtube, ...remote]) {
           if (seen.has(hit.source)) continue;
           seen.add(hit.source);
           combined.push(hit);
@@ -324,7 +337,7 @@ export const Route = createFileRoute("/api/videos/search")({
         // and skipped to keep the response fast.
         const verified = await Promise.all(
           combined.map(async (hit) => {
-            if (hit.origin !== "archive") return hit; // trusted CDN
+            if (hit.kind === "youtube" || hit.origin !== "archive") return hit; // trusted/embed
             const ok = await verify(hit.source);
             return ok ? hit : null;
           }),
