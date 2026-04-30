@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { AlertCircle, LoaderCircle, RefreshCcw } from "lucide-react";
+import { AlertCircle, LoaderCircle, RefreshCcw, Wifi, Zap } from "lucide-react";
 
 type VideoPlayerProps = {
   sources: string[];
@@ -12,20 +12,69 @@ type VideoPlayerProps = {
   muted?: boolean;
   playsInline?: boolean;
   preload?: "none" | "metadata" | "auto";
+  fill?: boolean;
   onClick?: () => void;
   onPlaybackReady?: () => void;
   onPlaybackFailed?: () => void;
   onMetadata?: (payload: { width: number; height: number; aspectRatio: number }) => void;
   onAllSourcesFailed?: () => void;
   onDimensions?: (dims: { width: number; height: number; aspectRatio: number }) => void;
-  /** Initial known aspect ratio (W/H) so the box reserves space before the
-   *  video metadata loads — avoids layout jumps. Defaults to 16/9. */
   initialAspectRatio?: number;
   emptyLabel?: string;
-  /** When true, fill the parent container (height + width) instead of
-   *  reserving space by aspect ratio. Use this for full-screen feeds. */
-  fill?: boolean;
+  /** Show NEXUS performance indicators (CDN node, buffer health) */
+  showPerfHud?: boolean;
 };
+
+/** Convert any YouTube URL variant → privacy-enhanced embed URL with params */
+function buildYouTubeEmbedSrc(raw: string, opts: { autoPlay: boolean; muted: boolean; loop: boolean }): string {
+  try {
+    const url = new URL(raw);
+    let videoId: string | null = null;
+
+    if (url.hostname.includes("youtube.com") && url.pathname === "/watch") {
+      videoId = url.searchParams.get("v");
+    } else if (url.hostname === "youtu.be") {
+      videoId = url.pathname.replace("/", "").split("?")[0];
+    } else if (url.hostname.includes("youtube.com") && url.pathname.startsWith("/embed/")) {
+      videoId = url.pathname.replace("/embed/", "").split("?")[0];
+    } else if (url.hostname.includes("youtube-nocookie.com") && url.pathname.startsWith("/embed/")) {
+      videoId = url.pathname.replace("/embed/", "").split("?")[0];
+    }
+
+    if (videoId) {
+      const params = new URLSearchParams({
+        autoplay: opts.autoPlay ? "1" : "0",
+        mute: opts.muted ? "1" : "0",
+        loop: opts.loop ? "1" : "0",
+        rel: "0",
+        modestbranding: "1",
+        playsinline: "1",
+        enablejsapi: "1",
+        origin: typeof window !== "undefined" ? window.location.origin : "",
+        ...(opts.loop && videoId ? { playlist: videoId } : {}),
+      });
+      return `https://www.youtube-nocookie.com/embed/${videoId}?${params.toString()}`;
+    }
+  } catch {
+    // not parseable — fall through
+  }
+  return raw;
+}
+
+/** Simple CDN node label derived from hostname for the perf HUD */
+function cdnNode(src: string): string {
+  try {
+    const { hostname } = new URL(src);
+    if (hostname.includes("commondatastorage")) return "GCS · Global CDN";
+    if (hostname.includes("archive.org")) return "Archive.org · Edge";
+    if (hostname.includes("w3schools")) return "W3S · EU";
+    if (hostname.includes("cloudfront")) return "CloudFront · AWS";
+    if (hostname.includes("akamai")) return "Akamai · Edge";
+    return hostname;
+  } catch {
+    return "CDN";
+  }
+}
 
 export function VideoPlayer({
   sources,
@@ -38,6 +87,7 @@ export function VideoPlayer({
   muted = false,
   playsInline = true,
   preload = "metadata",
+  fill = false,
   onClick,
   onPlaybackReady,
   onPlaybackFailed,
@@ -46,52 +96,18 @@ export function VideoPlayer({
   onDimensions,
   initialAspectRatio = 16 / 9,
   emptyLabel = "No video source available.",
-  fill = false,
+  showPerfHud = false,
 }: VideoPlayerProps) {
+  // ── YouTube / embed path ────────────────────────────────────────────────
   if (embedUrl) {
-    // Normalise any YouTube URL variant into an embed URL with autoplay/mute params
-    const buildEmbedSrc = (raw: string): string => {
-      try {
-        const url = new URL(raw);
-        let videoId: string | null = null;
-
-        // https://www.youtube.com/watch?v=VIDEO_ID
-        if (url.hostname.includes("youtube.com") && url.pathname === "/watch") {
-          videoId = url.searchParams.get("v");
-        }
-        // https://youtu.be/VIDEO_ID
-        if (url.hostname === "youtu.be") {
-          videoId = url.pathname.replace("/", "");
-        }
-        // Already an embed URL – just append params
-        if (url.hostname.includes("youtube.com") && url.pathname.startsWith("/embed/")) {
-          videoId = url.pathname.replace("/embed/", "");
-        }
-
-        if (videoId) {
-          const params = new URLSearchParams({
-            autoplay: autoPlay ? "1" : "0",
-            mute: muted ? "1" : "0",
-            loop: loop ? "1" : "0",
-            rel: "0",
-            modestbranding: "1",
-            ...(loop && videoId ? { playlist: videoId } : {}),
-          });
-          return `https://www.youtube-nocookie.com/embed/${videoId}?${params.toString()}`;
-        }
-      } catch {
-        // not a parseable URL – fall through
-      }
-      return raw;
-    };
-
+    const embedSrc = buildYouTubeEmbedSrc(embedUrl, { autoPlay, muted, loop });
     return (
       <div
-        className={fill ? "relative h-full w-full" : "relative w-full"}
-        style={fill ? undefined : { aspectRatio: initialAspectRatio }}
+        className="relative w-full"
+        style={fill ? { position: "absolute", inset: 0 } : { aspectRatio: initialAspectRatio }}
       >
         <iframe
-          src={buildEmbedSrc(embedUrl)}
+          src={embedSrc}
           title="Embedded video player"
           className={className ?? "h-full w-full"}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -100,15 +116,23 @@ export function VideoPlayer({
           referrerPolicy="strict-origin-when-cross-origin"
           onLoad={() => onPlaybackReady?.()}
         />
+        {showPerfHud && (
+          <div className="absolute top-2 left-2 flex items-center gap-1.5 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-mono text-emerald-400 backdrop-blur">
+            <Zap className="h-2.5 w-2.5" />
+            YouTube · Privacy-Enhanced
+          </div>
+        )}
       </div>
     );
   }
 
+  // ── Native video path ───────────────────────────────────────────────────
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [sourceIndex, setSourceIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [aspectRatio, setAspectRatio] = useState<number>(initialAspectRatio);
+  const [bufferHealth, setBufferHealth] = useState(0);
   const safeSources = useMemo(
     () => Array.from(new Set(sources.filter(Boolean))),
     [sources],
@@ -120,7 +144,7 @@ export function VideoPlayer({
     setIsLoading(true);
     setHasError(false);
     setAspectRatio(initialAspectRatio);
-  }, [safeSources]);
+  }, [safeSources, initialAspectRatio]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -131,22 +155,23 @@ export function VideoPlayer({
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-
-    if (!autoPlay) {
-      video.pause();
-      return;
-    }
-
-    const tryPlay = async () => {
-      try {
-        await video.play();
-      } catch {
-        /* autoplay may be blocked until user interaction */
-      }
-    };
-
-    void tryPlay();
+    if (!autoPlay) { video.pause(); return; }
+    void video.play().catch(() => { /* autoplay blocked */ });
   }, [autoPlay, activeSource]);
+
+  // Buffer health monitor — updates every 500ms while playing
+  useEffect(() => {
+    if (!showPerfHud) return;
+    const video = videoRef.current;
+    if (!video) return;
+    const id = window.setInterval(() => {
+      if (!video.buffered.length) return;
+      const end = video.buffered.end(video.buffered.length - 1);
+      const ahead = Math.max(0, end - video.currentTime);
+      setBufferHealth(Math.min(100, Math.round((ahead / 30) * 100)));
+    }, 500);
+    return () => clearInterval(id);
+  }, [showPerfHud]);
 
   const retry = () => {
     if (!safeSources.length) return;
@@ -157,10 +182,9 @@ export function VideoPlayer({
 
   const handleError = () => {
     if (sourceIndex < safeSources.length - 1) {
-      setSourceIndex((current) => current + 1);
+      setSourceIndex((c) => c + 1);
       return;
     }
-
     setHasError(true);
     setIsLoading(false);
     onPlaybackFailed?.();
@@ -170,26 +194,23 @@ export function VideoPlayer({
   if (!safeSources.length) {
     return (
       <div
-        className={`flex items-center justify-center bg-muted/20 px-4 text-center text-sm text-muted-foreground ${fill ? "h-full w-full" : ""}`}
-        style={fill ? undefined : { aspectRatio: initialAspectRatio }}
+        className="flex items-center justify-center bg-muted/20 px-4 text-center text-sm text-muted-foreground"
+        style={fill ? { position: "absolute", inset: 0 } : { aspectRatio: initialAspectRatio }}
       >
         {emptyLabel}
       </div>
     );
   }
 
-  // Reserve the box at the current best-known aspect ratio so the layout does
-  // not jump when intrinsic dimensions arrive via `loadedmetadata`.
-  const wrapperStyle: CSSProperties = fill ? {} : { aspectRatio };
+  const wrapperStyle: CSSProperties = fill
+    ? { position: "absolute", inset: 0 }
+    : { aspectRatio };
 
   return (
-    <div
-      className={fill ? "relative h-full w-full" : "relative w-full"}
-      style={wrapperStyle}
-    >
+    <div className="relative w-full" style={wrapperStyle}>
       <video
         ref={videoRef}
-        className={className ?? (fill ? "absolute inset-0 h-full w-full object-contain" : "h-full w-full object-contain")}
+        className={className ?? "h-full w-full object-contain"}
         controls={controls}
         autoPlay={autoPlay}
         loop={loop}
@@ -198,22 +219,13 @@ export function VideoPlayer({
         preload={preload}
         poster={poster}
         onClick={onClick}
-        onLoadedMetadata={(event) => {
-          const target = event.currentTarget;
-          const width = target.videoWidth;
-          const height = target.videoHeight;
-          if (width > 0 && height > 0) {
-            onMetadata?.({ width, height, aspectRatio: width / height });
-          }
-          const v = event.currentTarget;
+        onLoadedMetadata={(e) => {
+          const v = e.currentTarget;
           if (v.videoWidth && v.videoHeight) {
             const ratio = v.videoWidth / v.videoHeight;
             setAspectRatio(ratio);
-            onDimensions?.({
-              width: v.videoWidth,
-              height: v.videoHeight,
-              aspectRatio: ratio,
-            });
+            onMetadata?.({ width: v.videoWidth, height: v.videoHeight, aspectRatio: ratio });
+            onDimensions?.({ width: v.videoWidth, height: v.videoHeight, aspectRatio: ratio });
           }
         }}
         onLoadedData={() => {
@@ -228,21 +240,23 @@ export function VideoPlayer({
         <source src={activeSource} />
       </video>
 
+      {/* Loading overlay */}
       {isLoading && !hasError && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/20">
           <div className="flex items-center gap-2 rounded-full bg-black/60 px-3 py-1.5 text-xs font-medium text-white">
             <LoaderCircle className="h-4 w-4 animate-spin" />
-            Loading video
+            Buffering…
           </div>
         </div>
       )}
 
+      {/* Error overlay */}
       {hasError && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/80 px-4 text-center text-white">
           <AlertCircle className="h-8 w-8 text-red-300" />
           <div className="space-y-1">
-            <p className="text-sm font-semibold">This video could not be loaded.</p>
-            <p className="text-xs text-white/70">We tried every available source for this item.</p>
+            <p className="text-sm font-semibold">Video could not be loaded.</p>
+            <p className="text-xs text-white/70">All {safeSources.length} source{safeSources.length !== 1 ? "s" : ""} failed.</p>
           </div>
           <button
             type="button"
@@ -252,6 +266,24 @@ export function VideoPlayer({
             <RefreshCcw className="h-3.5 w-3.5" />
             Retry
           </button>
+        </div>
+      )}
+
+      {/* Performance HUD — CDN node + buffer health */}
+      {showPerfHud && !hasError && activeSource && (
+        <div className="absolute top-2 left-2 flex items-center gap-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-mono text-emerald-400 backdrop-blur pointer-events-none">
+          <Wifi className="h-2.5 w-2.5" />
+          {cdnNode(activeSource)}
+          <span className="text-white/50">·</span>
+          <span className={bufferHealth > 60 ? "text-emerald-400" : bufferHealth > 20 ? "text-amber-400" : "text-red-400"}>
+            buf {bufferHealth}%
+          </span>
+          {sourceIndex > 0 && (
+            <>
+              <span className="text-white/50">·</span>
+              <span className="text-amber-300">src {sourceIndex + 1}/{safeSources.length}</span>
+            </>
+          )}
         </div>
       )}
     </div>

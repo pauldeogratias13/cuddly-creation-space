@@ -129,6 +129,10 @@
     border-color: var(--color-border);
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
@@ -162,6 +166,8 @@
   .shadow-glow-magenta { box-shadow: var(--shadow-glow-magenta); }
   .shadow-card-elevated { box-shadow: var(--shadow-card); }
   .font-mono-display { font-family: var(--font-mono); }
+
+  /* Main grid background */
   .grid-bg {
     background-image:
       linear-gradient(oklch(0.82 0.16 195 / 0.06) 1px, transparent 1px),
@@ -169,28 +175,179 @@
     background-size: 56px 56px;
     mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
   }
+
+  /* Dot grid — subtle variant for alternate sections */
+  .dot-grid-bg {
+    background-image: radial-gradient(oklch(0.82 0.16 195 / 0.12) 1px, transparent 1px);
+    background-size: 24px 24px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+  }
+
+  /* Glassmorphism surface */
+  .glass {
+    background: oklch(0.17 0.025 270 / 0.55);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    border: 1px solid oklch(1 0 0 / 0.07);
+  }
+
+  /* Neon border glow on hover */
+  .hover-neon:hover {
+    box-shadow: 0 0 0 1px oklch(0.82 0.16 195 / 0.5), 0 0 20px -4px oklch(0.82 0.16 195 / 0.4);
+  }
+
+  /* Gradient border via pseudo-element — used by spec-card */
+  .gradient-border {
+    position: relative;
+    border-radius: var(--radius-xl);
+  }
+  .gradient-border::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: var(--gradient-aurora);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    -webkit-mask-composite: destination-out;
+    pointer-events: none;
+  }
+
+  /* Scan line effect (used in tech terminal blocks) */
+  .scanlines {
+    background: repeating-linear-gradient(
+      0deg,
+      oklch(0 0 0 / 0.04) 0px,
+      oklch(0 0 0 / 0.04) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+  }
+
+  /* Cinematic letterbox bars */
+  .letterbox::before,
+  .letterbox::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 6%;
+    background: #000;
+    z-index: 10;
+    pointer-events: none;
+  }
+  .letterbox::before { top: 0; }
+  .letterbox::after  { bottom: 0; }
+
+  /* Highlight bar used in competitor table */
+  .nexus-row {
+    background: linear-gradient(90deg, oklch(0.82 0.16 195 / 0.08) 0%, oklch(0.6 0.24 295 / 0.06) 100%);
+    border-left: 2px solid oklch(0.82 0.16 195);
+  }
+
+  /* Safe area top padding for mobile notch */
+  .pt-safe-top {
+    padding-top: env(safe-area-inset-top, 12px);
+  }
 }
+
+/* ── Keyframe Animations ──────────────────────────────────────────────── */
 
 @keyframes float-slow {
   0%, 100% { transform: translateY(0) scale(1); opacity: 0.7; }
   50% { transform: translateY(-20px) scale(1.05); opacity: 1; }
 }
+
 @keyframes pulse-glow {
   0%, 100% { opacity: 0.5; }
   50% { opacity: 1; }
 }
+
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
+  0%   { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
 
-.animate-float-slow { animation: float-slow 8s ease-in-out infinite; }
-.animate-pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
+@keyframes slide-in-right {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+@keyframes slide-out-left {
+  from { transform: translateX(0);    opacity: 1; }
+  to   { transform: translateX(-100%); opacity: 0; }
+}
+
+@keyframes ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes count-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes orbit {
+  0%   { transform: rotate(0deg)   translateX(60px) rotate(0deg); }
+  100% { transform: rotate(360deg) translateX(60px) rotate(-360deg); }
+}
+
+@keyframes radar-ping {
+  0%   { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
+@keyframes waveform {
+  0%, 100% { transform: scaleY(0.3); }
+  50%       { transform: scaleY(1);   }
+}
+
+@keyframes border-flow {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ── Animation Utility Classes ───────────────────────────────────────── */
+
+.animate-float-slow    { animation: float-slow 8s ease-in-out infinite; }
+.animate-pulse-glow    { animation: pulse-glow 3s ease-in-out infinite; }
+.animate-ticker        { animation: ticker-scroll 28s linear infinite; }
+.animate-radar-ping    { animation: radar-ping 2s ease-out infinite; }
+.animate-orbit         { animation: orbit 6s linear infinite; }
+.animate-count-up      { animation: count-up 0.5s var(--transition-smooth) forwards; }
+
 .animate-shimmer {
   background: linear-gradient(90deg, transparent, oklch(0.82 0.16 195 / 0.2), transparent);
   background-size: 200% 100%;
   animation: shimmer 3s linear infinite;
 }
+
+/* Waveform bars (used in audio/streaming UI) */
+.waveform-bar {
+  display: inline-block;
+  width: 3px;
+  border-radius: 2px;
+  transform-origin: bottom;
+  background: oklch(0.82 0.16 195);
+  animation: waveform 0.8s ease-in-out infinite;
+}
+.waveform-bar:nth-child(2) { animation-delay: 0.1s; }
+.waveform-bar:nth-child(3) { animation-delay: 0.2s; }
+.waveform-bar:nth-child(4) { animation-delay: 0.3s; }
+.waveform-bar:nth-child(5) { animation-delay: 0.15s; }
+
+/* Animated gradient border */
+.animate-border-flow {
+  background: linear-gradient(270deg, oklch(0.82 0.16 195), oklch(0.6 0.24 295), oklch(0.7 0.27 340), oklch(0.82 0.16 195));
+  background-size: 400% 400%;
+  animation: border-flow 4s ease infinite;
+}
+
+/* ── Pillar Cards ─────────────────────────────────────────────────────── */
 
 .pillar-card {
   position: relative;
@@ -211,6 +368,7 @@
   z-index: 0;
   mask: linear-gradient(black, black) content-box, linear-gradient(black, black);
   mask-composite: exclude;
+  -webkit-mask-composite: destination-out;
   padding: 1px;
   border-radius: inherit;
 }
@@ -224,4 +382,70 @@
 .pillar-card > * {
   position: relative;
   z-index: 1;
+}
+
+/* ── Spec / Competitor Table ─────────────────────────────────────────── */
+
+.spec-table th {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-muted-foreground);
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+}
+.spec-table td {
+  padding: 0.85rem 1rem;
+  font-size: 0.825rem;
+  border-bottom: 1px solid oklch(0.28 0.03 270 / 0.3);
+  vertical-align: middle;
+}
+.spec-table tr:last-child td { border-bottom: none; }
+
+/* ── Tech Ticker ─────────────────────────────────────────────────────── */
+
+.ticker-track {
+  display: flex;
+  gap: 2.5rem;
+  width: max-content;
+}
+.ticker-track:hover { animation-play-state: paused; }
+
+/* ── Pipeline Flow Node ──────────────────────────────────────────────── */
+
+.pipeline-node {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+.pipeline-node::after {
+  content: "→";
+  position: absolute;
+  right: -1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-muted-foreground);
+  font-size: 0.75rem;
+  opacity: 0.5;
+}
+.pipeline-node:last-child::after { display: none; }
+
+/* ── Scrollbar ───────────────────────────────────────────────────────── */
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: oklch(0.28 0.03 270 / 0.6);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover { background: oklch(0.82 0.16 195 / 0.4); }
+
+/* ── Focus ring ──────────────────────────────────────────────────────── */
+
+:focus-visible {
+  outline: 2px solid oklch(0.82 0.16 195);
+  outline-offset: 2px;
 }

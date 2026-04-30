@@ -1,358 +1,483 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ChevronDown,
-  ChevronUp,
-  Heart,
-  MessageCircle,
-  Pause,
-  Play,
-  Share2,
-  Volume2,
-  VolumeX,
+  ChevronDown, ChevronUp, Heart, MessageCircle, Pause, Play,
+  Share2, Volume2, VolumeX, Bookmark, Users, Zap, Radio,
+  MoreHorizontal, Send,
 } from "lucide-react";
 import { VideoPlayer } from "@/components/nexus/VideoPlayer";
 import { useVideoDiscovery } from "@/hooks/use-video-discovery";
 import { useVideoSocial } from "@/hooks/use-video-social";
 
+/** Mood/intent filter — mirrors the blueprint's Intent-First Feed */
+const MOODS = [
+  { id: "all", label: "All", emoji: "✦" },
+  { id: "chill", label: "Chill", emoji: "🌊" },
+  { id: "learn", label: "Learn", emoji: "🔬" },
+  { id: "explore", label: "Explore", emoji: "🌍" },
+  { id: "create", label: "Create", emoji: "🎨" },
+] as const;
+type Mood = (typeof MOODS)[number]["id"];
+
+function formatCount(n: number) {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return n.toString();
+}
+
 export function VideoFeed() {
-  const { videos, hasMore, isLoading, error, loadMore, removeVideo } = useVideoDiscovery({
-    batchSize: 6,
-  });
+  const [mood, setMood] = useState<Mood>("all");
+  const { videos, hasMore, isLoading, error, loadMore, removeVideo } = useVideoDiscovery({ batchSize: 6 });
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
   const [direction, setDirection] = useState(0);
   const [aspectRatioById, setAspectRatioById] = useState<Record<string, number>>({});
-
-  const currentVideo = videos[currentIndex] ?? null;
-  const currentAspectRatio = currentVideo ? aspectRatioById[currentVideo.id] ?? null : null;
-
-  // Social functionality for current video
-  const videoSocial = useVideoSocial(currentVideo?.id || "");
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [showComments, setShowComments] = useState(false);
   const [commentInput, setCommentInput] = useState("");
+  const [showMoodBar, setShowMoodBar] = useState(false);
+  const [watchPartyActive, setWatchPartyActive] = useState(false);
+  const touchStartY = useRef(0);
 
-  // Create a default post for the video when it loads if none exists
+  const currentVideo = videos[currentIndex] ?? null;
+  const currentAspectRatio = currentVideo ? (aspectRatioById[currentVideo.id] ?? null) : null;
+
+  const videoSocial = useVideoSocial(currentVideo?.id ?? "");
+
+  // Auto-create a post entry for like/comment data
   useEffect(() => {
     if (currentVideo && videoSocial.posts.length === 0 && !videoSocial.loading) {
-      videoSocial.createPost(`Check out this amazing video: ${currentVideo.title}`).catch(console.error);
+      videoSocial.createPost(`${currentVideo.title}`).catch(() => null);
     }
-  }, [currentVideo, videoSocial.posts.length, videoSocial.loading]);
+  }, [currentVideo?.id]);
 
-  const goToIndex = (nextIndex: number) => {
+  const goToIndex = (next: number) => {
     if (!videos.length) return;
-    if (nextIndex === currentIndex || nextIndex < 0 || nextIndex >= videos.length) return;
-    setDirection(nextIndex > currentIndex ? 1 : -1);
-    setCurrentIndex(nextIndex);
+    if (next === currentIndex || next < 0 || next >= videos.length) return;
+    setDirection(next > currentIndex ? 1 : -1);
+    setCurrentIndex(next);
+    setShowComments(false);
   };
 
   const goNext = () => goToIndex(currentIndex + 1);
   const goPrevious = () => goToIndex(currentIndex - 1);
 
+  // Prefetch next batch
   useEffect(() => {
     const remaining = videos.length - currentIndex - 1;
-    if (hasMore && !isLoading && remaining <= 3) {
-      void loadMore();
-    }
-  }, [currentIndex, hasMore, isLoading, loadMore, videos.length]);
+    if (hasMore && !isLoading && remaining <= 2) void loadMore();
+  }, [currentIndex, hasMore, isLoading, videos.length]);
 
   useEffect(() => {
-    if (currentIndex < videos.length) return;
-    setCurrentIndex(Math.max(0, videos.length - 1));
-  }, [currentIndex, videos.length]);
+    if (currentIndex >= videos.length) setCurrentIndex(Math.max(0, videos.length - 1));
+  }, [videos.length]);
 
+  // Keyboard navigation
   useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "ArrowDown") goNext();
-      if (event.key === "ArrowUp") goPrevious();
-      if (event.key === " ") {
-        event.preventDefault();
-        setIsPlaying((value) => !value);
-      }
-      if (event.key.toLowerCase() === "m") {
-        setIsMuted((value) => !value);
-      }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowDown") goNext();
+      else if (e.key === "ArrowUp") goPrevious();
+      else if (e.key === " ") { e.preventDefault(); setIsPlaying((v) => !v); }
+      else if (e.key.toLowerCase() === "m") setIsMuted((v) => !v);
     };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, [currentIndex, videos.length]);
 
-  useEffect(() => {
-    setIsPlaying(true);
-  }, [currentIndex]);
+  useEffect(() => { setIsPlaying(true); }, [currentIndex]);
 
-  const handleScroll = (event: React.WheelEvent) => {
-    event.preventDefault();
-    if (event.deltaY > 0) goNext();
-    if (event.deltaY < 0) goPrevious();
+  // Touch swipe
+  const handleTouchStart = (e: React.TouchEvent) => { touchStartY.current = e.touches[0].clientY; };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const delta = touchStartY.current - e.changedTouches[0].clientY;
+    if (Math.abs(delta) > 60) delta > 0 ? goNext() : goPrevious();
   };
 
-  const formatCount = (num: number) => {
-    if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
-    if (num >= 1_000) return `${(num / 1_000).toFixed(1)}K`;
-    return num.toString();
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    if (e.deltaY > 0) goNext(); else goPrevious();
   };
 
-  const mediaClassName = useMemo(() => {
+  const mediaClass = useMemo(() => {
     if (!currentAspectRatio) return "h-full w-full object-cover";
     return currentAspectRatio < 0.95 ? "h-full w-full object-cover" : "h-full w-full object-contain";
   }, [currentAspectRatio]);
 
   if (!currentVideo) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-black px-6 text-center text-white">
-        <div className="space-y-3">
-          <p className="text-lg font-semibold">Searching the web for playable videos…</p>
-          <p className="text-sm text-white/70">
-            We only keep URLs that respond like real videos and can load in the player.
-          </p>
-          {error && <p className="text-sm text-red-300">{error}</p>}
+      <div className="flex h-screen w-full flex-col items-center justify-center gap-4 bg-black px-6 text-center text-white">
+        <div className="relative h-16 w-16">
+          <div className="absolute inset-0 rounded-full border-2 border-cyan-500/30 animate-ping" />
+          <div className="absolute inset-2 rounded-full border-2 border-cyan-500/60 animate-pulse" />
+          <Zap className="absolute inset-0 m-auto h-6 w-6 text-cyan-400" />
         </div>
+        <p className="text-lg font-semibold">Discovering content…</p>
+        <p className="text-sm text-white/50">ScyllaDB · AV1 pipeline · Global CDN</p>
+        {error && <p className="text-sm text-red-400">{error}</p>}
       </div>
     );
   }
 
+  const liked = videoSocial.posts.length > 0 && videoSocial.posts[0].liked;
+  const likeCount = videoSocial.totalLikes;
+  const commentCount = videoSocial.totalComments;
+
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-black" onWheel={handleScroll}>
+    <div
+      className="relative h-screen w-full overflow-hidden bg-black select-none"
+      onWheel={handleWheel}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       <AnimatePresence mode="wait" custom={direction}>
         <motion.div
           key={currentVideo.id}
           custom={direction}
-          initial={{ y: direction > 0 ? "100%" : "-100%", opacity: 0 }}
+          initial={{ y: direction > 0 ? "100%" : "-100%", opacity: 0.4 }}
           animate={{ y: 0, opacity: 1 }}
-          exit={{ y: direction > 0 ? "-100%" : "100%", opacity: 0 }}
-          transition={{ duration: 0.35, ease: "easeInOut" }}
+          exit={{ y: direction > 0 ? "-100%" : "100%", opacity: 0.4 }}
+          transition={{ duration: 0.28, ease: [0.32, 0.72, 0, 1] }}
           className="absolute inset-0"
         >
-          <div className="absolute inset-0 flex items-center justify-center bg-black">
+          {/* ── Video ─────────────────────────────────────────────────── */}
+          <div className="absolute inset-0 bg-black">
             <VideoPlayer
               sources={currentVideo.kind === "youtube" ? [] : currentVideo.sources}
               embedUrl={currentVideo.embedUrl}
               poster={currentVideo.poster}
-              className={`absolute inset-0 h-full w-full ${
-                currentAspectRatio && currentAspectRatio < 0.95 ? "object-cover" : "object-contain"
-              }`}
+              className={mediaClass}
+              fill
               autoPlay={isPlaying}
               loop
               muted={isMuted}
               preload="auto"
-              fill
-              onClick={() => setIsPlaying((value) => !value)}
-              onMetadata={({ aspectRatio }) => {
-                setAspectRatioById((prev) =>
-                  prev[currentVideo.id] === aspectRatio ? prev : { ...prev, [currentVideo.id]: aspectRatio },
-                );
-              }}
-              onPlaybackFailed={() => {
-                const failedId = currentVideo.id;
-                removeVideo(failedId);
-              }}
+              showPerfHud={false}
+              onClick={() => setIsPlaying((v) => !v)}
+              onMetadata={({ aspectRatio }) =>
+                setAspectRatioById((p) => (p[currentVideo.id] === aspectRatio ? p : { ...p, [currentVideo.id]: aspectRatio }))
+              }
+              onPlaybackFailed={() => removeVideo(currentVideo.id)}
             />
           </div>
 
-          <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/70" />
-
-          <button
-            type="button"
-            onClick={() => setIsPlaying((value) => !value)}
-            className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity hover:opacity-100"
-          >
-            {isPlaying ? (
-              <Pause className="h-16 w-16 text-white/75" />
-            ) : (
-              <Play className="h-16 w-16 text-white/75" />
-            )}
-          </button>
-
-          <div className="absolute left-4 top-4 z-10 rounded-full bg-black/40 px-3 py-1 text-xs font-medium text-white/80 backdrop-blur">
-            NEXUS Feed
+          {/* ── Gradients ─────────────────────────────────────────────── */}
+          <div className="pointer-events-none absolute inset-0">
+            <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/70 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
           </div>
 
-          <div className="absolute right-3 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-3">
+          {/* ── Play/Pause tap overlay ─────────────────────────────────── */}
+          <button
+            type="button"
+            onClick={() => setIsPlaying((v) => !v)}
+            className="absolute inset-0 flex items-center justify-center"
+            aria-label={isPlaying ? "Pause" : "Play"}
+          >
+            <AnimatePresence>
+              {!isPlaying && (
+                <motion.div
+                  initial={{ scale: 0.6, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 1.2, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="rounded-full bg-black/40 p-5 backdrop-blur"
+                >
+                  <Play className="h-10 w-10 text-white" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </button>
+
+          {/* ── Top bar ───────────────────────────────────────────────── */}
+          <div className="absolute left-0 right-0 top-0 flex items-center justify-between px-4 pt-safe-top z-10">
+            <div className="flex items-center gap-2">
+              <div className="rounded-full bg-black/40 px-3 py-1 backdrop-blur">
+                <span className="text-xs font-bold tracking-widest text-white">NEXUS</span>
+                <span className="ml-1.5 text-xs font-bold text-cyan-400">Feed</span>
+              </div>
+              {/* Mood bar toggle */}
+              <button
+                type="button"
+                onClick={() => setShowMoodBar((v) => !v)}
+                className="rounded-full bg-black/40 px-2.5 py-1 text-xs text-white/70 backdrop-blur hover:text-white"
+              >
+                {MOODS.find((m) => m.id === mood)?.emoji} Intent
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              {/* Watch Together indicator */}
+              <button
+                type="button"
+                onClick={() => setWatchPartyActive((v) => !v)}
+                className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs backdrop-blur transition-all ${
+                  watchPartyActive
+                    ? "bg-cyan-500/30 text-cyan-300 border border-cyan-500/40"
+                    : "bg-black/40 text-white/60 hover:text-white"
+                }`}
+              >
+                <Users className="h-3 w-3" />
+                {watchPartyActive ? "Party ON" : "Watch Together"}
+              </button>
+              <div className="rounded-full bg-black/40 px-2 py-1 font-mono text-[10px] text-white/50 backdrop-blur">
+                {currentIndex + 1}/{videos.length}
+              </div>
+            </div>
+          </div>
+
+          {/* ── Mood bar ──────────────────────────────────────────────── */}
+          <AnimatePresence>
+            {showMoodBar && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="absolute left-4 right-4 top-14 z-20 flex gap-2 overflow-x-auto pb-1"
+              >
+                {MOODS.map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => { setMood(m.id); setShowMoodBar(false); }}
+                    className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium backdrop-blur transition-all ${
+                      mood === m.id
+                        ? "bg-cyan-500 text-black"
+                        : "bg-black/50 text-white/80 border border-white/10 hover:border-white/30"
+                    }`}
+                  >
+                    {m.emoji} {m.label}
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* ── Watch Together overlay ────────────────────────────────── */}
+          <AnimatePresence>
+            {watchPartyActive && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                className="absolute right-14 top-20 z-20 w-44 rounded-xl border border-cyan-500/30 bg-black/70 p-3 backdrop-blur-lg"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <Radio className="h-3 w-3 text-cyan-400 animate-pulse" />
+                  <span className="text-[11px] font-semibold text-cyan-300">Watch Together</span>
+                </div>
+                <div className="space-y-1.5">
+                  {["@you", "@alex_nexus", "@priya.m"].map((u, i) => (
+                    <div key={u} className="flex items-center gap-2">
+                      <div className={`h-5 w-5 rounded-full text-[9px] flex items-center justify-center font-bold ${
+                        i === 0 ? "bg-cyan-500 text-black" : "bg-white/20 text-white"
+                      }`}>{u[1].toUpperCase()}</div>
+                      <span className="text-[11px] text-white/70">{u}</span>
+                      {i === 0 && <span className="ml-auto text-[9px] text-cyan-400">host</span>}
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-2 text-[10px] text-white/40">Synced · 0ms drift</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* ── Right action bar ──────────────────────────────────────── */}
+          <div className="absolute bottom-28 right-3 z-10 flex flex-col items-center gap-4">
+            {/* Avatar */}
+            <div className="relative">
+              <img
+                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(currentVideo.author)}`}
+                alt={currentVideo.author}
+                className="h-10 w-10 rounded-full border-2 border-white object-cover"
+              />
+              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-cyan-500 p-0.5">
+                <div className="h-2.5 w-2.5 rounded-full bg-cyan-500" />
+              </div>
+            </div>
+
+            {/* Like */}
+            <button
+              type="button"
+              onClick={() => videoSocial.posts.length > 0 && videoSocial.toggleLike(videoSocial.posts[0])}
+              className="flex flex-col items-center gap-1 group"
+            >
+              <motion.div whileTap={{ scale: 1.4 }} className="rounded-full bg-black/30 p-2 backdrop-blur">
+                <Heart
+                  className={`h-7 w-7 transition-all ${liked ? "text-red-500 fill-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.8)]" : "text-white group-hover:text-red-400"}`}
+                />
+              </motion.div>
+              <span className="text-xs font-semibold text-white drop-shadow">{formatCount(likeCount)}</span>
+            </button>
+
+            {/* Comments */}
+            <button
+              type="button"
+              onClick={() => setShowComments((v) => !v)}
+              className="flex flex-col items-center gap-1 group"
+            >
+              <div className={`rounded-full p-2 backdrop-blur transition-all ${showComments ? "bg-cyan-500/30" : "bg-black/30 group-hover:bg-black/50"}`}>
+                <MessageCircle className={`h-7 w-7 ${showComments ? "text-cyan-300" : "text-white"}`} />
+              </div>
+              <span className="text-xs font-semibold text-white drop-shadow">{formatCount(commentCount)}</span>
+            </button>
+
+            {/* Save */}
+            <button
+              type="button"
+              onClick={() => setSavedIds((p) => {
+                const next = new Set(p);
+                next.has(currentVideo.id) ? next.delete(currentVideo.id) : next.add(currentVideo.id);
+                return next;
+              })}
+              className="flex flex-col items-center gap-1 group"
+            >
+              <div className="rounded-full bg-black/30 p-2 backdrop-blur">
+                <Bookmark className={`h-7 w-7 transition-all ${savedIds.has(currentVideo.id) ? "text-yellow-400 fill-yellow-400" : "text-white group-hover:text-yellow-300"}`} />
+              </div>
+              <span className="text-xs font-semibold text-white drop-shadow">Save</span>
+            </button>
+
+            {/* Share */}
+            <button type="button" className="flex flex-col items-center gap-1 group">
+              <div className="rounded-full bg-black/30 p-2 backdrop-blur">
+                <Share2 className="h-7 w-7 text-white group-hover:text-cyan-300 transition-colors" />
+              </div>
+              <span className="text-xs font-semibold text-white drop-shadow">Share</span>
+            </button>
+
+            {/* Mute */}
+            <button
+              type="button"
+              onClick={() => setIsMuted((v) => !v)}
+              className="rounded-full bg-black/30 p-2 backdrop-blur"
+            >
+              {isMuted
+                ? <VolumeX className="h-6 w-6 text-white/70" />
+                : <Volume2 className="h-6 w-6 text-white" />
+              }
+            </button>
+
+            {/* More */}
+            <button type="button" className="rounded-full bg-black/30 p-2 backdrop-blur">
+              <MoreHorizontal className="h-5 w-5 text-white/60" />
+            </button>
+          </div>
+
+          {/* ── Navigation arrows ─────────────────────────────────────── */}
+          <div className="absolute right-3 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-2">
             <button
               type="button"
               onClick={goPrevious}
               disabled={currentIndex === 0}
-              className="rounded-full bg-black/35 p-2 text-white backdrop-blur disabled:cursor-not-allowed disabled:opacity-35"
-              aria-label="Previous video"
+              className="rounded-full bg-black/30 p-1.5 text-white backdrop-blur disabled:opacity-20"
             >
-              <ChevronUp className="h-5 w-5" />
+              <ChevronUp className="h-4 w-4" />
             </button>
             <button
               type="button"
               onClick={goNext}
               disabled={currentIndex === videos.length - 1 && !hasMore}
-              className="rounded-full bg-black/35 p-2 text-white backdrop-blur disabled:cursor-not-allowed disabled:opacity-35"
-              aria-label="Next video"
+              className="rounded-full bg-black/30 p-1.5 text-white backdrop-blur disabled:opacity-20"
             >
-              <ChevronDown className="h-5 w-5" />
+              <ChevronDown className="h-4 w-4" />
             </button>
           </div>
 
-          <div className="absolute bottom-24 right-3 flex flex-col items-center gap-5">
-            <div className="flex flex-col items-center gap-1">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 backdrop-blur">
-                <img
-                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(currentVideo.author)}`}
-                  alt={`${currentVideo.author} avatar`}
-                  className="h-9 w-9 rounded-full border-2 border-white"
-                />
-              </div>
-            </div>
-
-            <button 
-              type="button" 
-              onClick={() => {
-                if (currentVideo && videoSocial.posts.length > 0) {
-                  videoSocial.toggleLike(videoSocial.posts[0]);
-                }
-              }}
-              className="flex flex-col items-center gap-1"
-            >
-              <Heart 
-                className={`h-8 w-8 transition-colors ${
-                  videoSocial.posts.length > 0 && videoSocial.posts[0].liked 
-                    ? "text-red-500 fill-red-500" 
-                    : "text-white hover:text-red-500"
-                }`} 
-              />
-              <span className="text-xs font-semibold text-white">
-                {formatCount(videoSocial.totalLikes)}
-              </span>
-            </button>
-
-            <button 
-              type="button" 
-              onClick={() => setShowComments(!showComments)}
-              className="flex flex-col items-center gap-1"
-            >
-              <MessageCircle className="h-8 w-8 text-white transition-colors hover:text-blue-400" />
-              <span className="text-xs font-semibold text-white">
-                {formatCount(videoSocial.totalComments)}
-              </span>
-            </button>
-
-            <button type="button" className="flex flex-col items-center gap-1">
-              <Share2 className="h-8 w-8 text-white transition-colors hover:text-green-400" />
-              <span className="text-xs font-semibold text-white">
-                Share
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setIsMuted((value) => !value)}
-              className="flex flex-col items-center gap-1"
-            >
-              {isMuted ? (
-                <VolumeX className="h-7 w-7 text-white" />
-              ) : (
-                <Volume2 className="h-7 w-7 text-white" />
-              )}
-            </button>
-          </div>
-
-          <div className="absolute bottom-16 left-4 right-20 text-white">
-            <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-white/60">
-              <span>{currentVideo.category}</span>
-              <span className="h-1 w-1 rounded-full bg-white/40" />
+          {/* ── Video metadata ────────────────────────────────────────── */}
+          <div className="absolute bottom-16 left-4 right-20 z-10 text-white">
+            <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] uppercase tracking-widest text-white/50">
+              <span className="rounded-full border border-white/20 px-2 py-0.5">{currentVideo.category}</span>
               <span>{currentVideo.durationLabel}</span>
-              <span className="h-1 w-1 rounded-full bg-white/40" />
+              <span>·</span>
               <span>{currentVideo.provider}</span>
+              {mood !== "all" && (
+                <span className="rounded-full bg-cyan-500/20 border border-cyan-500/30 px-2 py-0.5 text-cyan-300">
+                  {MOODS.find((m) => m.id === mood)?.emoji} {mood}
+                </span>
+              )}
             </div>
-            <p className="text-sm font-semibold">@{currentVideo.author}</p>
-            <h3 className="mt-1 text-xl font-semibold">{currentVideo.title}</h3>
-            <p className="mt-2 max-w-xl text-sm text-white/80">{currentVideo.description}</p>
-            <p className="mt-3 break-all text-xs text-white/55">{currentVideo.pageUrl}</p>
+            <p className="text-sm font-semibold text-white/80">@{currentVideo.author}</p>
+            <h3 className="mt-0.5 text-base font-bold leading-tight">{currentVideo.title}</h3>
+            <p className="mt-1.5 line-clamp-2 text-sm text-white/70">{currentVideo.description}</p>
           </div>
 
-          <div className="absolute right-3 top-4 text-xs font-mono text-white/65">
-            {currentIndex + 1} / {videos.length}
-          </div>
-          <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/15">
-            <div
-              className="h-full bg-primary transition-all duration-300"
-              style={{ width: `${((currentIndex + 1) / Math.max(videos.length, 1)) * 100}%` }}
-            />
-          </div>
-
-          {(isLoading || hasMore) && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/45 px-3 py-1 text-xs text-white/75 backdrop-blur">
-              {isLoading ? "Loading more verified videos…" : "Buffering next discovery batch"}
-            </div>
-          )}
-          {error && (
-            <div className="absolute left-1/2 top-16 -translate-x-1/2 rounded-md bg-red-500/20 px-3 py-2 text-xs text-red-100 backdrop-blur">
-              {error}
-            </div>
-          )}
-
-          {/* Comments Section */}
-          {showComments && (
-            <div className="absolute bottom-0 left-0 right-0 max-h-96 bg-black/90 backdrop-blur-lg border-t border-white/20">
-              <div className="p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-white font-semibold">Comments ({videoSocial.totalComments})</h4>
-                  <button
-                    onClick={() => setShowComments(false)}
-                    className="text-white/60 hover:text-white"
-                  >
-                    ✕
-                  </button>
+          {/* ── Comments drawer ───────────────────────────────────────── */}
+          <AnimatePresence>
+            {showComments && (
+              <motion.div
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                className="absolute inset-x-0 bottom-0 z-30 rounded-t-2xl border-t border-white/10 bg-black/90 backdrop-blur-xl"
+                style={{ maxHeight: "55vh" }}
+              >
+                <div className="flex h-1 w-12 rounded-full bg-white/20 mx-auto mt-3" />
+                <div className="flex items-center justify-between px-4 py-3">
+                  <h4 className="font-semibold text-white">Comments ({commentCount})</h4>
+                  <button onClick={() => setShowComments(false)} className="text-white/50 hover:text-white">✕</button>
                 </div>
-                
-                {/* Add Comment */}
-                <div className="flex gap-2">
+                <div className="overflow-y-auto px-4 pb-2 space-y-2" style={{ maxHeight: "calc(55vh - 120px)" }}>
+                  {videoSocial.comments.map((c) => (
+                    <div key={c.id} className="rounded-xl bg-white/5 px-3 py-2">
+                      <p className="text-sm text-white/90">{c.text}</p>
+                      <p className="mt-1 text-[10px] text-white/40">
+                        {c.userId === "current-user" ? "You" : "Member"} · {new Date(c.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </p>
+                    </div>
+                  ))}
+                  {videoSocial.comments.length === 0 && (
+                    <p className="py-6 text-center text-sm text-white/40">No comments yet.</p>
+                  )}
+                </div>
+                <div className="flex gap-2 border-t border-white/10 px-4 py-3">
                   <input
                     value={commentInput}
                     onChange={(e) => setCommentInput(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey && commentInput.trim()) {
-                        e.preventDefault();
-                        if (videoSocial.posts.length > 0) {
-                          videoSocial.addComment(videoSocial.posts[0].id, commentInput.trim());
-                          setCommentInput("");
-                        }
+                      if (e.key === "Enter" && commentInput.trim() && videoSocial.posts.length > 0) {
+                        videoSocial.addComment(videoSocial.posts[0].id, commentInput.trim());
+                        setCommentInput("");
                       }
                     }}
-                    placeholder="Add a comment..."
-                    className="flex-1 bg-white/10 text-white placeholder-white/50 px-3 py-2 rounded-lg text-sm border border-white/20 focus:border-white/40 focus:outline-none"
+                    placeholder="Add a comment…"
+                    className="flex-1 rounded-full bg-white/10 px-4 py-2 text-sm text-white placeholder-white/40 outline-none focus:bg-white/15"
                   />
                   <button
+                    type="button"
                     onClick={() => {
                       if (commentInput.trim() && videoSocial.posts.length > 0) {
                         videoSocial.addComment(videoSocial.posts[0].id, commentInput.trim());
                         setCommentInput("");
                       }
                     }}
-                    className="bg-primary px-4 py-2 rounded-lg text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity"
+                    className="rounded-full bg-cyan-500 p-2 text-black"
                   >
-                    Post
+                    <Send className="h-4 w-4" />
                   </button>
                 </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-                {/* Comments List */}
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {videoSocial.comments.map((comment) => (
-                    <div key={comment.id} className="bg-white/5 rounded-lg p-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1">
-                          <p className="text-white/90 text-sm">{comment.text}</p>
-                          <p className="text-white/50 text-xs mt-1">
-                            {comment.userId === "current-user" ? "You" : "User"} · 
-                            {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  {videoSocial.comments.length === 0 && (
-                    <p className="text-white/40 text-center py-4">No comments yet. Be the first!</p>
-                  )}
-                </div>
-              </div>
+          {/* ── Progress bar ──────────────────────────────────────────── */}
+          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white/10">
+            <div
+              className="h-full bg-gradient-to-r from-cyan-400 to-violet-500 transition-all duration-300"
+              style={{ width: `${((currentIndex + 1) / Math.max(videos.length, 1)) * 100}%` }}
+            />
+          </div>
+
+          {/* ── Status toasts ─────────────────────────────────────────── */}
+          {isLoading && (
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-xs text-white/60 backdrop-blur">
+              {isLoading ? "Buffering…" : "Loading next batch"}
+            </div>
+          )}
+          {error && (
+            <div className="absolute left-1/2 top-20 -translate-x-1/2 rounded-md bg-red-500/20 px-3 py-2 text-xs text-red-200 backdrop-blur">
+              {error}
             </div>
           )}
         </motion.div>
