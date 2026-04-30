@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { VideoPlayer } from "@/components/nexus/VideoPlayer";
 import { useVideoDiscovery } from "@/hooks/use-video-discovery";
-import { useVideoSocial } from "@/hooks/use-video-social";
+import { useVideoSocial, type VideoComment } from "@/hooks/use-video-social";
 
 /** Mood/intent filter — mirrors the blueprint's Intent-First Feed */
 const MOODS = [
@@ -45,13 +45,6 @@ export function VideoFeed() {
   const currentAspectRatio = currentVideo ? (aspectRatioById[currentVideo.id] ?? null) : null;
 
   const videoSocial = useVideoSocial(currentVideo?.id ?? "");
-
-  // Auto-create a post entry for like/comment data
-  useEffect(() => {
-    if (currentVideo && videoSocial.posts.length === 0 && !videoSocial.loading) {
-      videoSocial.createPost(`${currentVideo.title}`).catch(() => null);
-    }
-  }, [currentVideo?.id]);
 
   const goToIndex = (next: number) => {
     if (!videos.length) return;
@@ -120,9 +113,7 @@ export function VideoFeed() {
     );
   }
 
-  const liked = videoSocial.posts.length > 0 && videoSocial.posts[0].liked;
-  const likeCount = videoSocial.totalLikes;
-  const commentCount = videoSocial.totalComments;
+  const { liked, likeCount, commentCount } = videoSocial;
 
   return (
     <div
@@ -299,7 +290,7 @@ export function VideoFeed() {
             {/* Like */}
             <button
               type="button"
-              onClick={() => videoSocial.posts.length > 0 && videoSocial.toggleLike(videoSocial.posts[0])}
+              onClick={() => videoSocial.toggleLike()}
               className="flex flex-col items-center gap-1 group"
             >
               <motion.div whileTap={{ scale: 1.4 }} className="rounded-full bg-black/30 p-2 backdrop-blur">
@@ -419,12 +410,21 @@ export function VideoFeed() {
                   <button onClick={() => setShowComments(false)} className="text-white/50 hover:text-white">✕</button>
                 </div>
                 <div className="overflow-y-auto px-4 pb-2 space-y-2" style={{ maxHeight: "calc(55vh - 120px)" }}>
-                  {videoSocial.comments.map((c) => (
-                    <div key={c.id} className="rounded-xl bg-white/5 px-3 py-2">
+                  {videoSocial.comments.map((c: VideoComment) => (
+                    <div key={c.id} className="rounded-xl bg-white/5 px-3 py-2 group/comment">
                       <p className="text-sm text-white/90">{c.text}</p>
-                      <p className="mt-1 text-[10px] text-white/40">
-                        {c.userId === "current-user" ? "You" : "Member"} · {new Date(c.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                      </p>
+                      <div className="mt-1 flex items-center justify-between">
+                        <p className="text-[10px] text-white/40">
+                          {videoSocial.isLoggedIn && c.userId === videoSocial.anchor?.id ? "You" : "Member"} · {new Date(c.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        </p>
+                        {videoSocial.isLoggedIn && (
+                          <button
+                            type="button"
+                            onClick={() => videoSocial.deleteComment(c.id)}
+                            className="opacity-0 group-hover/comment:opacity-100 text-[10px] text-white/30 hover:text-red-400 transition-all"
+                          >delete</button>
+                        )}
+                      </div>
                     </div>
                   ))}
                   {videoSocial.comments.length === 0 && (
@@ -436,23 +436,25 @@ export function VideoFeed() {
                     value={commentInput}
                     onChange={(e) => setCommentInput(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" && commentInput.trim() && videoSocial.posts.length > 0) {
-                        videoSocial.addComment(videoSocial.posts[0].id, commentInput.trim());
+                      if (e.key === "Enter" && commentInput.trim()) {
+                        void videoSocial.addComment(commentInput.trim());
                         setCommentInput("");
                       }
                     }}
-                    placeholder="Add a comment…"
-                    className="flex-1 rounded-full bg-white/10 px-4 py-2 text-sm text-white placeholder-white/40 outline-none focus:bg-white/15"
+                    placeholder={videoSocial.isLoggedIn ? "Add a comment…" : "Sign in to comment"}
+                    disabled={!videoSocial.isLoggedIn}
+                    className="flex-1 rounded-full bg-white/10 px-4 py-2 text-sm text-white placeholder-white/40 outline-none focus:bg-white/15 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                   <button
                     type="button"
+                    disabled={!videoSocial.isLoggedIn || !commentInput.trim()}
                     onClick={() => {
-                      if (commentInput.trim() && videoSocial.posts.length > 0) {
-                        videoSocial.addComment(videoSocial.posts[0].id, commentInput.trim());
+                      if (commentInput.trim()) {
+                        void videoSocial.addComment(commentInput.trim());
                         setCommentInput("");
                       }
                     }}
-                    className="rounded-full bg-cyan-500 p-2 text-black"
+                    className="rounded-full bg-cyan-500 p-2 text-black disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <Send className="h-4 w-4" />
                   </button>

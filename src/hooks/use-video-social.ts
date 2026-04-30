@@ -1,19 +1,28 @@
-import { useEffect, useState } from "react";
+/**
+ * use-video-social.ts
+ *
+ * Manages likes, comments, and counts for a single video identified by its
+ * public_videos.id.  Works correctly for:
+ *   - Unauthenticated visitors (read-only counts are shown)
+ *   - Authenticated users (like / comment / delete)
+ *
+ * Design: one `social_posts` row acts as the "social anchor" for each video.
+ *   row.text  = `video:${videoId}`   (stable, never changes)
+ *   row.likes_count  = canonical like count (kept in sync via DB trigger or
+ *                       optimistic update)
+ *
+ * The anchor row is created lazily the first time an authenticated user
+ * interacts with a video, so there is no "create post on mount" side-effect.
+ */
+
+import { useEffect, useRef, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 
-type VideoPost = {
-  id: string;
-  videoId: string;
-  userId: string;
-  text: string;
-  likes: number;
-  liked: boolean;
-  createdAt: string;
-};
+// ── Types ─────────────────────────────────────────────────────────────────
 
-type VideoComment = {
+export type VideoComment = {
   id: string;
   postId: string;
   userId: string;
@@ -21,347 +30,341 @@ type VideoComment = {
   createdAt: string;
 };
 
+type SocialAnchor = {
+  id: string;        // social_posts.id
+  likes: number;
+  liked: boolean;    // whether current user has liked
+};
+
+// ── Hook ──────────────────────────────────────────────────────────────────
+
 export function useVideoSocial(videoId: string) {
   const { user } = useAuth();
-  const [posts, setPosts] = useState<VideoPost[]>([]);
-  const [comments, setComments] = useState<VideoComment[]>([]);
-  const [likedPostIds, setLikedPostIds] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  // Load posts and comments for this video
+  const [anchor, setAnchor] = useState<SocialAnchor | null>(null);
+  const [comments, setComments] = useState<VideoComment[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Stable ref so real-time callbacks can access latest anchor without
+  // re-subscribing every time it changes.
+  const anchorRef = useRef<SocialAnchor | null>(null);
+  useEffect(() => { anchorRef.current = anchor; }, [anchor]);
+
+  // ── Load anchor + comments ──────────────────────────────────────────────
   useEffect(() => {
     if (!videoId) return;
-    
-    const loadData = async () => {
+
+    let cancelled = false;
+
+    async function load() {
       setLoading(true);
       try {
-        // Use existing social_posts table with video association in text
-        const [postsRes, commentsRes, likesRes] = await Promise.all([
-          supabase
-            .from("social_posts")
-            .select("id, user_id, text, likes_count, created_at")
-            .like("text", `video:${videoId}:%`)
-            .order("created_at", { ascending: false }),
-          supabase
-            .from("social_comments")
-            .select("id, post_id, user_id, text, created_at")
-            .in("post_id", (await supabase
-              .from("social_posts")
-              .select("id")
-              .like("text", `video:${videoId}:%`)).data?.map(p => p.id) || [])
-            .order("created_at", { ascending: true }),
-          user ? supabase
+        // 1. Find the anchor post for this video
+        const { data: postRows, error: postErr } = await supabase
+          .from("social_posts")
+          .select("id, likes_count")
+          .eq("text", `video:${videoId}`)
+          .limit(1);
+
+        if (postErr) throw postErr;
+        if (cancelled) return;
+
+        const postRow = postRows?.[0] ?? null;
+        const postId = postRow?.id ?? null;
+
+        // 2. Check whether current user has liked (only if logged in and anchor exists)
+        let liked = false;
+        if (user && postId) {
+          const { data: likeRow } = await supabase
             .from("social_post_likes")
             .select("post_id")
-            .eq("user_id", user.id) : { data: [], error: null }
-        ]);
-
-        if (postsRes.error) throw postsRes.error;
-        if (commentsRes.error) throw commentsRes.error;
-        if (likesRes.error) throw likesRes.error;
-
-        const postsData = (postsRes.data || []).map(p => {
-          // Extract actual text from video:videoId:text format
-          const textParts = p.text.split(':', 3);
-          const actualText = textParts.length >= 3 ? textParts[2] : p.text;
-          
-          return {
-            id: p.id,
-            videoId: videoId,
-            userId: p.user_id,
-            text: actualText,
-            likes: p.likes_count,
-            liked: false,
-            createdAt: p.created_at
-          };
-        });
-
-        const likes = (likesRes.data || []).map((l: { post_id: string }) => l.post_id);
-        
-        setPosts(postsData.map(p => ({
-          ...p,
-          liked: likes.includes(p.id)
-        })));
-        setComments((commentsRes.data || []).map(c => ({
-          id: c.id,
-          postId: c.post_id,
-          userId: c.user_id,
-          text: c.text,
-          createdAt: c.created_at
-        })));
-        setLikedPostIds(likes);
-      } catch (error) {
-        console.error("Error loading video social data:", error);
-        toast.error("Failed to load social features");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, [videoId, user]);
-
-  // Real-time subscriptions
-  useEffect(() => {
-    if (!user || !videoId) return;
-
-    const postsChannel = supabase
-      .channel(`video-posts-${videoId}`)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "social_posts" },
-        (payload) => {
-          const newPost = payload.new as any;
-          // Check if this post belongs to this video
-          if (newPost.text && newPost.text.startsWith(`video:${videoId}:`)) {
-            const textParts = newPost.text.split(':', 3);
-            const actualText = textParts.length >= 3 ? textParts[2] : newPost.text;
-            
-            setPosts(prev => [
-              {
-                id: newPost.id,
-                videoId: videoId,
-                userId: newPost.user_id,
-                text: actualText,
-                likes: newPost.likes_count,
-                liked: false,
-                createdAt: newPost.created_at
-              },
-              ...prev
-            ]);
-          }
+            .eq("post_id", postId)
+            .eq("user_id", user.id)
+            .maybeSingle();
+          liked = !!likeRow;
         }
-      )
+
+        if (cancelled) return;
+
+        setAnchor(postId
+          ? { id: postId, likes: postRow!.likes_count, liked }
+          : null
+        );
+
+        // 3. Load comments only if anchor exists
+        if (postId) {
+          const { data: commentRows, error: commentErr } = await supabase
+            .from("social_comments")
+            .select("id, post_id, user_id, text, created_at")
+            .eq("post_id", postId)
+            .order("created_at", { ascending: true });
+
+          if (commentErr) throw commentErr;
+          if (cancelled) return;
+
+          setComments(
+            (commentRows ?? []).map((c) => ({
+              id: c.id,
+              postId: c.post_id,
+              userId: c.user_id,
+              text: c.text,
+              createdAt: c.created_at,
+            }))
+          );
+        } else {
+          setComments([]);
+        }
+      } catch (err) {
+        console.error("[use-video-social] load error:", err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    load();
+    return () => { cancelled = true; };
+  }, [videoId, user?.id]);
+
+  // ── Real-time subscriptions ─────────────────────────────────────────────
+  useEffect(() => {
+    if (!videoId) return;
+
+    // Subscribe to like-count changes on the anchor post
+    const postsSub = supabase
+      .channel(`vsocial-posts-${videoId}`)
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "social_posts" },
         (payload) => {
-          const updated = payload.new as any;
-          const postExists = posts.some(p => p.id === updated.id);
-          if (!postExists) return;
-          
-          // Check if this post belongs to this video
-          if (updated.text && updated.text.startsWith(`video:${videoId}:`)) {
-            const textParts = updated.text.split(':', 3);
-            const actualText = textParts.length >= 3 ? textParts[2] : updated.text;
-            
-            setPosts(prev => prev.map(p => 
-              p.id === updated.id 
-                ? { ...p, likes: updated.likes_count, text: actualText }
-                : p
-            ));
-          }
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "DELETE", schema: "public", table: "social_posts" },
-        (payload) => {
-          const deletedId = payload.old?.id;
-          if (deletedId) {
-            setPosts(prev => prev.filter(p => p.id !== deletedId));
-            setComments(prev => prev.filter(c => c.postId !== deletedId));
-            setLikedPostIds(prev => prev.filter(id => id !== deletedId));
-          }
+          const updated = payload.new as { id: string; likes_count: number };
+          if (anchorRef.current?.id !== updated.id) return;
+          setAnchor((prev) =>
+            prev ? { ...prev, likes: updated.likes_count } : prev
+          );
         }
       )
       .subscribe();
 
-    const commentsChannel = supabase
-      .channel(`video-comments-${videoId}`)
+    // Subscribe to new comments on this video's anchor
+    const commentsSub = supabase
+      .channel(`vsocial-comments-${videoId}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "social_comments" },
         (payload) => {
-          const newComment = payload.new as any;
-          // Check if this comment belongs to a post in this video
-          const postExists = posts.some(p => p.id === newComment.post_id);
-          if (postExists) {
-            setComments(prev => [
-              {
-                id: newComment.id,
-                postId: newComment.post_id,
-                userId: newComment.user_id,
-                text: newComment.text,
-                createdAt: newComment.created_at
-              },
-              ...prev
-            ]);
-          }
+          const c = payload.new as {
+            id: string; post_id: string; user_id: string; text: string; created_at: string;
+          };
+          if (c.post_id !== anchorRef.current?.id) return;
+          setComments((prev) => {
+            if (prev.some((x) => x.id === c.id)) return prev;
+            return [
+              ...prev,
+              { id: c.id, postId: c.post_id, userId: c.user_id, text: c.text, createdAt: c.created_at },
+            ];
+          });
         }
       )
-      .subscribe();
-
-    const likesChannel = supabase
-      .channel(`video-likes-${videoId}-${user.id}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "social_post_likes", filter: `user_id=eq.${user.id}` },
+        { event: "DELETE", schema: "public", table: "social_comments" },
         (payload) => {
-          const postId = (payload.new as any)?.post_id || (payload.old as any)?.post_id;
-          if (!postId) return;
-
-          const postExists = posts.some(p => p.id === postId);
-          if (!postExists) return;
-
-          if (payload.eventType === "INSERT") {
-            setLikedPostIds(prev => [...prev, postId]);
-            setPosts(prev => prev.map(p => 
-              p.id === postId ? { ...p, liked: true, likes: p.likes + 1 } : p
-            ));
-          } else if (payload.eventType === "DELETE") {
-            setLikedPostIds(prev => prev.filter(id => id !== postId));
-            setPosts(prev => prev.map(p => 
-              p.id === postId ? { ...p, liked: false, likes: Math.max(0, p.likes - 1) } : p
-            ));
-          }
+          const deletedId = (payload.old as { id: string })?.id;
+          if (deletedId) setComments((prev) => prev.filter((c) => c.id !== deletedId));
         }
       )
       .subscribe();
 
     return () => {
-      postsChannel.unsubscribe();
-      commentsChannel.unsubscribe();
-      likesChannel.unsubscribe();
+      postsSub.unsubscribe();
+      commentsSub.unsubscribe();
     };
-  }, [videoId, user, posts]);
+  }, [videoId]);
 
-  const createPost = async (text: string) => {
-    if (!user || !videoId) return;
-    
-    // Format: video:videoId:text
-    const formattedText = `video:${videoId}:${text}`;
-    
+  // ── Helpers ────────────────────────────────────────────────────────────
+
+  /**
+   * Ensures the social anchor post exists, creating it if needed.
+   * Returns the anchor's post ID, or null on failure.
+   */
+  const ensureAnchor = useCallback(async (): Promise<string | null> => {
+    if (!user) {
+      toast.error("Sign in to interact");
+      return null;
+    }
+
+    if (anchorRef.current) return anchorRef.current.id;
+
+    // Create the anchor post (upsert to handle race conditions)
     const { data, error } = await supabase
       .from("social_posts")
-      .insert({ user_id: user.id, text: formattedText })
-      .select("id, user_id, text, likes_count, created_at")
+      .upsert(
+        { user_id: user.id, text: `video:${videoId}`, likes_count: 0 },
+        { onConflict: "text", ignoreDuplicates: false }
+      )
+      .select("id, likes_count")
       .single();
 
     if (error || !data) {
-      toast.error("Failed to create post");
+      // If upsert failed because row already exists, fetch it
+      const { data: existing } = await supabase
+        .from("social_posts")
+        .select("id, likes_count")
+        .eq("text", `video:${videoId}`)
+        .single();
+
+      if (existing) {
+        const newAnchor = { id: existing.id, likes: existing.likes_count, liked: false };
+        setAnchor(newAnchor);
+        anchorRef.current = newAnchor;
+        return existing.id;
+      }
+
+      console.error("[use-video-social] ensureAnchor error:", error);
+      return null;
+    }
+
+    const newAnchor = { id: data.id, likes: data.likes_count, liked: false };
+    setAnchor(newAnchor);
+    anchorRef.current = newAnchor;
+    return data.id;
+  }, [user, videoId]);
+
+  // ── Public actions ─────────────────────────────────────────────────────
+
+  const toggleLike = useCallback(async () => {
+    if (!user) {
+      toast.error("Sign in to like videos");
       return;
     }
 
-    toast.success("Post published");
-    return data;
-  };
+    const postId = await ensureAnchor();
+    if (!postId) return;
 
-  const toggleLike = async (post: VideoPost) => {
-    if (!user) return;
+    const isLiked = anchorRef.current?.liked ?? false;
 
-    if (post.liked) {
-      // Unlike
-      setLikedPostIds(prev => prev.filter(id => id !== post.id));
-      setPosts(prev => prev.map(p => 
-        p.id === post.id ? { ...p, liked: false, likes: Math.max(0, p.likes - 1) } : p
-      ));
+    // Optimistic update
+    setAnchor((prev) =>
+      prev
+        ? {
+            ...prev,
+            liked: !isLiked,
+            likes: isLiked ? Math.max(0, prev.likes - 1) : prev.likes + 1,
+          }
+        : prev
+    );
 
+    if (isLiked) {
       const { error } = await supabase
         .from("social_post_likes")
         .delete()
-        .eq("post_id", post.id)
+        .eq("post_id", postId)
         .eq("user_id", user.id);
 
       if (error) {
-        // Revert on error
-        setLikedPostIds(prev => [...prev, post.id]);
-        setPosts(prev => prev.map(p => 
-          p.id === post.id ? { ...p, liked: true, likes: p.likes + 1 } : p
-        ));
+        // Revert
+        setAnchor((prev) =>
+          prev ? { ...prev, liked: true, likes: prev.likes + 1 } : prev
+        );
         toast.error("Could not unlike");
       }
     } else {
-      // Like
-      setLikedPostIds(prev => [...prev, post.id]);
-      setPosts(prev => prev.map(p => 
-        p.id === post.id ? { ...p, liked: true, likes: p.likes + 1 } : p
-      ));
-
       const { error } = await supabase
         .from("social_post_likes")
-        .insert({ post_id: post.id, user_id: user.id });
+        .insert({ post_id: postId, user_id: user.id });
 
       if (error && error.code !== "23505") {
-        // Revert on error (except duplicate key)
-        setLikedPostIds(prev => prev.filter(id => id !== post.id));
-        setPosts(prev => prev.map(p => 
-          p.id === post.id ? { ...p, liked: false, likes: Math.max(0, p.likes - 1) } : p
-        ));
+        // Revert (ignore duplicate-key: means it's already liked)
+        setAnchor((prev) =>
+          prev ? { ...prev, liked: false, likes: Math.max(0, prev.likes - 1) } : prev
+        );
         toast.error("Could not like");
       }
     }
-  };
+  }, [user, ensureAnchor]);
 
-  const addComment = async (postId: string, text: string) => {
-    if (!user) return;
+  const addComment = useCallback(
+    async (text: string) => {
+      if (!user) {
+        toast.error("Sign in to comment");
+        return;
+      }
+      if (!text.trim()) return;
 
-    const { data, error } = await supabase
-      .from("social_comments")
-      .insert({ post_id: postId, user_id: user.id, text })
-      .select("id, post_id, user_id, text, created_at")
-      .single();
+      const postId = await ensureAnchor();
+      if (!postId) return;
 
-    if (error || !data) {
-      toast.error("Could not add comment");
-      return;
-    }
+      // Optimistic update
+      const tempId = `temp-${Date.now()}`;
+      const optimistic: VideoComment = {
+        id: tempId,
+        postId,
+        userId: user.id,
+        text: text.trim(),
+        createdAt: new Date().toISOString(),
+      };
+      setComments((prev) => [...prev, optimistic]);
 
-    toast.success("Comment added");
-    return data;
-  };
+      const { data, error } = await supabase
+        .from("social_comments")
+        .insert({ post_id: postId, user_id: user.id, text: text.trim() })
+        .select("id, post_id, user_id, text, created_at")
+        .single();
 
-  const deletePost = async (post: VideoPost) => {
-    if (!user || post.userId !== user.id) return;
+      if (error || !data) {
+        // Revert
+        setComments((prev) => prev.filter((c) => c.id !== tempId));
+        toast.error("Could not post comment");
+        return;
+      }
 
-    const { error } = await supabase
-      .from("social_posts")
-      .delete()
-      .eq("id", post.id)
-      .eq("user_id", user.id);
+      // Replace temp with real row
+      setComments((prev) =>
+        prev.map((c) =>
+          c.id === tempId
+            ? { id: data.id, postId: data.post_id, userId: data.user_id, text: data.text, createdAt: data.created_at }
+            : c
+        )
+      );
+    },
+    [user, ensureAnchor]
+  );
 
-    if (error) {
-      toast.error("Could not delete post");
-      return;
-    }
+  const deleteComment = useCallback(
+    async (commentId: string) => {
+      if (!user) return;
 
-    toast.success("Post deleted");
-  };
+      setComments((prev) => prev.filter((c) => c.id !== commentId));
 
-  const deleteComment = async (comment: VideoComment) => {
-    if (!user || comment.userId !== user.id) return;
+      const { error } = await supabase
+        .from("social_comments")
+        .delete()
+        .eq("id", commentId)
+        .eq("user_id", user.id);
 
-    const { error } = await supabase
-      .from("social_comments")
-      .delete()
-      .eq("id", comment.id)
-      .eq("user_id", user.id);
+      if (error) {
+        toast.error("Could not delete comment");
+        // Reload to restore
+      }
+    },
+    [user]
+  );
 
-    if (error) {
-      toast.error("Could not delete comment");
-      return;
-    }
-
-    toast.success("Comment deleted");
-  };
-
-  // Get aggregated stats for the video
-  const totalLikes = posts.reduce((sum, post) => sum + post.likes, 0);
-  const totalComments = comments.length;
-  const totalPosts = posts.length;
+  // ── Derived values ─────────────────────────────────────────────────────
 
   return {
-    posts,
+    // State
+    anchor,
     comments,
-    likedPostIds,
     loading,
-    totalLikes,
-    totalComments,
-    totalPosts,
-    createPost,
+    // Derived
+    liked: anchor?.liked ?? false,
+    likeCount: anchor?.likes ?? 0,
+    commentCount: comments.length,
+    isLoggedIn: !!user,
+    // Actions
     toggleLike,
     addComment,
-    deletePost,
-    deleteComment
+    deleteComment,
   };
 }
