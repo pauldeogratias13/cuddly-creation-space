@@ -49,14 +49,11 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
-      - name: Deploy to Vercel
-        uses: vercel/vercel-action@v20
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
-          working-directory: apps/web
+      - name: Build complete - Ready for Lovable deployment
+        run: |
+          echo "✅ Web app built successfully!"
+          echo "🚀 Ready for manual deployment to Lovable.dev"
+          echo "📱 Mobile builds will continue..."
 
   build-android:
     name: Build Android
