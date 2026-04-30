@@ -1,7 +1,7 @@
 import { View, Text, FlatList, TouchableOpacity, Image, ScrollView } from "react-native";
 import { useState, useEffect, useCallback } from "react";
 import type { ComponentProps } from "react";
-import { useAuth, type Notification } from "@nexus/shared";
+import { useAuth, type Json, type Notification } from "@nexus/shared";
 import { NotificationService, NotificationHandlers } from "@nexus/shared";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -98,7 +98,9 @@ export default function NotificationsScreen() {
   };
 
   const getStringDataValue = (notification: Notification, key: NotificationRouteKey) => {
-    const value = notification.data?.[key];
+    const data = notification.data;
+    if (!data || typeof data !== "object" || Array.isArray(data)) return null;
+    const value = (data as Record<string, Json | undefined>)[key];
     return typeof value === "string" ? value : null;
   };
 
@@ -158,6 +160,7 @@ export default function NotificationsScreen() {
       like: "heart",
       comment: "chatbubble",
       follow: "person-add",
+      message: "chatbubble",
       mention: "at",
       chat_message: "chatbubble",
       post_shared: "share",
@@ -175,6 +178,7 @@ export default function NotificationsScreen() {
       like: "#EF4444",
       comment: "#3B82F6",
       follow: "#10B981",
+      message: "#F59E0B",
       mention: "#8B5CF6",
       chat_message: "#F59E0B",
       post_shared: "#6366F1",

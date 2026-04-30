@@ -8,6 +8,7 @@
     },
     "allowJs": true,
     "jsx": "react-native",
+    "types": [],
     "noEmit": true
   },
   "include": [
@@ -18,8 +19,5 @@
   "exclude": [
     "node_modules",
     "expo-module"
-  ],
-  "references": [
-    { "path": "../../packages/shared" }
   ]
 }

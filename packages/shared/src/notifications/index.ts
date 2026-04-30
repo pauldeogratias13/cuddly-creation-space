@@ -130,7 +130,7 @@ export class NotificationService {
     }
   }
 
-  static async getNotifications(userId: string, limit = 20, offset = 0) {
+  static async getNotifications(userId: string, limit = 20, offset = 0): Promise<Notification[]> {
     try {
       const { data, error } = await supabase
         .from("notifications")
@@ -150,7 +150,7 @@ export class NotificationService {
         .range(offset, offset + limit - 1);
 
       if (error) throw error;
-      return data || [];
+      return (data || []) as unknown as Notification[];
     } catch (error) {
       console.error("Error fetching notifications:", error);
       throw error;

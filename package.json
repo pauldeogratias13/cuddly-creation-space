@@ -9,13 +9,14 @@
   ],
   "scripts": {
     "dev": "pnpm --filter web dev",
-    "build": "pnpm --filter shared build && pnpm --filter web build",
-    "build:mobile": "pnpm --filter shared build && pnpm --filter mobile build",
-    "build:all": "pnpm --filter shared build && pnpm --filter web build && pnpm --filter mobile build",
+    "build": "npm run build -w @nexus/shared && npm run build -w @nexus/web",
+    "build:mobile": "npm run build -w @nexus/shared && npm run build -w @nexus/mobile",
+    "build:all": "npm run build -w @nexus/shared && npm run build -w @nexus/web && npm run build -w @nexus/mobile",
     "preview": "pnpm --filter web preview",
     "lint": "pnpm -r lint",
     "format": "prettier --write .",
     "type-check": "pnpm -r type-check",
+    "test": "echo \"No tests configured\"",
     "clean": "pnpm -r clean"
   },
   "devDependencies": {

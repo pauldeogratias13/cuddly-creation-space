@@ -143,9 +143,9 @@ export default function ChatScreen() {
                   }`}
                 />
               ))}
-              {item.profiles?.length > 2 && (
+              {(item.profiles?.length ?? 0) > 2 && (
                 <View className="w-10 h-10 rounded-full bg-gray-300 border-2 border-white -ml-2 items-center justify-center">
-                  <Text className="text-xs text-gray-600">+{item.profiles.length - 2}</Text>
+                  <Text className="text-xs text-gray-600">+{(item.profiles?.length ?? 0) - 2}</Text>
                 </View>
               )}
             </View>

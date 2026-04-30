@@ -1,5 +1,4 @@
 import * as ImagePicker from "expo-image-picker";
-import * as Camera from "expo-camera";
 import * as FileSystem from "expo-file-system";
 import * as SecureStore from "expo-secure-store";
 import * as LocalAuthentication from "expo-local-authentication";
@@ -26,7 +25,7 @@ export class DeviceService {
   static async requestCameraPermissions() {
     if (Platform.OS === "web") return true;
 
-    const { status } = await Camera.requestCameraPermissionsAsync();
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
     return status === "granted";
   }
 
@@ -37,7 +36,7 @@ export class DeviceService {
     return status === "granted";
   }
 
-  static async takePhoto(options: ImagePicker.CameraOptions = {}) {
+  static async takePhoto(options: ImagePicker.ImagePickerOptions = {}) {
     const hasPermission = await this.requestCameraPermissions();
     if (!hasPermission) {
       throw new Error("Camera permission denied");
@@ -58,7 +57,7 @@ export class DeviceService {
     return result.assets[0];
   }
 
-  static async recordVideo(options: ImagePicker.CameraOptions = {}) {
+  static async recordVideo(options: ImagePicker.ImagePickerOptions = {}) {
     const hasPermission = await this.requestCameraPermissions();
     if (!hasPermission) {
       throw new Error("Camera permission denied");
@@ -68,7 +67,6 @@ export class DeviceService {
       mediaTypes: ImagePicker.MediaTypeOptions.Videos,
       allowsEditing: true,
       quality: 0.8,
-      maxDuration: 60, // 60 seconds max
       ...options,
     });
 
@@ -277,10 +275,7 @@ export class DeviceService {
 
     const isAvailable = await Sharing.isAvailableAsync();
     if (isAvailable) {
-      await Sharing.shareAsync(url, {
-        title,
-        message,
-      });
+      await Sharing.shareAsync(url);
     } else {
       // Fallback - copy to clipboard
       // TODO: Implement clipboard functionality

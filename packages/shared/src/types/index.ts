@@ -31,6 +31,7 @@ export interface Database {
           bio?: string | null;
           updated_at?: string;
         };
+        Relationships: [];
       };
       user_follows: {
         Row: {
@@ -51,6 +52,7 @@ export interface Database {
           following_id?: string;
           created_at?: string;
         };
+        Relationships: [];
       };
       public_videos: {
         Row: {
@@ -88,6 +90,7 @@ export interface Database {
           user_id?: string | null;
           updated_at?: string;
         };
+        Relationships: [];
       };
       social_posts: {
         Row: {
@@ -113,6 +116,7 @@ export interface Database {
           likes_count?: number;
           updated_at?: string;
         };
+        Relationships: [];
       };
       social_post_likes: {
         Row: {
@@ -133,6 +137,7 @@ export interface Database {
           user_id?: string;
           created_at?: string;
         };
+        Relationships: [];
       };
       social_comments: {
         Row: {
@@ -158,6 +163,7 @@ export interface Database {
           content?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       chat_threads: {
         Row: {
@@ -183,6 +189,7 @@ export interface Database {
           created_by?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       chat_messages: {
         Row: {
@@ -214,6 +221,7 @@ export interface Database {
           file_url?: string | null;
           updated_at?: string;
         };
+        Relationships: [];
       };
       notifications: {
         Row: {
@@ -285,6 +293,30 @@ export interface Database {
           is_read?: boolean;
           created_at?: string;
         };
+        Relationships: [];
+      };
+      user_devices: {
+        Row: {
+          id: string;
+          user_id: string;
+          device_token: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          device_token: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          device_token?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
       };
       commerce_orders: {
         Row: {
@@ -319,6 +351,7 @@ export interface Database {
           shipping_address?: Json;
           updated_at?: string;
         };
+        Relationships: [];
       };
       commerce_cart: {
         Row: {
@@ -347,8 +380,10 @@ export interface Database {
           price?: number;
           updated_at?: string;
         };
+        Relationships: [];
       };
     };
+    Views: Record<string, never>;
     Functions: {
       get_creator_stats: {
         Args: {
@@ -362,6 +397,8 @@ export interface Database {
         };
       };
     };
+    Enums: Record<string, never>;
+    CompositeTypes: Record<string, never>;
   };
 }
 
@@ -414,6 +451,7 @@ export interface Video {
 
 export interface SocialPost {
   id: string;
+  user_id: string;
   text: string;
   likes_count: number;
   created_at: string;

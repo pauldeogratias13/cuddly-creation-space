@@ -298,7 +298,7 @@ export const getNotifications = async (userId: string, limit = 20, offset = 0) =
   const { data, error } = await supabase
     .from("notifications")
     .select("*")
-    .eq("user_id", userId)
+    .eq("recipient_id", userId)
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 
@@ -309,7 +309,7 @@ export const getNotifications = async (userId: string, limit = 20, offset = 0) =
 export const markNotificationAsRead = async (notificationId: string) => {
   const { data, error } = await supabase
     .from("notifications")
-    .update({ read: true })
+    .update({ is_read: true })
     .eq("id", notificationId)
     .select()
     .single();
@@ -322,8 +322,8 @@ export const getUnreadNotificationCount = async (userId: string) => {
   const { data, error } = await supabase
     .from("notifications")
     .select("id", { count: "exact" })
-    .eq("user_id", userId)
-    .eq("read", false);
+    .eq("recipient_id", userId)
+    .eq("is_read", false);
 
   if (error) throw error;
   return data?.length || 0;
@@ -404,7 +404,7 @@ export const subscribeToNotifications = (
         event: "*",
         schema: "public",
         table: "notifications",
-        filter: `user_id=eq.${userId}`,
+        filter: `recipient_id=eq.${userId}`,
       },
       callback,
     )

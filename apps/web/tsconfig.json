@@ -2,11 +2,10 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src",
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@nexus/shared": ["../shared/src"]
+      "@nexus/shared": ["../../packages/shared/src"]
     },
     "types": ["vite/client"]
   },
@@ -18,7 +17,5 @@
     "dist",
     "node_modules"
   ],
-  "references": [
-    { "path": "../shared" }
-  ]
+  "references": []
 }

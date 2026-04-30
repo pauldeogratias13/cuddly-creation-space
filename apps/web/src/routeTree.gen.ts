@@ -15,8 +15,10 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppProfileRouteImport } from './routes/app.profile'
 import { Route as ApiVideosSearchRouteImport } from './routes/api.videos.search'
-import { Route as ApiPublicHooksSyncYoutubeRouteImport } from './routes/api/public/hooks/sync-youtube'
 import { Route as ApiPublicHooksTestVideosRouteImport } from './routes/api/public/hooks/test-videos'
+import { Route as ApiPublicHooksSyncYoutubeRouteImport } from './routes/api/public/hooks/sync-youtube'
+import { Route as ApiPublicHooksPurgeBrokenRouteImport } from './routes/api/public/hooks/purge-broken'
+import { Route as ApiPublicHooksCrawlAndSeedRouteImport } from './routes/api/public/hooks/crawl-and-seed'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -48,16 +50,28 @@ const ApiVideosSearchRoute = ApiVideosSearchRouteImport.update({
   path: '/api/videos/search',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksTestVideosRoute =
+  ApiPublicHooksTestVideosRouteImport.update({
+    id: '/api/public/hooks/test-videos',
+    path: '/api/public/hooks/test-videos',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksSyncYoutubeRoute =
   ApiPublicHooksSyncYoutubeRouteImport.update({
     id: '/api/public/hooks/sync-youtube',
     path: '/api/public/hooks/sync-youtube',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicHooksTestVideosRoute =
-  ApiPublicHooksTestVideosRouteImport.update({
-    id: '/api/public/hooks/test-videos',
-    path: '/api/public/hooks/test-videos',
+const ApiPublicHooksPurgeBrokenRoute =
+  ApiPublicHooksPurgeBrokenRouteImport.update({
+    id: '/api/public/hooks/purge-broken',
+    path: '/api/public/hooks/purge-broken',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksCrawlAndSeedRoute =
+  ApiPublicHooksCrawlAndSeedRouteImport.update({
+    id: '/api/public/hooks/crawl-and-seed',
+    path: '/api/public/hooks/crawl-and-seed',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -68,6 +82,8 @@ export interface FileRoutesByFullPath {
   '/app/profile': typeof AppProfileRoute
   '/app/': typeof AppIndexRoute
   '/api/videos/search': typeof ApiVideosSearchRoute
+  '/api/public/hooks/crawl-and-seed': typeof ApiPublicHooksCrawlAndSeedRoute
+  '/api/public/hooks/purge-broken': typeof ApiPublicHooksPurgeBrokenRoute
   '/api/public/hooks/sync-youtube': typeof ApiPublicHooksSyncYoutubeRoute
   '/api/public/hooks/test-videos': typeof ApiPublicHooksTestVideosRoute
 }
@@ -77,6 +93,8 @@ export interface FileRoutesByTo {
   '/app/profile': typeof AppProfileRoute
   '/app': typeof AppIndexRoute
   '/api/videos/search': typeof ApiVideosSearchRoute
+  '/api/public/hooks/crawl-and-seed': typeof ApiPublicHooksCrawlAndSeedRoute
+  '/api/public/hooks/purge-broken': typeof ApiPublicHooksPurgeBrokenRoute
   '/api/public/hooks/sync-youtube': typeof ApiPublicHooksSyncYoutubeRoute
   '/api/public/hooks/test-videos': typeof ApiPublicHooksTestVideosRoute
 }
@@ -88,6 +106,8 @@ export interface FileRoutesById {
   '/app/profile': typeof AppProfileRoute
   '/app/': typeof AppIndexRoute
   '/api/videos/search': typeof ApiVideosSearchRoute
+  '/api/public/hooks/crawl-and-seed': typeof ApiPublicHooksCrawlAndSeedRoute
+  '/api/public/hooks/purge-broken': typeof ApiPublicHooksPurgeBrokenRoute
   '/api/public/hooks/sync-youtube': typeof ApiPublicHooksSyncYoutubeRoute
   '/api/public/hooks/test-videos': typeof ApiPublicHooksTestVideosRoute
 }
@@ -100,6 +120,8 @@ export interface FileRouteTypes {
     | '/app/profile'
     | '/app/'
     | '/api/videos/search'
+    | '/api/public/hooks/crawl-and-seed'
+    | '/api/public/hooks/purge-broken'
     | '/api/public/hooks/sync-youtube'
     | '/api/public/hooks/test-videos'
   fileRoutesByTo: FileRoutesByTo
@@ -109,6 +131,8 @@ export interface FileRouteTypes {
     | '/app/profile'
     | '/app'
     | '/api/videos/search'
+    | '/api/public/hooks/crawl-and-seed'
+    | '/api/public/hooks/purge-broken'
     | '/api/public/hooks/sync-youtube'
     | '/api/public/hooks/test-videos'
   id:
@@ -119,6 +143,8 @@ export interface FileRouteTypes {
     | '/app/profile'
     | '/app/'
     | '/api/videos/search'
+    | '/api/public/hooks/crawl-and-seed'
+    | '/api/public/hooks/purge-broken'
     | '/api/public/hooks/sync-youtube'
     | '/api/public/hooks/test-videos'
   fileRoutesById: FileRoutesById
@@ -128,6 +154,8 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRoute
   ApiVideosSearchRoute: typeof ApiVideosSearchRoute
+  ApiPublicHooksCrawlAndSeedRoute: typeof ApiPublicHooksCrawlAndSeedRoute
+  ApiPublicHooksPurgeBrokenRoute: typeof ApiPublicHooksPurgeBrokenRoute
   ApiPublicHooksSyncYoutubeRoute: typeof ApiPublicHooksSyncYoutubeRoute
   ApiPublicHooksTestVideosRoute: typeof ApiPublicHooksTestVideosRoute
 }
@@ -176,6 +204,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiVideosSearchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/test-videos': {
+      id: '/api/public/hooks/test-videos'
+      path: '/api/public/hooks/test-videos'
+      fullPath: '/api/public/hooks/test-videos'
+      preLoaderRoute: typeof ApiPublicHooksTestVideosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/sync-youtube': {
       id: '/api/public/hooks/sync-youtube'
       path: '/api/public/hooks/sync-youtube'
@@ -183,11 +218,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksSyncYoutubeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/hooks/test-videos': {
-      id: '/api/public/hooks/test-videos'
-      path: '/api/public/hooks/test-videos'
-      fullPath: '/api/public/hooks/test-videos'
-      preLoaderRoute: typeof ApiPublicHooksTestVideosRouteImport
+    '/api/public/hooks/purge-broken': {
+      id: '/api/public/hooks/purge-broken'
+      path: '/api/public/hooks/purge-broken'
+      fullPath: '/api/public/hooks/purge-broken'
+      preLoaderRoute: typeof ApiPublicHooksPurgeBrokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/crawl-and-seed': {
+      id: '/api/public/hooks/crawl-and-seed'
+      path: '/api/public/hooks/crawl-and-seed'
+      fullPath: '/api/public/hooks/crawl-and-seed'
+      preLoaderRoute: typeof ApiPublicHooksCrawlAndSeedRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -210,18 +252,11 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRoute,
   ApiVideosSearchRoute: ApiVideosSearchRoute,
+  ApiPublicHooksCrawlAndSeedRoute: ApiPublicHooksCrawlAndSeedRoute,
+  ApiPublicHooksPurgeBrokenRoute: ApiPublicHooksPurgeBrokenRoute,
   ApiPublicHooksSyncYoutubeRoute: ApiPublicHooksSyncYoutubeRoute,
   ApiPublicHooksTestVideosRoute: ApiPublicHooksTestVideosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

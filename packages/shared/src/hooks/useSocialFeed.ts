@@ -21,12 +21,9 @@ export function useSocialFeed(initialLimit = 20) {
     data: posts = [],
     isLoading,
     error,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useQuery({
+  } = useQuery<SocialPost[]>({
     queryKey: ["social-posts", limit, offset],
-    queryFn: () => getSocialPosts(limit, offset),
+    queryFn: async () => (await getSocialPosts(limit, offset)) as unknown as SocialPost[],
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
@@ -89,17 +86,20 @@ export function useSocialFeed(initialLimit = 20) {
       if (post?.is_liked) {
         unlikeMutation.mutate({ postId, userId });
       } else {
-        likeMutation.mutate({ postId, userId });
+        likeMutation.mutate({
+          postId,
+          userId,
+          postAuthorId: post?.user_id ?? userId,
+          likerUsername: post?.profile?.username ?? "Someone",
+        });
       }
     },
     [posts, likeMutation, unlikeMutation],
   );
 
   const loadMore = useCallback(() => {
-    if (hasNextPage && !isFetchingNextPage) {
-      setOffset((prev) => prev + limit);
-    }
-  }, [hasNextPage, isFetchingNextPage, limit]);
+    setOffset((prev) => prev + limit);
+  }, [limit]);
 
   const refresh = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["social-posts"] });
@@ -109,8 +109,8 @@ export function useSocialFeed(initialLimit = 20) {
     posts,
     isLoading,
     error,
-    hasNextPage,
-    isFetchingNextPage,
+    hasNextPage: posts.length >= limit,
+    isFetchingNextPage: false,
     handleLike,
     loadMore,
     refresh,
@@ -175,8 +175,8 @@ export function useComments(postId: string) {
   });
 
   const handleAddComment = useCallback(
-    (content: string, userId: string) => {
-      addCommentMutation.mutate({ content, userId });
+    (content: string, userId: string, postAuthorId = userId, commenterUsername = "Someone") => {
+      addCommentMutation.mutate({ content, userId, postAuthorId, commenterUsername });
     },
     [addCommentMutation],
   );

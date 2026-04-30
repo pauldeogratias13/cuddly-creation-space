@@ -49,7 +49,10 @@ export default function HomeScreen() {
 
       {/* Video Preview */}
       {item.video && (
-        <TouchableOpacity onPress={() => router.push(`/video/${item.video.id}`)} className="mb-3">
+        <TouchableOpacity
+          onPress={() => item.video && router.push(`/video/${item.video.id}`)}
+          className="mb-3"
+        >
           <View className="relative">
             <Image
               source={{ uri: item.video.thumbnail_url || "https://via.placeholder.com/400x225" }}

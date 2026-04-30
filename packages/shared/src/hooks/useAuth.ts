@@ -1,13 +1,13 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { AuthChangeEvent, Session } from "@supabase/supabase-js";
 import { supabase, getCurrentUser, getProfile } from "../supabase";
-import type { Profile, AuthState } from "../types";
+import type { Database, Profile, AuthState } from "../types";
 
 interface AuthContextType extends AuthState {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, metadata: Record<string, unknown>) => Promise<void>;
   signOut: () => Promise<void>;
-  updateProfile: (updates: Partial<Profile>) => Promise<void>;
+  updateProfile: (updates: Database["public"]["Tables"]["profiles"]["Update"]) => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
 
@@ -99,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const updateProfile = async (updates: Partial<Profile>) => {
+  const updateProfile = async (updates: Database["public"]["Tables"]["profiles"]["Update"]) => {
     try {
       if (!state.user) throw new Error("No user logged in");
 
