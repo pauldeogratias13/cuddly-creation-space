@@ -275,17 +275,34 @@ export function SuperAppWorkspace({ name }: { name: string }) {
       setStreamPage(1);
       setStreamHasMore(true);
       try {
-        const params = new URLSearchParams({
-          q: streamSearch.trim(),
-          limit: "12",
-          page: "1",
-        });
-        const res = await fetch(`/api/videos/search?${params}`, { signal: ac.signal });
-        if (!res.ok) throw new Error(`Search failed (${res.status})`);
-        const data = (await res.json()) as { results: RemoteVideoHit[]; hasMore?: boolean };
-        const mapped = data.results.map(mapHit);
+        const needle = streamSearch.trim();
+        let q = supabase
+          .from("public_videos")
+          .select("id,title,description,author,provider,source_url,poster_url,page_url,kind,category,duration_label")
+          .eq("is_active", true)
+          .order("sort_order", { ascending: true })
+          .range(0, 11);
+        if (needle) {
+          q = q.or(
+            `title.ilike.%${needle}%,description.ilike.%${needle}%,category.ilike.%${needle}%,provider.ilike.%${needle}%`,
+          );
+        }
+        const { data: rows, error: dbErr } = await q;
+        if (dbErr) throw dbErr;
+        const mapped: StreamItem[] = (rows ?? []).map((row) => ({
+          id: row.id,
+          title: row.title,
+          description: row.description ?? "Curated public video.",
+          category: (row.category as StreamItem["category"]) ?? "Cinema",
+          duration: row.duration_label ?? "—",
+          kind: (row.kind as "native" | "youtube") ?? "native",
+          videoSources: [row.source_url],
+          poster: row.poster_url ?? "",
+          pageUrl: row.page_url ?? row.source_url,
+          provider: row.provider || "unknown",
+        }));
         setStreamLibrary(mapped.length ? mapped : seedStreamLibrary);
-        setStreamHasMore(Boolean(data.hasMore) && mapped.length > 0);
+        setStreamHasMore(mapped.length === 12);
       } catch (err) {
         if ((err as { name?: string }).name === "AbortError") return;
         setStreamSearchError(err instanceof Error ? err.message : "Search failed");
@@ -316,21 +333,39 @@ export function SuperAppWorkspace({ name }: { name: string }) {
         setStreamLoadingMore(true);
         const nextPage = streamPage + 1;
         try {
-          const params = new URLSearchParams({
-            q: streamSearch.trim(),
-            limit: "12",
-            page: String(nextPage),
-          });
-          const res = await fetch(`/api/videos/search?${params}`);
-          if (!res.ok) throw new Error(`Search failed (${res.status})`);
-          const data = (await res.json()) as { results: RemoteVideoHit[]; hasMore?: boolean };
-          const mapped = data.results.map(mapHit);
+          const needle = streamSearch.trim();
+          const from = (nextPage - 1) * 12;
+          let q = supabase
+            .from("public_videos")
+            .select("id,title,description,author,provider,source_url,poster_url,page_url,kind,category,duration_label")
+            .eq("is_active", true)
+            .order("sort_order", { ascending: true })
+            .range(from, from + 11);
+          if (needle) {
+            q = q.or(
+              `title.ilike.%${needle}%,description.ilike.%${needle}%,category.ilike.%${needle}%,provider.ilike.%${needle}%`,
+            );
+          }
+          const { data: rows, error: dbErr } = await q;
+          if (dbErr) throw dbErr;
+          const mapped: StreamItem[] = (rows ?? []).map((row) => ({
+            id: row.id,
+            title: row.title,
+            description: row.description ?? "Curated public video.",
+            category: (row.category as StreamItem["category"]) ?? "Cinema",
+            duration: row.duration_label ?? "—",
+            kind: (row.kind as "native" | "youtube") ?? "native",
+            videoSources: [row.source_url],
+            poster: row.poster_url ?? "",
+            pageUrl: row.page_url ?? row.source_url,
+            provider: row.provider || "unknown",
+          }));
           setStreamLibrary((prev) => {
             const seen = new Set(prev.map((s) => s.id));
             return [...prev, ...mapped.filter((m) => !seen.has(m.id))];
           });
           setStreamPage(nextPage);
-          setStreamHasMore(Boolean(data.hasMore) && mapped.length > 0);
+          setStreamHasMore(mapped.length === 12);
         } catch {
           setStreamHasMore(false);
         } finally {
