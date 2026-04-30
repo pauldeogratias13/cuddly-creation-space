@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export type VideoCategory = "Cinema" | "Series" | "Docs";
 
@@ -14,6 +15,8 @@ export interface DiscoveredVideo {
   durationLabel: string;
   category: VideoCategory;
   provider: string;
+  kind?: "native" | "youtube";
+  embedUrl?: string;
 }
 
 type ApiVideoHit = {
@@ -43,6 +46,7 @@ const FAST_SEED_VIDEOS: DiscoveredVideo[] = [
     durationLabel: "9m 56s",
     category: "Cinema",
     provider: "Google sample video",
+    kind: "native",
   },
   {
     id: "seed-tears",
@@ -177,27 +181,48 @@ export function useVideoDiscovery(options?: UseVideoDiscoveryOptions) {
 
       try {
         const nextPage = reset ? 1 : pageRef.current + 1;
-        const params = new URLSearchParams({
-          q: debouncedQuery,
-          limit: String(Math.max(batchSize * 2, 8)),
-          page: String(nextPage),
-        });
-        const response = await fetch(`/api/videos/search?${params}`);
-        if (!response.ok) {
-          throw new Error(`Video feed unavailable (${response.status})`);
+        const pageSize = Math.max(batchSize, 8);
+        const from = (nextPage - 1) * pageSize;
+        const to = from + pageSize - 1;
+
+        let dbQuery = supabase
+          .from("public_videos")
+          .select("id,title,description,author,provider,source_url,poster_url,page_url,kind,category,duration_label")
+          .eq("is_active", true)
+          .order("sort_order", { ascending: true })
+          .range(from, to);
+
+        const needle = debouncedQuery.trim();
+        if (needle && needle !== DEFAULT_DISCOVERY_QUERY) {
+          dbQuery = dbQuery.or(
+            `title.ilike.%${needle}%,description.ilike.%${needle}%,category.ilike.%${needle}%,provider.ilike.%${needle}%`,
+          );
         }
-        const payload = (await response.json()) as { results?: ApiVideoHit[]; hasMore?: boolean };
-        const remoteVideos = (payload.results ?? [])
-          .filter((item) => item.kind === "native")
-          .map(mapApiHit)
-          .slice(0, batchSize);
-        const seed = filterSeedVideos(debouncedQuery).slice(0, batchSize);
+
+        const { data, error: dbError } = await dbQuery;
+        if (dbError) throw dbError;
+
+        const dbVideos: DiscoveredVideo[] = (data ?? []).map((row) => ({
+          id: row.id,
+          title: row.title,
+          author: row.author ?? row.provider,
+          description: row.description ?? "",
+          poster: row.poster_url ?? "",
+          thumbnail: row.poster_url ?? "",
+          pageUrl: row.page_url ?? row.source_url,
+          sources: [row.source_url],
+          durationLabel: row.duration_label ?? "Live",
+          category: (row.category as VideoCategory) ?? inferCategory(row.title),
+          provider: row.provider,
+          kind: (row.kind as "native" | "youtube") ?? "native",
+          embedUrl: row.kind === "youtube" ? row.source_url : undefined,
+        }));
 
         if (requestId !== requestIdRef.current) return;
 
-        setVideos((prev) => dedupeVideos(reset ? [...seed, ...remoteVideos] : [...prev, ...remoteVideos]));
+        setVideos((prev) => dedupeVideos(reset ? dbVideos : [...prev, ...dbVideos]));
         setPage(nextPage);
-        setHasMore(Boolean(payload.hasMore) && remoteVideos.length > 0);
+        setHasMore(dbVideos.length === pageSize);
       } catch (err) {
         if (requestId !== requestIdRef.current) return;
         setVideos((prev) => (reset ? filterSeedVideos(debouncedQuery).slice(0, batchSize) : prev));
