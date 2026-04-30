@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export type VideoCategory = "Cinema" | "Series" | "Docs";
 
@@ -14,6 +15,8 @@ export interface DiscoveredVideo {
   durationLabel: string;
   category: VideoCategory;
   provider: string;
+  kind?: "native" | "youtube";
+  embedUrl?: string;
 }
 
 type ApiVideoHit = {
@@ -43,6 +46,7 @@ const FAST_SEED_VIDEOS: DiscoveredVideo[] = [
     durationLabel: "9m 56s",
     category: "Cinema",
     provider: "Google sample video",
+    kind: "native",
   },
   {
     id: "seed-tears",
