@@ -26,7 +26,10 @@ type VideoPlayerProps = {
 };
 
 /** Convert any YouTube URL variant → privacy-enhanced embed URL with params */
-function buildYouTubeEmbedSrc(raw: string, opts: { autoPlay: boolean; muted: boolean; loop: boolean }): string {
+function buildYouTubeEmbedSrc(
+  raw: string,
+  opts: { autoPlay: boolean; muted: boolean; loop: boolean },
+): string {
   try {
     const url = new URL(raw);
     let videoId: string | null = null;
@@ -37,7 +40,10 @@ function buildYouTubeEmbedSrc(raw: string, opts: { autoPlay: boolean; muted: boo
       videoId = url.pathname.replace("/", "").split("?")[0];
     } else if (url.hostname.includes("youtube.com") && url.pathname.startsWith("/embed/")) {
       videoId = url.pathname.replace("/embed/", "").split("?")[0];
-    } else if (url.hostname.includes("youtube-nocookie.com") && url.pathname.startsWith("/embed/")) {
+    } else if (
+      url.hostname.includes("youtube-nocookie.com") &&
+      url.pathname.startsWith("/embed/")
+    ) {
       videoId = url.pathname.replace("/embed/", "").split("?")[0];
     }
 
@@ -99,32 +105,6 @@ export function VideoPlayer({
   showPerfHud = false,
 }: VideoPlayerProps) {
   // ── YouTube / embed path ────────────────────────────────────────────────
-  if (embedUrl) {
-    const embedSrc = buildYouTubeEmbedSrc(embedUrl, { autoPlay, muted, loop });
-    return (
-      <div
-        className="relative w-full"
-        style={fill ? { position: "absolute", inset: 0 } : { aspectRatio: initialAspectRatio }}
-      >
-        <iframe
-          src={embedSrc}
-          title="Embedded video player"
-          className={className ?? "h-full w-full"}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          allowFullScreen
-          loading="lazy"
-          referrerPolicy="strict-origin-when-cross-origin"
-          onLoad={() => onPlaybackReady?.()}
-        />
-        {showPerfHud && (
-          <div className="absolute top-2 left-2 flex items-center gap-1.5 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-mono text-emerald-400 backdrop-blur">
-            <Zap className="h-2.5 w-2.5" />
-            YouTube · Privacy-Enhanced
-          </div>
-        )}
-      </div>
-    );
-  }
 
   // ── Native video path ───────────────────────────────────────────────────
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -133,10 +113,7 @@ export function VideoPlayer({
   const [hasError, setHasError] = useState(false);
   const [aspectRatio, setAspectRatio] = useState<number>(initialAspectRatio);
   const [bufferHealth, setBufferHealth] = useState(0);
-  const safeSources = useMemo(
-    () => Array.from(new Set(sources.filter(Boolean))),
-    [sources],
-  );
+  const safeSources = useMemo(() => Array.from(new Set(sources.filter(Boolean))), [sources]);
   const activeSource = safeSources[sourceIndex] ?? "";
 
   useEffect(() => {
@@ -155,8 +132,13 @@ export function VideoPlayer({
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    if (!autoPlay) { video.pause(); return; }
-    void video.play().catch(() => { /* autoplay blocked */ });
+    if (!autoPlay) {
+      video.pause();
+      return;
+    }
+    void video.play().catch(() => {
+      /* autoplay blocked */
+    });
   }, [autoPlay, activeSource]);
 
   // Buffer health monitor — updates every 500ms while playing
@@ -191,6 +173,33 @@ export function VideoPlayer({
     onAllSourcesFailed?.();
   };
 
+  if (embedUrl) {
+    const embedSrc = buildYouTubeEmbedSrc(embedUrl, { autoPlay, muted, loop });
+    return (
+      <div
+        className="relative w-full"
+        style={fill ? { position: "absolute", inset: 0 } : { aspectRatio: initialAspectRatio }}
+      >
+        <iframe
+          src={embedSrc}
+          title="Embedded video player"
+          className={className ?? "h-full w-full"}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+          loading="lazy"
+          referrerPolicy="strict-origin-when-cross-origin"
+          onLoad={() => onPlaybackReady?.()}
+        />
+        {showPerfHud && (
+          <div className="absolute top-2 left-2 flex items-center gap-1.5 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-mono text-emerald-400 backdrop-blur">
+            <Zap className="h-2.5 w-2.5" />
+            YouTube Â· Privacy-Enhanced
+          </div>
+        )}
+      </div>
+    );
+  }
+
   if (!safeSources.length) {
     return (
       <div
@@ -202,9 +211,7 @@ export function VideoPlayer({
     );
   }
 
-  const wrapperStyle: CSSProperties = fill
-    ? { position: "absolute", inset: 0 }
-    : { aspectRatio };
+  const wrapperStyle: CSSProperties = fill ? { position: "absolute", inset: 0 } : { aspectRatio };
 
   return (
     <div className="relative w-full" style={wrapperStyle}>
@@ -256,7 +263,9 @@ export function VideoPlayer({
           <AlertCircle className="h-8 w-8 text-red-300" />
           <div className="space-y-1">
             <p className="text-sm font-semibold">Video could not be loaded.</p>
-            <p className="text-xs text-white/70">All {safeSources.length} source{safeSources.length !== 1 ? "s" : ""} failed.</p>
+            <p className="text-xs text-white/70">
+              All {safeSources.length} source{safeSources.length !== 1 ? "s" : ""} failed.
+            </p>
           </div>
           <button
             type="button"
@@ -275,13 +284,23 @@ export function VideoPlayer({
           <Wifi className="h-2.5 w-2.5" />
           {cdnNode(activeSource)}
           <span className="text-white/50">·</span>
-          <span className={bufferHealth > 60 ? "text-emerald-400" : bufferHealth > 20 ? "text-amber-400" : "text-red-400"}>
+          <span
+            className={
+              bufferHealth > 60
+                ? "text-emerald-400"
+                : bufferHealth > 20
+                  ? "text-amber-400"
+                  : "text-red-400"
+            }
+          >
             buf {bufferHealth}%
           </span>
           {sourceIndex > 0 && (
             <>
               <span className="text-white/50">·</span>
-              <span className="text-amber-300">src {sourceIndex + 1}/{safeSources.length}</span>
+              <span className="text-amber-300">
+                src {sourceIndex + 1}/{safeSources.length}
+              </span>
             </>
           )}
         </div>

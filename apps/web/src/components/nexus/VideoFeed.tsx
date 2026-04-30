@@ -1,9 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Heart, MessageCircle, Pause, Play,
-  Share2, Volume2, VolumeX, Bookmark, Users, Zap, Radio,
-  MoreHorizontal, Send,
+  Heart,
+  MessageCircle,
+  Pause,
+  Play,
+  Share2,
+  Volume2,
+  VolumeX,
+  Bookmark,
+  Users,
+  Zap,
+  Radio,
+  MoreHorizontal,
+  Send,
 } from "lucide-react";
 import { VideoPlayer } from "@/components/nexus/VideoPlayer";
 import { useVideoDiscovery } from "@/hooks/use-video-discovery";
@@ -27,7 +37,9 @@ function formatCount(n: number) {
 
 export function VideoFeed() {
   const [mood, setMood] = useState<Mood>("all");
-  const { videos, hasMore, isLoading, error, loadMore, removeVideo } = useVideoDiscovery({ batchSize: 6 });
+  const { videos, hasMore, isLoading, error, loadMore, removeVideo } = useVideoDiscovery({
+    batchSize: 6,
+  });
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
@@ -72,30 +84,42 @@ export function VideoFeed() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowDown") goNext();
       else if (e.key === "ArrowUp") goPrevious();
-      else if (e.key === " ") { e.preventDefault(); setIsPlaying((v) => !v); }
-      else if (e.key.toLowerCase() === "m") setIsMuted((v) => !v);
+      else if (e.key === " ") {
+        e.preventDefault();
+        setIsPlaying((v) => !v);
+      } else if (e.key.toLowerCase() === "m") setIsMuted((v) => !v);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [currentIndex, videos.length]);
 
-  useEffect(() => { setIsPlaying(true); }, [currentIndex]);
+  useEffect(() => {
+    setIsPlaying(true);
+  }, [currentIndex]);
 
   // Touch swipe
-  const handleTouchStart = (e: React.TouchEvent) => { touchStartY.current = e.touches[0].clientY; };
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
   const handleTouchEnd = (e: React.TouchEvent) => {
     const delta = touchStartY.current - e.changedTouches[0].clientY;
-    if (Math.abs(delta) > 60) delta > 0 ? goNext() : goPrevious();
+    if (Math.abs(delta) > 60) {
+      if (delta > 0) goNext();
+      else goPrevious();
+    }
   };
 
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
-    if (e.deltaY > 0) goNext(); else goPrevious();
+    if (e.deltaY > 0) goNext();
+    else goPrevious();
   };
 
   const mediaClass = useMemo(() => {
     if (!currentAspectRatio) return "h-full w-full object-cover";
-    return currentAspectRatio < 0.95 ? "h-full w-full object-cover" : "h-full w-full object-contain";
+    return currentAspectRatio < 0.95
+      ? "h-full w-full object-cover"
+      : "h-full w-full object-contain";
   }, [currentAspectRatio]);
 
   if (!currentVideo) {
@@ -147,7 +171,9 @@ export function VideoFeed() {
               showPerfHud={false}
               onClick={() => setIsPlaying((v) => !v)}
               onMetadata={({ aspectRatio }) =>
-                setAspectRatioById((p) => (p[currentVideo.id] === aspectRatio ? p : { ...p, [currentVideo.id]: aspectRatio }))
+                setAspectRatioById((p) =>
+                  p[currentVideo.id] === aspectRatio ? p : { ...p, [currentVideo.id]: aspectRatio },
+                )
               }
               onPlaybackFailed={() => removeVideo(currentVideo.id)}
             />
@@ -230,7 +256,10 @@ export function VideoFeed() {
                   <button
                     key={m.id}
                     type="button"
-                    onClick={() => { setMood(m.id); setShowMoodBar(false); }}
+                    onClick={() => {
+                      setMood(m.id);
+                      setShowMoodBar(false);
+                    }}
                     className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium backdrop-blur transition-all ${
                       mood === m.id
                         ? "bg-cyan-500 text-black"
@@ -260,9 +289,13 @@ export function VideoFeed() {
                 <div className="space-y-1.5">
                   {["@you", "@alex_nexus", "@priya.m"].map((u, i) => (
                     <div key={u} className="flex items-center gap-2">
-                      <div className={`h-5 w-5 rounded-full text-[9px] flex items-center justify-center font-bold ${
-                        i === 0 ? "bg-cyan-500 text-black" : "bg-white/20 text-white"
-                      }`}>{u[1].toUpperCase()}</div>
+                      <div
+                        className={`h-5 w-5 rounded-full text-[9px] flex items-center justify-center font-bold ${
+                          i === 0 ? "bg-cyan-500 text-black" : "bg-white/20 text-white"
+                        }`}
+                      >
+                        {u[1].toUpperCase()}
+                      </div>
                       <span className="text-[11px] text-white/70">{u}</span>
                       {i === 0 && <span className="ml-auto text-[9px] text-cyan-400">host</span>}
                     </div>
@@ -293,12 +326,17 @@ export function VideoFeed() {
               onClick={() => videoSocial.toggleLike()}
               className="flex flex-col items-center gap-1 group"
             >
-              <motion.div whileTap={{ scale: 1.4 }} className="rounded-full bg-black/30 p-2 backdrop-blur">
+              <motion.div
+                whileTap={{ scale: 1.4 }}
+                className="rounded-full bg-black/30 p-2 backdrop-blur"
+              >
                 <Heart
                   className={`h-7 w-7 transition-all ${liked ? "text-red-500 fill-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.8)]" : "text-white group-hover:text-red-400"}`}
                 />
               </motion.div>
-              <span className="text-xs font-semibold text-white drop-shadow">{formatCount(likeCount)}</span>
+              <span className="text-xs font-semibold text-white drop-shadow">
+                {formatCount(likeCount)}
+              </span>
             </button>
 
             {/* Comments */}
@@ -307,24 +345,38 @@ export function VideoFeed() {
               onClick={() => setShowComments((v) => !v)}
               className="flex flex-col items-center gap-1 group"
             >
-              <div className={`rounded-full p-2 backdrop-blur transition-all ${showComments ? "bg-cyan-500/30" : "bg-black/30 group-hover:bg-black/50"}`}>
-                <MessageCircle className={`h-7 w-7 ${showComments ? "text-cyan-300" : "text-white"}`} />
+              <div
+                className={`rounded-full p-2 backdrop-blur transition-all ${showComments ? "bg-cyan-500/30" : "bg-black/30 group-hover:bg-black/50"}`}
+              >
+                <MessageCircle
+                  className={`h-7 w-7 ${showComments ? "text-cyan-300" : "text-white"}`}
+                />
               </div>
-              <span className="text-xs font-semibold text-white drop-shadow">{formatCount(commentCount)}</span>
+              <span className="text-xs font-semibold text-white drop-shadow">
+                {formatCount(commentCount)}
+              </span>
             </button>
 
             {/* Save */}
             <button
               type="button"
-              onClick={() => setSavedIds((p) => {
-                const next = new Set(p);
-                next.has(currentVideo.id) ? next.delete(currentVideo.id) : next.add(currentVideo.id);
-                return next;
-              })}
+              onClick={() =>
+                setSavedIds((p) => {
+                  const next = new Set(p);
+                  if (next.has(currentVideo.id)) {
+                    next.delete(currentVideo.id);
+                  } else {
+                    next.add(currentVideo.id);
+                  }
+                  return next;
+                })
+              }
               className="flex flex-col items-center gap-1 group"
             >
               <div className="rounded-full bg-black/30 p-2 backdrop-blur">
-                <Bookmark className={`h-7 w-7 transition-all ${savedIds.has(currentVideo.id) ? "text-yellow-400 fill-yellow-400" : "text-white group-hover:text-yellow-300"}`} />
+                <Bookmark
+                  className={`h-7 w-7 transition-all ${savedIds.has(currentVideo.id) ? "text-yellow-400 fill-yellow-400" : "text-white group-hover:text-yellow-300"}`}
+                />
               </div>
               <span className="text-xs font-semibold text-white drop-shadow">Save</span>
             </button>
@@ -343,10 +395,11 @@ export function VideoFeed() {
               onClick={() => setIsMuted((v) => !v)}
               className="rounded-full bg-black/30 p-2 backdrop-blur"
             >
-              {isMuted
-                ? <VolumeX className="h-6 w-6 text-white/70" />
-                : <Volume2 className="h-6 w-6 text-white" />
-              }
+              {isMuted ? (
+                <VolumeX className="h-6 w-6 text-white/70" />
+              ) : (
+                <Volume2 className="h-6 w-6 text-white" />
+              )}
             </button>
 
             {/* More */}
@@ -358,7 +411,9 @@ export function VideoFeed() {
           {/* ── Video metadata ────────────────────────────────────────── */}
           <div className="absolute bottom-16 left-4 right-20 z-10 text-white">
             <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] uppercase tracking-widest text-white/50">
-              <span className="rounded-full border border-white/20 px-2 py-0.5">{currentVideo.category}</span>
+              <span className="rounded-full border border-white/20 px-2 py-0.5">
+                {currentVideo.category}
+              </span>
               <span>{currentVideo.durationLabel}</span>
               <span>·</span>
               <span>{currentVideo.provider}</span>
@@ -387,22 +442,39 @@ export function VideoFeed() {
                 <div className="flex h-1 w-12 rounded-full bg-white/20 mx-auto mt-3" />
                 <div className="flex items-center justify-between px-4 py-3">
                   <h4 className="font-semibold text-white">Comments ({commentCount})</h4>
-                  <button onClick={() => setShowComments(false)} className="text-white/50 hover:text-white">✕</button>
+                  <button
+                    onClick={() => setShowComments(false)}
+                    className="text-white/50 hover:text-white"
+                  >
+                    ✕
+                  </button>
                 </div>
-                <div className="overflow-y-auto px-4 pb-2 space-y-2" style={{ maxHeight: "calc(55vh - 120px)" }}>
+                <div
+                  className="overflow-y-auto px-4 pb-2 space-y-2"
+                  style={{ maxHeight: "calc(55vh - 120px)" }}
+                >
                   {videoSocial.comments.map((c: VideoComment) => (
                     <div key={c.id} className="rounded-xl bg-white/5 px-3 py-2 group/comment">
                       <p className="text-sm text-white/90">{c.text}</p>
                       <div className="mt-1 flex items-center justify-between">
                         <p className="text-[10px] text-white/40">
-                          {videoSocial.isLoggedIn && c.userId === videoSocial.anchor?.id ? "You" : "Member"} · {new Date(c.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                          {videoSocial.isLoggedIn && c.userId === videoSocial.anchor?.id
+                            ? "You"
+                            : "Member"}{" "}
+                          ·{" "}
+                          {new Date(c.createdAt).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                         </p>
                         {videoSocial.isLoggedIn && (
                           <button
                             type="button"
                             onClick={() => videoSocial.deleteComment(c.id)}
                             className="opacity-0 group-hover/comment:opacity-100 text-[10px] text-white/30 hover:text-red-400 transition-all"
-                          >delete</button>
+                          >
+                            delete
+                          </button>
                         )}
                       </div>
                     </div>

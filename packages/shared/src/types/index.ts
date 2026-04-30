@@ -1,3 +1,5 @@
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+
 // Database Types (based on Supabase schema)
 export interface Database {
   public: {
@@ -188,7 +190,7 @@ export interface Database {
           thread_id: string;
           user_id: string;
           content: string;
-          message_type: 'text' | 'image' | 'video' | 'file';
+          message_type: "text" | "image" | "video" | "file";
           file_url: string | null;
           created_at: string;
           updated_at: string;
@@ -198,7 +200,7 @@ export interface Database {
           thread_id: string;
           user_id: string;
           content: string;
-          message_type?: 'text' | 'image' | 'video' | 'file';
+          message_type?: "text" | "image" | "video" | "file";
           file_url?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -208,7 +210,7 @@ export interface Database {
           thread_id?: string;
           user_id?: string;
           content?: string;
-          message_type?: 'text' | 'image' | 'video' | 'file';
+          message_type?: "text" | "image" | "video" | "file";
           file_url?: string | null;
           updated_at?: string;
         };
@@ -218,10 +220,22 @@ export interface Database {
           id: string;
           recipient_id: string;
           actor_id: string;
-          type: 'follow' | 'like' | 'comment' | 'message' | 'system' | 'mention' | 'chat_message' | 'post_shared' | 'profile_view' | 'video_like' | 'video_comment' | 'follow_request';
+          type:
+            | "follow"
+            | "like"
+            | "comment"
+            | "message"
+            | "system"
+            | "mention"
+            | "chat_message"
+            | "post_shared"
+            | "profile_view"
+            | "video_like"
+            | "video_comment"
+            | "follow_request";
           title: string;
           message: string;
-          data: any;
+          data: Json;
           is_read: boolean;
           created_at: string;
         };
@@ -229,10 +243,22 @@ export interface Database {
           id?: string;
           recipient_id: string;
           actor_id: string;
-          type: 'follow' | 'like' | 'comment' | 'message' | 'system' | 'mention' | 'chat_message' | 'post_shared' | 'profile_view' | 'video_like' | 'video_comment' | 'follow_request';
+          type:
+            | "follow"
+            | "like"
+            | "comment"
+            | "message"
+            | "system"
+            | "mention"
+            | "chat_message"
+            | "post_shared"
+            | "profile_view"
+            | "video_like"
+            | "video_comment"
+            | "follow_request";
           title?: string;
           message: string;
-          data?: any;
+          data?: Json;
           is_read?: boolean;
           created_at?: string;
         };
@@ -240,10 +266,22 @@ export interface Database {
           id?: string;
           recipient_id?: string;
           actor_id?: string;
-          type?: 'follow' | 'like' | 'comment' | 'message' | 'system' | 'mention' | 'chat_message' | 'post_shared' | 'profile_view' | 'video_like' | 'video_comment' | 'follow_request';
+          type?:
+            | "follow"
+            | "like"
+            | "comment"
+            | "message"
+            | "system"
+            | "mention"
+            | "chat_message"
+            | "post_shared"
+            | "profile_view"
+            | "video_like"
+            | "video_comment"
+            | "follow_request";
           title?: string;
           message?: string;
-          data?: any;
+          data?: Json;
           is_read?: boolean;
           created_at?: string;
         };
@@ -254,9 +292,9 @@ export interface Database {
           user_id: string;
           total_amount: number;
           currency: string;
-          status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-          items: any;
-          shipping_address: any;
+          status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
+          items: Json;
+          shipping_address: Json;
           created_at: string;
           updated_at: string;
         };
@@ -265,9 +303,9 @@ export interface Database {
           user_id: string;
           total_amount: number;
           currency?: string;
-          status?: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-          items?: any;
-          shipping_address?: any;
+          status?: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
+          items?: Json;
+          shipping_address?: Json;
           created_at?: string;
           updated_at?: string;
         };
@@ -276,9 +314,9 @@ export interface Database {
           user_id?: string;
           total_amount?: number;
           currency?: string;
-          status?: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-          items?: any;
-          shipping_address?: any;
+          status?: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
+          items?: Json;
+          shipping_address?: Json;
           updated_at?: string;
         };
       };
@@ -412,7 +450,7 @@ export interface ChatMessage {
   thread_id: string;
   user_id: string;
   content: string;
-  message_type: 'text' | 'image' | 'video' | 'file';
+  message_type: "text" | "image" | "video" | "file";
   file_url: string | null;
   created_at: string;
   updated_at: string;
@@ -423,10 +461,22 @@ export interface Notification {
   id: string;
   recipient_id: string;
   actor_id: string;
-  type: 'follow' | 'like' | 'comment' | 'message' | 'system' | 'mention' | 'chat_message' | 'post_shared' | 'profile_view' | 'video_like' | 'video_comment' | 'follow_request';
+  type:
+    | "follow"
+    | "like"
+    | "comment"
+    | "message"
+    | "system"
+    | "mention"
+    | "chat_message"
+    | "post_shared"
+    | "profile_view"
+    | "video_like"
+    | "video_comment"
+    | "follow_request";
   title: string;
   message: string;
-  data: any;
+  data: Json;
   is_read: boolean;
   created_at: string;
   actor?: Profile;
@@ -437,9 +487,9 @@ export interface CommerceOrder {
   user_id: string;
   total_amount: number;
   currency: string;
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-  items: any;
-  shipping_address: any;
+  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
+  items: Json;
+  shipping_address: Json;
   created_at: string;
   updated_at: string;
 }
@@ -486,7 +536,7 @@ export interface NotificationState {
 }
 
 // API Response Types
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   data?: T;
   error?: string;
   message?: string;
@@ -533,17 +583,17 @@ export interface CommentFormData {
 
 export interface ChatMessageFormData {
   content: string;
-  message_type?: 'text' | 'image' | 'video' | 'file';
+  message_type?: "text" | "image" | "video" | "file";
   file_url?: string;
 }
 
 // Navigation Types
-export type TabName = 'home' | 'discover' | 'create' | 'chat' | 'profile';
-export type StackName = 'main' | 'auth' | 'chat' | 'profile' | 'create' | 'settings';
+export type TabName = "home" | "discover" | "create" | "chat" | "profile";
+export type StackName = "main" | "auth" | "chat" | "profile" | "create" | "settings";
 
 // Platform Types
-export type Platform = 'web' | 'ios' | 'android';
-export type Theme = 'light' | 'dark' | 'system';
+export type Platform = "web" | "ios" | "android";
+export type Theme = "light" | "dark" | "system";
 
 // Feature Flags
 export interface FeatureFlags {

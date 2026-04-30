@@ -1,8 +1,8 @@
-import { View, Text, FlatList, RefreshControl, TouchableOpacity, Image } from 'react-native';
-import { useState, useCallback } from 'react';
-import { useSocialFeed } from '@nexus/shared';
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { View, Text, FlatList, RefreshControl, TouchableOpacity, Image } from "react-native";
+import { useState, useCallback } from "react";
+import { useSocialFeed, type SocialPost } from "@nexus/shared";
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 
 export default function HomeScreen() {
   const { posts, isLoading, error, handleLike, loadMore, refresh, isLiking } = useSocialFeed();
@@ -14,7 +14,7 @@ export default function HomeScreen() {
     setRefreshing(false);
   }, [refresh]);
 
-  const renderPost = ({ item }: { item: any }) => (
+  const renderPost = ({ item }: { item: SocialPost }) => (
     <View className="bg-white border-b border-gray-200 p-4">
       {/* Header */}
       <View className="flex-row items-center mb-3">
@@ -23,11 +23,17 @@ export default function HomeScreen() {
           className="flex-row items-center flex-1"
         >
           <Image
-            source={{ uri: item.profile?.avatar_url || 'https://api.dicebear.com/7.x/identicon/svg?seed=' + item.profile?.username }}
+            source={{
+              uri:
+                item.profile?.avatar_url ||
+                "https://api.dicebear.com/7.x/identicon/svg?seed=" + item.profile?.username,
+            }}
             className="w-10 h-10 rounded-full mr-3"
           />
           <View>
-            <Text className="font-semibold text-gray-900">{item.profile?.username || 'Anonymous'}</Text>
+            <Text className="font-semibold text-gray-900">
+              {item.profile?.username || "Anonymous"}
+            </Text>
             <Text className="text-xs text-gray-500">
               {new Date(item.created_at).toLocaleDateString()}
             </Text>
@@ -43,13 +49,10 @@ export default function HomeScreen() {
 
       {/* Video Preview */}
       {item.video && (
-        <TouchableOpacity
-          onPress={() => router.push(`/video/${item.video.id}`)}
-          className="mb-3"
-        >
+        <TouchableOpacity onPress={() => router.push(`/video/${item.video.id}`)} className="mb-3">
           <View className="relative">
             <Image
-              source={{ uri: item.video.thumbnail_url || 'https://via.placeholder.com/400x225' }}
+              source={{ uri: item.video.thumbnail_url || "https://via.placeholder.com/400x225" }}
               className="w-full h-48 rounded-lg"
               resizeMode="cover"
             />
@@ -58,7 +61,8 @@ export default function HomeScreen() {
             </View>
             <View className="absolute bottom-2 right-2 bg-black bg-opacity-60 px-2 py-1 rounded">
               <Text className="text-white text-xs">
-                {Math.floor(item.video.duration / 60)}:{(item.video.duration % 60).toString().padStart(2, '0')}
+                {Math.floor(item.video.duration / 60)}:
+                {(item.video.duration % 60).toString().padStart(2, "0")}
               </Text>
             </View>
           </View>
@@ -116,10 +120,7 @@ export default function HomeScreen() {
       <View className="flex-1 items-center justify-center p-8">
         <Ionicons name="alert-circle-outline" size={64} color="#EF4444" />
         <Text className="text-red-500 text-center mt-4">Something went wrong</Text>
-        <TouchableOpacity
-          onPress={refresh}
-          className="mt-4 bg-blue-500 px-6 py-2 rounded-full"
-        >
+        <TouchableOpacity onPress={refresh} className="mt-4 bg-blue-500 px-6 py-2 rounded-full">
           <Text className="text-white font-semibold">Try Again</Text>
         </TouchableOpacity>
       </View>
@@ -133,9 +134,7 @@ export default function HomeScreen() {
         renderItem={renderPost}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: 20 }}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         onEndReached={loadMore}
         onEndReachedThreshold={0.1}
         ListEmptyComponent={!isLoading ? renderEmptyState : null}

@@ -49,7 +49,9 @@ export async function verifyVideoUrlDetailed(url: string) {
   }
 }
 
-export async function storeVerifiedVideo(_video: Omit<VerifiedVideoSource, "id" | "lastVerified" | "verificationCount">): Promise<string | null> {
+export async function storeVerifiedVideo(
+  _video: Omit<VerifiedVideoSource, "id" | "lastVerified" | "verificationCount">,
+): Promise<string | null> {
   return null;
 }
 

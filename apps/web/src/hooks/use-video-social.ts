@@ -31,9 +31,9 @@ export type VideoComment = {
 };
 
 type SocialAnchor = {
-  id: string;        // social_posts.id
+  id: string; // social_posts.id
   likes: number;
-  liked: boolean;    // whether current user has liked
+  liked: boolean; // whether current user has liked
 };
 
 // ── Hook ──────────────────────────────────────────────────────────────────
@@ -48,7 +48,9 @@ export function useVideoSocial(videoId: string) {
   // Stable ref so real-time callbacks can access latest anchor without
   // re-subscribing every time it changes.
   const anchorRef = useRef<SocialAnchor | null>(null);
-  useEffect(() => { anchorRef.current = anchor; }, [anchor]);
+  useEffect(() => {
+    anchorRef.current = anchor;
+  }, [anchor]);
 
   // ── Load anchor + comments ──────────────────────────────────────────────
   useEffect(() => {
@@ -86,10 +88,7 @@ export function useVideoSocial(videoId: string) {
 
         if (cancelled) return;
 
-        setAnchor(postId
-          ? { id: postId, likes: postRow!.likes_count, liked }
-          : null
-        );
+        setAnchor(postId ? { id: postId, likes: postRow!.likes_count, liked } : null);
 
         // 3. Load comments only if anchor exists
         if (postId) {
@@ -109,7 +108,7 @@ export function useVideoSocial(videoId: string) {
               userId: c.user_id,
               text: c.text,
               createdAt: c.created_at,
-            }))
+            })),
           );
         } else {
           setComments([]);
@@ -122,7 +121,9 @@ export function useVideoSocial(videoId: string) {
     }
 
     load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [videoId, user?.id]);
 
   // ── Real-time subscriptions ─────────────────────────────────────────────
@@ -138,10 +139,8 @@ export function useVideoSocial(videoId: string) {
         (payload) => {
           const updated = payload.new as { id: string; likes_count: number };
           if (anchorRef.current?.id !== updated.id) return;
-          setAnchor((prev) =>
-            prev ? { ...prev, likes: updated.likes_count } : prev
-          );
-        }
+          setAnchor((prev) => (prev ? { ...prev, likes: updated.likes_count } : prev));
+        },
       )
       .subscribe();
 
@@ -153,17 +152,27 @@ export function useVideoSocial(videoId: string) {
         { event: "INSERT", schema: "public", table: "social_comments" },
         (payload) => {
           const c = payload.new as {
-            id: string; post_id: string; user_id: string; text: string; created_at: string;
+            id: string;
+            post_id: string;
+            user_id: string;
+            text: string;
+            created_at: string;
           };
           if (c.post_id !== anchorRef.current?.id) return;
           setComments((prev) => {
             if (prev.some((x) => x.id === c.id)) return prev;
             return [
               ...prev,
-              { id: c.id, postId: c.post_id, userId: c.user_id, text: c.text, createdAt: c.created_at },
+              {
+                id: c.id,
+                postId: c.post_id,
+                userId: c.user_id,
+                text: c.text,
+                createdAt: c.created_at,
+              },
             ];
           });
-        }
+        },
       )
       .on(
         "postgres_changes",
@@ -171,7 +180,7 @@ export function useVideoSocial(videoId: string) {
         (payload) => {
           const deletedId = (payload.old as { id: string })?.id;
           if (deletedId) setComments((prev) => prev.filter((c) => c.id !== deletedId));
-        }
+        },
       )
       .subscribe();
 
@@ -200,7 +209,7 @@ export function useVideoSocial(videoId: string) {
       .from("social_posts")
       .upsert(
         { user_id: user.id, text: `video:${videoId}`, likes_count: 0 },
-        { onConflict: "text", ignoreDuplicates: false }
+        { onConflict: "text", ignoreDuplicates: false },
       )
       .select("id, likes_count")
       .single();
@@ -251,7 +260,7 @@ export function useVideoSocial(videoId: string) {
             liked: !isLiked,
             likes: isLiked ? Math.max(0, prev.likes - 1) : prev.likes + 1,
           }
-        : prev
+        : prev,
     );
 
     if (isLiked) {
@@ -263,9 +272,7 @@ export function useVideoSocial(videoId: string) {
 
       if (error) {
         // Revert
-        setAnchor((prev) =>
-          prev ? { ...prev, liked: true, likes: prev.likes + 1 } : prev
-        );
+        setAnchor((prev) => (prev ? { ...prev, liked: true, likes: prev.likes + 1 } : prev));
         toast.error("Could not unlike");
       }
     } else {
@@ -276,7 +283,7 @@ export function useVideoSocial(videoId: string) {
       if (error && error.code !== "23505") {
         // Revert (ignore duplicate-key: means it's already liked)
         setAnchor((prev) =>
-          prev ? { ...prev, liked: false, likes: Math.max(0, prev.likes - 1) } : prev
+          prev ? { ...prev, liked: false, likes: Math.max(0, prev.likes - 1) } : prev,
         );
         toast.error("Could not like");
       }
@@ -322,12 +329,18 @@ export function useVideoSocial(videoId: string) {
       setComments((prev) =>
         prev.map((c) =>
           c.id === tempId
-            ? { id: data.id, postId: data.post_id, userId: data.user_id, text: data.text, createdAt: data.created_at }
-            : c
-        )
+            ? {
+                id: data.id,
+                postId: data.post_id,
+                userId: data.user_id,
+                text: data.text,
+                createdAt: data.created_at,
+              }
+            : c,
+        ),
       );
     },
-    [user, ensureAnchor]
+    [user, ensureAnchor],
   );
 
   const deleteComment = useCallback(
@@ -347,7 +360,7 @@ export function useVideoSocial(videoId: string) {
         // Reload to restore
       }
     },
-    [user]
+    [user],
   );
 
   // ── Derived values ─────────────────────────────────────────────────────

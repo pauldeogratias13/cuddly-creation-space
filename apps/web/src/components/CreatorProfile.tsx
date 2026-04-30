@@ -1,6 +1,6 @@
 /**
  * CreatorProfile.tsx
- * 
+ *
  * Displays a content creator's profile with:
  * - Profile header (avatar, name, bio, stats)
  * - Follow/Unfollow button
@@ -9,7 +9,11 @@
  */
 
 import { useState, useEffect } from "react";
-import { useContentCreator, CreatorProfile as CreatorProfileType, CreatorPost } from "@/hooks/use-content-creator";
+import {
+  useContentCreator,
+  CreatorProfile as CreatorProfileType,
+  CreatorPost,
+} from "@/hooks/use-content-creator";
 import { useAuth } from "@/hooks/use-auth";
 import { useVideoSocial } from "@/hooks/use-video-social";
 import { Heart, MessageCircle, Share2, User, Users, Video, Check, Plus } from "lucide-react";
@@ -21,14 +25,15 @@ interface CreatorProfileProps {
 
 export function CreatorProfile({ userId }: CreatorProfileProps) {
   const { user } = useAuth();
-  const { getProfile, toggleFollow, getUserPosts, getFollowers, getFollowing, shareContent } = useContentCreator();
-  
+  const { getProfile, toggleFollow, getUserPosts, getFollowers, getFollowing, shareContent } =
+    useContentCreator();
+
   const [profile, setProfile] = useState<CreatorProfileType | null>(null);
   const [posts, setPosts] = useState<CreatorPost[]>([]);
   const [followers, setFollowers] = useState<Array<{ username: string; avatar_url: string }>>([]);
   const [following, setFollowing] = useState<Array<{ username: string; avatar_url: string }>>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'posts' | 'followers' | 'following'>('posts');
+  const [activeTab, setActiveTab] = useState<"posts" | "followers" | "following">("posts");
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
@@ -39,16 +44,16 @@ export function CreatorProfile({ userId }: CreatorProfileProps) {
     setLoading(true);
     const profileData = await getProfile(userId);
     setProfile(profileData);
-    
+
     const postsData = await getUserPosts(userId);
     setPosts(postsData);
-    
+
     const followersData = await getFollowers(userId);
     setFollowers(followersData.slice(0, 10));
-    
+
     const followingData = await getFollowing(userId);
     setFollowing(followingData.slice(0, 10));
-    
+
     setLoading(false);
   }
 
@@ -57,7 +62,11 @@ export function CreatorProfile({ userId }: CreatorProfileProps) {
     if (result && profile) {
       setProfile({ ...profile, is_following: true, followers_count: profile.followers_count + 1 });
     } else if (!result && profile) {
-      setProfile({ ...profile, is_following: false, followers_count: Math.max(0, profile.followers_count - 1) });
+      setProfile({
+        ...profile,
+        is_following: false,
+        followers_count: Math.max(0, profile.followers_count - 1),
+      });
     }
   }
 
@@ -87,7 +96,7 @@ export function CreatorProfile({ userId }: CreatorProfileProps) {
       <div className="bg-card rounded-lg shadow-lg overflow-hidden mb-6">
         {/* Cover */}
         <div className="h-32 bg-gradient-to-r from-primary/20 to-primary/5"></div>
-        
+
         {/* Profile Info */}
         <div className="px-6 pb-6">
           <div className="flex items-start justify-between -mt-12">
@@ -95,12 +104,15 @@ export function CreatorProfile({ userId }: CreatorProfileProps) {
               {/* Avatar */}
               <div className="relative">
                 <img
-                  src={profile.avatar_url || `https://api.dicebear.com/7.x/identicon/svg?seed=${profile.username}`}
+                  src={
+                    profile.avatar_url ||
+                    `https://api.dicebear.com/7.x/identicon/svg?seed=${profile.username}`
+                  }
                   alt={profile.username}
                   className="w-24 h-24 rounded-full border-4 border-card object-cover"
                 />
               </div>
-              
+
               {/* Name & Bio */}
               <div className="pb-2">
                 <h1 className="text-2xl font-bold">{profile.full_name || profile.username}</h1>
@@ -118,8 +130,8 @@ export function CreatorProfile({ userId }: CreatorProfileProps) {
                   onClick={handleFollow}
                   className={`px-4 py-2 rounded-md font-medium flex items-center gap-2 ${
                     profile.is_following
-                      ? 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-                      : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                      ? "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                      : "bg-primary text-primary-foreground hover:bg-primary/90"
                   }`}
                 >
                   {profile.is_following ? (
@@ -135,7 +147,7 @@ export function CreatorProfile({ userId }: CreatorProfileProps) {
                   )}
                 </button>
               )}
-              
+
               {user && user.id === userId && (
                 <button
                   onClick={() => setShowCreateModal(true)}
@@ -170,31 +182,31 @@ export function CreatorProfile({ userId }: CreatorProfileProps) {
           {/* Tabs */}
           <div className="flex gap-1 mt-4 border-b">
             <button
-              onClick={() => setActiveTab('posts')}
+              onClick={() => setActiveTab("posts")}
               className={`px-4 py-2 font-medium text-sm ${
-                activeTab === 'posts'
-                  ? 'text-primary border-b-2 border-primary'
-                  : 'text-muted-foreground hover:text-foreground'
+                activeTab === "posts"
+                  ? "text-primary border-b-2 border-primary"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Posts
             </button>
             <button
-              onClick={() => setActiveTab('followers')}
+              onClick={() => setActiveTab("followers")}
               className={`px-4 py-2 font-medium text-sm ${
-                activeTab === 'followers'
-                  ? 'text-primary border-b-2 border-primary'
-                  : 'text-muted-foreground hover:text-foreground'
+                activeTab === "followers"
+                  ? "text-primary border-b-2 border-primary"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Followers
             </button>
             <button
-              onClick={() => setActiveTab('following')}
+              onClick={() => setActiveTab("following")}
               className={`px-4 py-2 font-medium text-sm ${
-                activeTab === 'following'
-                  ? 'text-primary border-b-2 border-primary'
-                  : 'text-muted-foreground hover:text-foreground'
+                activeTab === "following"
+                  ? "text-primary border-b-2 border-primary"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Following
@@ -205,12 +217,10 @@ export function CreatorProfile({ userId }: CreatorProfileProps) {
 
       {/* Tab Content */}
       <div className="space-y-4">
-        {activeTab === 'posts' && (
+        {activeTab === "posts" && (
           <div className="grid gap-4 md:grid-cols-2">
             {posts.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground col-span-2">
-                No posts yet
-              </div>
+              <div className="text-center py-8 text-muted-foreground col-span-2">No posts yet</div>
             ) : (
               posts.map((post) => (
                 <CreatorPostCard key={post.id} post={post} onShare={handleShare} />
@@ -219,17 +229,18 @@ export function CreatorProfile({ userId }: CreatorProfileProps) {
           </div>
         )}
 
-        {activeTab === 'followers' && (
+        {activeTab === "followers" && (
           <div className="space-y-2">
             {followers.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                No followers yet
-              </div>
+              <div className="text-center py-8 text-muted-foreground">No followers yet</div>
             ) : (
               followers.map((follower, i) => (
                 <div key={i} className="flex items-center gap-3 p-3 bg-card rounded-lg">
                   <img
-                    src={follower.avatar_url || `https://api.dicebear.com/7.x/identicon/svg?seed=${follower.username}`}
+                    src={
+                      follower.avatar_url ||
+                      `https://api.dicebear.com/7.x/identicon/svg?seed=${follower.username}`
+                    }
                     alt={follower.username}
                     className="w-10 h-10 rounded-full"
                   />
@@ -240,17 +251,18 @@ export function CreatorProfile({ userId }: CreatorProfileProps) {
           </div>
         )}
 
-        {activeTab === 'following' && (
+        {activeTab === "following" && (
           <div className="space-y-2">
             {following.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Not following anyone yet
-              </div>
+              <div className="text-center py-8 text-muted-foreground">Not following anyone yet</div>
             ) : (
               following.map((user, i) => (
                 <div key={i} className="flex items-center gap-3 p-3 bg-card rounded-lg">
                   <img
-                    src={user.avatar_url || `https://api.dicebear.com/7.x/identicon/svg?seed=${user.username}`}
+                    src={
+                      user.avatar_url ||
+                      `https://api.dicebear.com/7.x/identicon/svg?seed=${user.username}`
+                    }
                     alt={user.username}
                     className="w-10 h-10 rounded-full"
                   />
@@ -276,11 +288,17 @@ export function CreatorProfile({ userId }: CreatorProfileProps) {
   );
 }
 
-function CreatorPostCard({ post, onShare }: { post: CreatorPost; onShare: (post: CreatorPost) => void }) {
+function CreatorPostCard({
+  post,
+  onShare,
+}: {
+  post: CreatorPost;
+  onShare: (post: CreatorPost) => void;
+}) {
   const { toggleLike, addComment, likeCount, liked, comments } = useVideoSocial(post.video_id);
-  
+
   const [showComments, setShowComments] = useState(false);
-  const [commentText, setCommentText] = useState('');
+  const [commentText, setCommentText] = useState("");
 
   async function handleLike() {
     await toggleLike();
@@ -289,7 +307,7 @@ function CreatorPostCard({ post, onShare }: { post: CreatorPost; onShare: (post:
   async function handleComment() {
     if (!commentText.trim()) return;
     await addComment(commentText.trim());
-    setCommentText('');
+    setCommentText("");
   }
 
   return (
@@ -316,12 +334,12 @@ function CreatorPostCard({ post, onShare }: { post: CreatorPost; onShare: (post:
         <div className="flex items-center gap-4 mt-4">
           <button
             onClick={handleLike}
-            className={`flex items-center gap-1 text-sm ${liked ? 'text-red-500' : 'text-muted-foreground hover:text-foreground'}`}
+            className={`flex items-center gap-1 text-sm ${liked ? "text-red-500" : "text-muted-foreground hover:text-foreground"}`}
           >
-            <Heart className={`w-4 h-4 ${liked ? 'fill-current' : ''}`} />
+            <Heart className={`w-4 h-4 ${liked ? "fill-current" : ""}`} />
             {likeCount}
           </button>
-          
+
           <button
             onClick={() => setShowComments(!showComments)}
             className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
@@ -329,7 +347,7 @@ function CreatorPostCard({ post, onShare }: { post: CreatorPost; onShare: (post:
             <MessageCircle className="w-4 h-4" />
             {comments.length}
           </button>
-          
+
           <button
             onClick={() => onShare(post)}
             className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground ml-auto"
@@ -357,7 +375,7 @@ function CreatorPostCard({ post, onShare }: { post: CreatorPost; onShare: (post:
                 onChange={(e) => setCommentText(e.target.value)}
                 placeholder="Add a comment..."
                 className="flex-1 px-3 py-2 text-sm bg-background border rounded-md"
-                onKeyPress={(e) => e.key === 'Enter' && handleComment()}
+                onKeyPress={(e) => e.key === "Enter" && handleComment()}
               />
               <button
                 onClick={handleComment}
@@ -373,17 +391,23 @@ function CreatorPostCard({ post, onShare }: { post: CreatorPost; onShare: (post:
   );
 }
 
-function CreateContentModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
+function CreateContentModal({
+  onClose,
+  onSuccess,
+}: {
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
   const { createPost, isCreating } = useContentCreator();
-  
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [videoUrl, setVideoUrl] = useState('');
-  const [thumbnailUrl, setThumbnailUrl] = useState('');
+
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    
+
     if (!title.trim() || !videoUrl.trim()) {
       toast.error("Title and video URL are required");
       return;
@@ -406,7 +430,7 @@ function CreateContentModal({ onClose, onSuccess }: { onClose: () => void; onSuc
       <div className="bg-card rounded-lg shadow-xl max-w-md w-full mx-4">
         <div className="p-6">
           <h2 className="text-xl font-bold mb-4">Create New Content</h2>
-          
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-1">Title *</label>
@@ -465,7 +489,7 @@ function CreateContentModal({ onClose, onSuccess }: { onClose: () => void; onSuc
                 disabled={isCreating}
                 className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-md disabled:opacity-50"
               >
-                {isCreating ? 'Creating...' : 'Create'}
+                {isCreating ? "Creating..." : "Create"}
               </button>
             </div>
           </form>

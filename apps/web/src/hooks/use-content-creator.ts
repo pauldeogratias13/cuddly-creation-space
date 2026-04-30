@@ -58,6 +58,16 @@ export interface FollowRelationship {
   full_name?: string;
 }
 
+type ProfileRelation = {
+  username?: string | null;
+  avatar_url?: string | null;
+  full_name?: string | null;
+};
+
+type AbortNamedError = {
+  name?: string;
+};
+
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useContentCreator() {
@@ -68,91 +78,96 @@ export function useContentCreator() {
   const [loading, setLoading] = useState(false);
 
   // ── Create Content ─────────────────────────────────────────────────────────
-  const createPost = useCallback(async (data: {
-    title: string;
-    description: string;
-    video_url: string;
-    thumbnail_url?: string;
-    source_url?: string;
-  }) => {
-    if (!user) {
-      toast.error("Sign in to create content");
-      return null;
-    }
+  const createPost = useCallback(
+    async (data: {
+      title: string;
+      description: string;
+      video_url: string;
+      thumbnail_url?: string;
+      source_url?: string;
+    }) => {
+      if (!user) {
+        toast.error("Sign in to create content");
+        return null;
+      }
 
-    setIsCreating(true);
-    try {
-      // 1. Create the social post anchor
-      const { data: post, error: postErr } = await supabase
-        .from("social_posts")
-        .insert({
+      setIsCreating(true);
+      try {
+        // 1. Create the social post anchor
+        const { data: post, error: postErr } = await supabase
+          .from("social_posts")
+          .insert({
+            user_id: user.id,
+            text: `video:${data.video_url}`,
+            likes_count: 0,
+          })
+          .select("id")
+          .single();
+
+        if (postErr) throw postErr;
+
+        // 2. Add to public_videos as user-generated content
+        const { data: video, error: videoErr } = await supabase
+          .from("public_videos")
+          .insert({
+            title: data.title,
+            description: data.description,
+            author: user.user_metadata?.full_name || user.user_metadata?.name || user.email,
+            provider: "user-generated",
+            source_url: data.video_url,
+            page_url: data.source_url || data.video_url,
+            poster_url: data.thumbnail_url || null,
+            kind: data.video_url.includes("youtube") ? "youtube" : "native",
+            category: "User Generated",
+            is_active: true,
+            user_id: user.id,
+          })
+          .select("id")
+          .single();
+
+        if (videoErr) throw videoErr;
+
+        const newPost: CreatorPost = {
+          id: post.id,
           user_id: user.id,
-          text: `video:${data.video_url}`,
-          likes_count: 0,
-        })
-        .select("id")
-        .single();
-
-      if (postErr) throw postErr;
-
-      // 2. Add to public_videos as user-generated content
-      const { data: video, error: videoErr } = await supabase
-        .from("public_videos")
-        .insert({
+          video_id: video.id,
           title: data.title,
           description: data.description,
-          author: user.user_metadata?.full_name || user.user_metadata?.name || user.email,
-          provider: "user-generated",
-          source_url: data.video_url,
-          page_url: data.source_url || data.video_url,
-          poster_url: data.thumbnail_url || null,
-          kind: data.video_url.includes("youtube") ? "youtube" : "native",
-          category: "User Generated",
-          is_active: true,
-          user_id: user.id,
-        })
-        .select("id")
-        .single();
+          thumbnail_url: data.thumbnail_url || "",
+          video_url: data.video_url,
+          likes_count: 0,
+          comments_count: 0,
+          shares_count: 0,
+          views_count: 0,
+          is_liked: false,
+          created_at: new Date().toISOString(),
+          username: user.user_metadata?.username || user.email,
+          avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture,
+        };
 
-      if (videoErr) throw videoErr;
-
-      const newPost: CreatorPost = {
-        id: post.id,
-        user_id: user.id,
-        video_id: video.id,
-        title: data.title,
-        description: data.description,
-        thumbnail_url: data.thumbnail_url || "",
-        video_url: data.video_url,
-        likes_count: 0,
-        comments_count: 0,
-        shares_count: 0,
-        views_count: 0,
-        is_liked: false,
-        created_at: new Date().toISOString(),
-        username: user.user_metadata?.username || user.email,
-        avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture,
-      };
-
-      setPosts(prev => [newPost, ...prev]);
-      toast.success("Content created successfully!");
-      return newPost;
-    } catch (error) {
-      console.error("[create-post] error:", error);
-      toast.error("Failed to create content");
-      return null;
-    } finally {
-      setIsCreating(false);
-    }
-  }, [user]);
+        setPosts((prev) => [newPost, ...prev]);
+        toast.success("Content created successfully!");
+        return newPost;
+      } catch (error) {
+        console.error("[create-post] error:", error);
+        toast.error("Failed to create content");
+        return null;
+      } finally {
+        setIsCreating(false);
+      }
+    },
+    [user],
+  );
 
   // ── Get User's Posts ───────────────────────────────────────────────────────
-  const getUserPosts = useCallback(async (userId: string) => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from("public_videos")
-        .select(`
+  const getUserPosts = useCallback(
+    async (userId: string) => {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("public_videos")
+          .select(
+            `
           id,
           title,
           description,
@@ -162,183 +177,188 @@ export function useContentCreator() {
           user_id,
           author,
           provider
-        `)
-        .eq("user_id", userId)
-        .eq("is_active", true)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      // Get like counts for each post
-      const postsWithCounts = await Promise.all(
-        (data || []).map(async (video) => {
-          const { data: post } = await supabase
-            .from("social_posts")
-            .select("id, likes_count")
-            .eq("text", `video:${video.source_url}`)
-            .single();
-
-          const { count } = await supabase
-            .from("social_comments")
-            .select("*", { count: "exact", head: true })
-            .eq("post_id", post?.id);
-
-          // Check if current user liked
-          let is_liked = false;
-          if (user) {
-            const { data: like } = await supabase
-              .from("social_post_likes")
-              .select("post_id")
-              .eq("post_id", post?.id)
-              .eq("user_id", user.id)
-              .maybeSingle();
-            is_liked = !!like;
-          }
-
-          return {
-            id: post?.id || video.id,
-            user_id: video.user_id,
-            video_id: video.id,
-            title: video.title,
-            description: video.description || "",
-            thumbnail_url: video.poster_url || "",
-            video_url: video.source_url,
-            likes_count: post?.likes_count || 0,
-            comments_count: count || 0,
-            shares_count: 0,
-            views_count: 0,
-            is_liked,
-            created_at: video.created_at,
-            username: video.author,
-            avatar_url: null,
-          } as CreatorPost;
-        })
-      );
-
-      setPosts(postsWithCounts);
-    } catch (error) {
-      console.error("[get-user-posts] error:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
-
-  // ── Follow/Unfollow ────────────────────────────────────────────────────────
-  const toggleFollow = useCallback(async (targetUserId: string) => {
-    if (!user) {
-      toast.error("Sign in to follow creators");
-      return false;
-    }
-
-    if (targetUserId === user.id) {
-      toast.error("You can't follow yourself");
-      return false;
-    }
-
-    try {
-      // Check if already following
-      const { data: existing } = await supabase
-        .from("user_follows")
-        .select("id")
-        .eq("follower_id", user.id)
-        .eq("following_id", targetUserId)
-        .single();
-
-      if (existing) {
-        // Unfollow
-        const { error } = await supabase
-          .from("user_follows")
-          .delete()
-          .eq("id", existing.id);
+        `,
+          )
+          .eq("user_id", userId)
+          .eq("is_active", true)
+          .order("created_at", { ascending: false });
 
         if (error) throw error;
-        toast.success("Unfollowed creator");
+
+        // Get like counts for each post
+        const postsWithCounts = await Promise.all(
+          (data || []).map(async (video) => {
+            const { data: post } = await supabase
+              .from("social_posts")
+              .select("id, likes_count")
+              .eq("text", `video:${video.source_url}`)
+              .single();
+
+            const { count } = await supabase
+              .from("social_comments")
+              .select("*", { count: "exact", head: true })
+              .eq("post_id", post?.id);
+
+            // Check if current user liked
+            let is_liked = false;
+            if (user) {
+              const { data: like } = await supabase
+                .from("social_post_likes")
+                .select("post_id")
+                .eq("post_id", post?.id)
+                .eq("user_id", user.id)
+                .maybeSingle();
+              is_liked = !!like;
+            }
+
+            return {
+              id: post?.id || video.id,
+              user_id: video.user_id,
+              video_id: video.id,
+              title: video.title,
+              description: video.description || "",
+              thumbnail_url: video.poster_url || "",
+              video_url: video.source_url,
+              likes_count: post?.likes_count || 0,
+              comments_count: count || 0,
+              shares_count: 0,
+              views_count: 0,
+              is_liked,
+              created_at: video.created_at,
+              username: video.author,
+              avatar_url: null,
+            } as CreatorPost;
+          }),
+        );
+
+        setPosts(postsWithCounts);
+      } catch (error) {
+        console.error("[get-user-posts] error:", error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [user],
+  );
+
+  // ── Follow/Unfollow ────────────────────────────────────────────────────────
+  const toggleFollow = useCallback(
+    async (targetUserId: string) => {
+      if (!user) {
+        toast.error("Sign in to follow creators");
         return false;
-      } else {
-        // Follow
-        const { error } = await supabase
+      }
+
+      if (targetUserId === user.id) {
+        toast.error("You can't follow yourself");
+        return false;
+      }
+
+      try {
+        // Check if already following
+        const { data: existing } = await supabase
           .from("user_follows")
-          .insert({
+          .select("id")
+          .eq("follower_id", user.id)
+          .eq("following_id", targetUserId)
+          .single();
+
+        if (existing) {
+          // Unfollow
+          const { error } = await supabase.from("user_follows").delete().eq("id", existing.id);
+
+          if (error) throw error;
+          toast.success("Unfollowed creator");
+          return false;
+        } else {
+          // Follow
+          const { error } = await supabase.from("user_follows").insert({
             follower_id: user.id,
             following_id: targetUserId,
           });
 
-        if (error) throw error;
-        toast.success("Following creator!");
-        return true;
+          if (error) throw error;
+          toast.success("Following creator!");
+          return true;
+        }
+      } catch (error) {
+        console.error("[toggle-follow] error:", error);
+        toast.error("Failed to update follow status");
+        return false;
       }
-    } catch (error) {
-      console.error("[toggle-follow] error:", error);
-      toast.error("Failed to update follow status");
-      return false;
-    }
-  }, [user]);
+    },
+    [user],
+  );
 
   // ── Get Profile ────────────────────────────────────────────────────────────
-  const getProfile = useCallback(async (userId: string): Promise<CreatorProfile | null> => {
-    try {
-      // Get user profile
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id, username, full_name, avatar_url, bio, created_at")
-        .eq("id", userId)
-        .single();
+  const getProfile = useCallback(
+    async (userId: string): Promise<CreatorProfile | null> => {
+      try {
+        // Get user profile
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id, username, full_name, avatar_url, bio, created_at")
+          .eq("id", userId)
+          .single();
 
-      if (!profile) return null;
+        if (!profile) return null;
 
-      // Get counts
-      const { count: followersCount } = await supabase
-        .from("user_follows")
-        .select("*", { count: "exact", head: true })
-        .eq("following_id", userId);
-
-      const { count: followingCount } = await supabase
-        .from("user_follows")
-        .select("*", { count: "exact", head: true })
-        .eq("follower_id", userId);
-
-      const { count: postsCount } = await supabase
-        .from("public_videos")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", userId)
-        .eq("is_active", true);
-
-      // Check if current user is following
-      let isFollowing = false;
-      if (user) {
-        const { data: follow } = await supabase
+        // Get counts
+        const { count: followersCount } = await supabase
           .from("user_follows")
-          .select("id")
-          .eq("follower_id", user.id)
-          .eq("following_id", userId)
-          .maybeSingle();
-        isFollowing = !!follow;
-      }
+          .select("*", { count: "exact", head: true })
+          .eq("following_id", userId);
 
-      return {
-        id: profile.id,
-        username: profile.username || "",
-        full_name: profile.full_name || "",
-        avatar_url: profile.avatar_url || "",
-        bio: profile.bio || "",
-        followers_count: followersCount || 0,
-        following_count: followingCount || 0,
-        posts_count: postsCount || 0,
-        is_following: isFollowing,
-        created_at: profile.created_at,
-      };
-    } catch (error) {
-      console.error("[get-profile] error:", error);
-      return null;
-    }
-  }, [user]);
+        const { count: followingCount } = await supabase
+          .from("user_follows")
+          .select("*", { count: "exact", head: true })
+          .eq("follower_id", userId);
+
+        const { count: postsCount } = await supabase
+          .from("public_videos")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", userId)
+          .eq("is_active", true);
+
+        // Check if current user is following
+        let isFollowing = false;
+        if (user) {
+          const { data: follow } = await supabase
+            .from("user_follows")
+            .select("id")
+            .eq("follower_id", user.id)
+            .eq("following_id", userId)
+            .maybeSingle();
+          isFollowing = !!follow;
+        }
+
+        return {
+          id: profile.id,
+          username: profile.username || "",
+          full_name: profile.full_name || "",
+          avatar_url: profile.avatar_url || "",
+          bio: profile.bio || "",
+          followers_count: followersCount || 0,
+          following_count: followingCount || 0,
+          posts_count: postsCount || 0,
+          is_following: isFollowing,
+          created_at: profile.created_at,
+        };
+      } catch (error) {
+        console.error("[get-profile] error:", error);
+        return null;
+      }
+    },
+    [user],
+  );
 
   // ── Get Followers/Following ────────────────────────────────────────────────
   const getFollowers = useCallback(async (userId: string): Promise<FollowRelationship[]> => {
     try {
       const { data } = await supabase
         .from("user_follows")
-        .select(`
+        .select(
+          `
           id,
           follower_id,
           created_at,
@@ -348,18 +368,22 @@ export function useContentCreator() {
             full_name,
             avatar_url
           )
-        `)
+        `,
+        )
         .eq("following_id", userId);
 
-      return (data || []).map((item) => ({
-        id: item.id,
-        follower_id: item.follower_id,
-        following_id: userId,
-        created_at: item.created_at,
-        username: (item.profiles as any)?.username,
-        avatar_url: (item.profiles as any)?.avatar_url,
-        full_name: (item.profiles as any)?.full_name,
-      }));
+      return (data || []).map((item) => {
+        const profile = item.profiles as ProfileRelation | null;
+        return {
+          id: item.id,
+          follower_id: item.follower_id,
+          following_id: userId,
+          created_at: item.created_at,
+          username: profile?.username ?? undefined,
+          avatar_url: profile?.avatar_url ?? undefined,
+          full_name: profile?.full_name ?? undefined,
+        };
+      });
     } catch (error) {
       console.error("[get-followers] error:", error);
       return [];
@@ -370,7 +394,8 @@ export function useContentCreator() {
     try {
       const { data } = await supabase
         .from("user_follows")
-        .select(`
+        .select(
+          `
           id,
           following_id,
           created_at,
@@ -380,18 +405,22 @@ export function useContentCreator() {
             full_name,
             avatar_url
           )
-        `)
+        `,
+        )
         .eq("follower_id", userId);
 
-      return (data || []).map((item) => ({
-        id: item.id,
-        follower_id: userId,
-        following_id: item.following_id,
-        created_at: item.created_at,
-        username: (item.profiles as any)?.username,
-        avatar_url: (item.profiles as any)?.avatar_url,
-        full_name: (item.profiles as any)?.full_name,
-      }));
+      return (data || []).map((item) => {
+        const profile = item.profiles as ProfileRelation | null;
+        return {
+          id: item.id,
+          follower_id: userId,
+          following_id: item.following_id,
+          created_at: item.created_at,
+          username: profile?.username ?? undefined,
+          avatar_url: profile?.avatar_url ?? undefined,
+          full_name: profile?.full_name ?? undefined,
+        };
+      });
     } catch (error) {
       console.error("[get-following] error:", error);
       return [];
@@ -402,7 +431,7 @@ export function useContentCreator() {
   const shareContent = useCallback(async (videoId: string, videoTitle: string) => {
     // Generate share URL
     const shareUrl = `${window.location.origin}/video/${videoId}`;
-    
+
     // Try native share if available
     if (navigator.share) {
       try {
@@ -413,7 +442,7 @@ export function useContentCreator() {
         });
         toast.success("Shared successfully!");
       } catch (error) {
-        if ((error as any).name !== "AbortError") {
+        if ((error as AbortNamedError).name !== "AbortError") {
           // Fallback to clipboard
           await navigator.clipboard.writeText(shareUrl);
           toast.success("Link copied to clipboard!");
@@ -433,18 +462,32 @@ export function useContentCreator() {
     }
   }, []);
 
-  return useMemo(() => ({
-    // State
-    posts,
-    isCreating,
-    loading,
-    // Actions
-    createPost,
-    getUserPosts,
-    toggleFollow,
-    getProfile,
-    getFollowers,
-    getFollowing,
-    shareContent,
-  }), [posts, isCreating, loading, createPost, getUserPosts, toggleFollow, getProfile, getFollowers, getFollowing, shareContent]);
+  return useMemo(
+    () => ({
+      // State
+      posts,
+      isCreating,
+      loading,
+      // Actions
+      createPost,
+      getUserPosts,
+      toggleFollow,
+      getProfile,
+      getFollowers,
+      getFollowing,
+      shareContent,
+    }),
+    [
+      posts,
+      isCreating,
+      loading,
+      createPost,
+      getUserPosts,
+      toggleFollow,
+      getProfile,
+      getFollowers,
+      getFollowing,
+      shareContent,
+    ],
+  );
 }

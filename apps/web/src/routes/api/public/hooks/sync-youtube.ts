@@ -40,12 +40,12 @@ const YT_BASE = "https://www.googleapis.com/youtube/v3";
 /** Headers that satisfy YouTube API referer checks */
 const ytHeaders = {
   "User-Agent": "NexusPlatform/1.0 (server-sync)",
-  "Accept": "application/json",
+  Accept: "application/json",
   // YouTube Data API v3 does NOT enforce Referer for server-key calls,
   // but some edge proxies strip or block empty-referer requests.
   // Providing an explicit server origin resolves "Requests from referer <empty> are blocked."
-  "Referer": "https://cuddly-creation-space.lovable.app/",
-  "Origin": "https://cuddly-creation-space.lovable.app",
+  Referer: "https://cuddly-creation-space.lovable.app/",
+  Origin: "https://cuddly-creation-space.lovable.app",
 };
 
 function pickThumb(t: YTSearchItem["snippet"]["thumbnails"]): string | null {
@@ -72,8 +72,8 @@ async function fetchSourceVideos(src: SourceRow, apiKey: string): Promise<YTSear
   const params = new URLSearchParams({
     part: "snippet",
     type: "video",
-    videoEmbeddable: "true",      // only return embeddable videos
-    videoSyndicated: "true",      // only return videos playable outside YouTube
+    videoEmbeddable: "true", // only return embeddable videos
+    videoSyndicated: "true", // only return videos playable outside YouTube
     maxResults: String(Math.min(src.max_results, 50)),
     order: "date",
     key: apiKey,
@@ -94,7 +94,7 @@ async function fetchSourceVideos(src: SourceRow, apiKey: string): Promise<YTSear
  */
 async function fetchVideoDetails(
   videoIds: string[],
-  apiKey: string
+  apiKey: string,
 ): Promise<Map<string, YTVideoDetail>> {
   if (videoIds.length === 0) return new Map();
 
@@ -125,7 +125,7 @@ async function isVideoPlayable(videoId: string): Promise<boolean> {
     const url = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
     const res = await fetch(url, {
       method: "GET",
-      headers: { ...ytHeaders, "Accept": "application/json" },
+      headers: { ...ytHeaders, Accept: "application/json" },
       signal: AbortSignal.timeout(5000), // 5 s timeout
     });
     // 200 = playable, 401/403/404 = blocked or deleted
@@ -187,7 +187,7 @@ async function handle() {
 
       const existingSet = new Set((existing ?? []).map((r) => r.source_url));
       const newItems = items.filter(
-        (it) => !existingSet.has(`https://www.youtube.com/watch?v=${it.id.videoId}`)
+        (it) => !existingSet.has(`https://www.youtube.com/watch?v=${it.id.videoId}`),
       );
 
       if (newItems.length === 0) {
@@ -219,19 +219,18 @@ async function handle() {
         embeddableItems.map(async (it) => ({
           item: it,
           playable: await isVideoPlayable(it.id.videoId!),
-        }))
+        })),
       );
 
       const playableItems = playabilityChecks
         .filter(
           (r): r is PromiseFulfilledResult<{ item: YTSearchItem; playable: boolean }> =>
-            r.status === "fulfilled" && r.value.playable
+            r.status === "fulfilled" && r.value.playable,
         )
         .map((r) => r.value.item);
 
       const skippedCount =
-        newItems.length - embeddableItems.length +
-        (embeddableItems.length - playableItems.length);
+        newItems.length - embeddableItems.length + (embeddableItems.length - playableItems.length);
 
       totalSkippedUnplayable += skippedCount;
 

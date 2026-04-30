@@ -2,13 +2,13 @@ export function Footer() {
   const year = new Date().getFullYear();
 
   const productLinks = [
-    { label: "Pillars",   href: "#pillars" },
-    { label: "Vision",    href: "#vision" },
+    { label: "Pillars", href: "#pillars" },
+    { label: "Vision", href: "#vision" },
     { label: "Streaming", href: "#streaming" },
-    { label: "Social",    href: "#social" },
-    { label: "NexOS",     href: "#nexos" },
-    { label: "Pricing",   href: "#pricing" },
-    { label: "Waitlist",  href: "#waitlist" },
+    { label: "Social", href: "#social" },
+    { label: "NexOS", href: "#nexos" },
+    { label: "Pricing", href: "#pricing" },
+    { label: "Waitlist", href: "#waitlist" },
   ];
 
   const stackItems = [
@@ -49,17 +49,22 @@ export function Footer() {
               NEXUS<span className="text-gradient-aurora">.</span>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              One identity. Every experience. The world's first true super-app —
-              AI-first, streaming-native, privacy-preserving. Built to outcompete every incumbent.
+              One identity. Every experience. The world's first true super-app — AI-first,
+              streaming-native, privacy-preserving. Built to outcompete every incumbent.
             </p>
             <div className="mt-4 flex items-center gap-1.5">
               <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse-glow" />
-              <span className="text-xs font-mono-display text-muted-foreground">v4.0 · 2026 Edition · Blueprint Active</span>
+              <span className="text-xs font-mono-display text-muted-foreground">
+                v4.0 · 2026 Edition · Blueprint Active
+              </span>
             </div>
             {/* Performance badges */}
             <div className="mt-5 flex flex-wrap gap-2">
               {["<300ms", "AV1", "VMAF 93+", "E2E"].map((b) => (
-                <span key={b} className="rounded-full border border-border bg-surface px-2 py-0.5 text-[10px] font-mono-display text-primary">
+                <span
+                  key={b}
+                  className="rounded-full border border-border bg-surface px-2 py-0.5 text-[10px] font-mono-display text-primary"
+                >
                   {b}
                 </span>
               ))}
@@ -68,7 +73,9 @@ export function Footer() {
 
           {/* Product */}
           <div>
-            <p className="text-xs font-mono-display uppercase tracking-widest text-muted-foreground mb-4">Product</p>
+            <p className="text-xs font-mono-display uppercase tracking-widest text-muted-foreground mb-4">
+              Product
+            </p>
             <ul className="space-y-2 text-sm">
               {productLinks.map((l) => (
                 <li key={l.label}>
@@ -85,7 +92,9 @@ export function Footer() {
 
           {/* Tech stack */}
           <div>
-            <p className="text-xs font-mono-display uppercase tracking-widest text-muted-foreground mb-4">Engineering Stack</p>
+            <p className="text-xs font-mono-display uppercase tracking-widest text-muted-foreground mb-4">
+              Engineering Stack
+            </p>
             <ul className="space-y-1.5 text-[11px] font-mono-display">
               {stackItems.map((t) => (
                 <li key={t} className="flex items-center gap-2 text-muted-foreground">
@@ -98,7 +107,9 @@ export function Footer() {
 
           {/* Privacy */}
           <div>
-            <p className="text-xs font-mono-display uppercase tracking-widest text-muted-foreground mb-4">Privacy by Design</p>
+            <p className="text-xs font-mono-display uppercase tracking-widest text-muted-foreground mb-4">
+              Privacy by Design
+            </p>
             <ul className="space-y-1.5 text-[11px]">
               {privacyItems.map((t) => (
                 <li key={t} className="flex items-center gap-2 text-muted-foreground">

@@ -47,7 +47,8 @@ export const BLUEPRINT_SECTIONS: BlueprintSection[] = [
     id: "05",
     title: "Subscription plans & advertising tiers",
     coverage: "partial",
-    detail: "Commerce checkout, cart, order history with cancel + load-more, and illustrative tier cards; no billing provider yet.",
+    detail:
+      "Commerce checkout, cart, order history with cancel + load-more, and illustrative tier cards; no billing provider yet.",
   },
   {
     id: "06",
@@ -65,7 +66,8 @@ export const BLUEPRINT_SECTIONS: BlueprintSection[] = [
     id: "08",
     title: "Backend services",
     coverage: "mvp",
-    detail: "Supabase Postgres, RLS, Realtime for core modules; order status updates and chat message edits flow through the same API.",
+    detail:
+      "Supabase Postgres, RLS, Realtime for core modules; order status updates and chat message edits flow through the same API.",
   },
   {
     id: "09",
@@ -141,7 +143,11 @@ export const SUBSCRIPTION_TIER_CARDS: SubscriptionTierCard[] = [
     name: "Network Pro",
     priceLabel: "Custom",
     blurb: "Enterprise-style controls: multi-region, ads tier, SSO — roadmap.",
-    features: ["Dedicated support (roadmap)", "Advertising tier controls (roadmap)", "Advanced security reviews"],
+    features: [
+      "Dedicated support (roadmap)",
+      "Advertising tier controls (roadmap)",
+      "Advanced security reviews",
+    ],
     blueprintRef: "§05 + §12 — org tier",
   },
 ];

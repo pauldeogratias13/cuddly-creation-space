@@ -14,7 +14,10 @@ export const Route = createFileRoute("/app/profile")({
 function ProfilePage() {
   return (
     <div className="mx-auto max-w-7xl px-6 py-16">
-      <Link to="/app" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+      <Link
+        to="/app"
+        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+      >
         ← Dashboard
       </Link>
       <h1 className="mt-6 text-3xl font-bold tracking-tight">Profile</h1>

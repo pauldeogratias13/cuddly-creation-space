@@ -81,10 +81,26 @@ const tiers = [
 ];
 
 const AD_TIERS = [
-  { name: "Community", price: "Free", desc: "Promote 1 post/week to your followers. Native feed card format." },
-  { name: "Starter", price: "€49/mo", desc: "Feed cards + story ads. Intent-cohort targeting. Geographic filters." },
-  { name: "Growth", price: "€299/mo", desc: "All formats incl. pre-roll. Lookalike audiences. Unlimited campaigns." },
-  { name: "Enterprise", price: "Custom", desc: "Managed service. Homepage takeovers. Watch party sponsorship. Guaranteed impressions." },
+  {
+    name: "Community",
+    price: "Free",
+    desc: "Promote 1 post/week to your followers. Native feed card format.",
+  },
+  {
+    name: "Starter",
+    price: "€49/mo",
+    desc: "Feed cards + story ads. Intent-cohort targeting. Geographic filters.",
+  },
+  {
+    name: "Growth",
+    price: "€299/mo",
+    desc: "All formats incl. pre-roll. Lookalike audiences. Unlimited campaigns.",
+  },
+  {
+    name: "Enterprise",
+    price: "Custom",
+    desc: "Managed service. Homepage takeovers. Watch party sponsorship. Guaranteed impressions.",
+  },
 ];
 
 export function Pricing() {
@@ -99,14 +115,15 @@ export function Pricing() {
           transition={{ duration: 0.6 }}
           className="text-center max-w-2xl mx-auto mb-20"
         >
-          <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-4">§ 05 · Subscription Plans</p>
+          <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-4">
+            § 05 · Subscription Plans
+          </p>
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.05]">
-            Pick your{" "}
-            <span className="text-gradient-aurora">tier of NEXUS.</span>
+            Pick your <span className="text-gradient-aurora">tier of NEXUS.</span>
           </h2>
           <p className="mt-6 text-lg text-muted-foreground">
-            Free forever for everyone. Upgrade when you want cinema-grade playback,
-            an ad-free feed, or a bespoke app of your own.
+            Free forever for everyone. Upgrade when you want cinema-grade playback, an ad-free feed,
+            or a bespoke app of your own.
           </p>
         </motion.div>
 
@@ -132,7 +149,9 @@ export function Pricing() {
                 </div>
               )}
               <div>
-                <p className="text-[10px] font-mono-display text-muted-foreground/60 uppercase tracking-widest mb-1">{t.blueprintRef}</p>
+                <p className="text-[10px] font-mono-display text-muted-foreground/60 uppercase tracking-widest mb-1">
+                  {t.blueprintRef}
+                </p>
                 <h3 className="text-2xl font-bold tracking-tight">{t.name}</h3>
                 <p className="mt-1 text-sm text-muted-foreground">{t.desc}</p>
               </div>
@@ -170,11 +189,13 @@ export function Pricing() {
           transition={{ duration: 0.6 }}
         >
           <div className="mb-8 text-center">
-            <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-3">§ 05 · Advertiser Plans</p>
+            <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-3">
+              § 05 · Advertiser Plans
+            </p>
             <h3 className="text-2xl font-bold">Intent-matched advertising.</h3>
             <p className="mt-2 text-muted-foreground text-sm max-w-xl mx-auto">
-              Every ad is contextually matched to the user's declared mood and intent.
-              An ad shown to someone in 'learning' mode about photography is a camera — never a pizza coupon.
+              Every ad is contextually matched to the user's declared mood and intent. An ad shown
+              to someone in 'learning' mode about photography is a camera — never a pizza coupon.
             </p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -187,14 +208,17 @@ export function Pricing() {
                 transition={{ delay: i * 0.07 }}
                 className="rounded-xl border border-border bg-surface/40 p-5"
               >
-                <p className="text-xs font-mono-display text-muted-foreground uppercase tracking-widest mb-2">{t.name}</p>
+                <p className="text-xs font-mono-display text-muted-foreground uppercase tracking-widest mb-2">
+                  {t.name}
+                </p>
                 <p className="text-xl font-bold text-gradient-aurora">{t.price}</p>
                 <p className="mt-3 text-sm text-muted-foreground">{t.desc}</p>
               </motion.div>
             ))}
           </div>
           <p className="mt-6 text-center text-xs text-muted-foreground">
-            All ad plans subject to NEXUS Intent-Match Guard — ads only served to users in a contextually relevant state.
+            All ad plans subject to NEXUS Intent-Match Guard — ads only served to users in a
+            contextually relevant state.
           </p>
         </motion.div>
       </div>

@@ -11,9 +11,9 @@ interface AspectRatioGuardProps {
 export function AspectRatioGuard({
   children,
   className = "",
-  minRatio = 0.5,  // 1:2 (tall/narrow)
-  maxRatio = 2.0,  // 2:1 (wide)
-  fallbackRatio = 16/9,
+  minRatio = 0.5, // 1:2 (tall/narrow)
+  maxRatio = 2.0, // 2:1 (wide)
+  fallbackRatio = 16 / 9,
 }: AspectRatioGuardProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -31,14 +31,14 @@ export function AspectRatioGuard({
       // Only update if we have meaningful dimensions
       if (newWidth > 0 && newHeight > 0) {
         const newRatio = newWidth / newHeight;
-        
+
         // Update last known ratio if this is a reasonable ratio
         if (newRatio >= minRatio && newRatio <= maxRatio) {
           setLastKnownRatio(newRatio);
         }
 
         setDimensions({ width: newWidth, height: newHeight });
-        
+
         // Apply ratio constraints
         let constrainedRatio = newRatio;
         if (newRatio < minRatio) {
@@ -46,12 +46,12 @@ export function AspectRatioGuard({
         } else if (newRatio > maxRatio) {
           constrainedRatio = maxRatio;
         }
-        
+
         // Use last known ratio if current is extreme
         if (newRatio < minRatio || newRatio > maxRatio) {
           constrainedRatio = lastKnownRatio;
         }
-        
+
         setCurrentRatio(constrainedRatio);
       }
     };
@@ -61,11 +61,11 @@ export function AspectRatioGuard({
 
     // Set up ResizeObserver for responsive behavior
     let resizeObserver: ResizeObserver;
-    if (typeof ResizeObserver !== 'undefined') {
+    if (typeof ResizeObserver !== "undefined") {
       resizeObserver = new ResizeObserver(() => {
         updateDimensions();
       });
-      
+
       if (containerRef.current) {
         resizeObserver.observe(containerRef.current);
       }
@@ -75,13 +75,13 @@ export function AspectRatioGuard({
     const handleResize = () => {
       updateDimensions();
     };
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
 
     return () => {
       if (resizeObserver) {
         resizeObserver.disconnect();
       }
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
     };
   }, [minRatio, maxRatio, lastKnownRatio]);
 
@@ -90,12 +90,12 @@ export function AspectRatioGuard({
   const constrainedWidth = dimensions.height * currentRatio;
 
   return (
-    <div 
+    <div
       ref={containerRef}
       className={`relative overflow-hidden ${className}`}
       style={{
-        width: '100%',
-        height: '100%',
+        width: "100%",
+        height: "100%",
       }}
     >
       <div
@@ -104,9 +104,9 @@ export function AspectRatioGuard({
           // Use the constrained ratio to prevent layout shifts
           aspectRatio: currentRatio.toString(),
           // Ensure the content stays within bounds
-          maxWidth: '100%',
-          maxHeight: '100%',
-          margin: 'auto',
+          maxWidth: "100%",
+          maxHeight: "100%",
+          margin: "auto",
         }}
       >
         {children}

@@ -46,12 +46,11 @@ export function CTA() {
         <div className="absolute inset-0 grid-bg opacity-60" />
         <div className="relative">
           <h2 className="text-4xl sm:text-6xl font-bold tracking-tight leading-[1.05]">
-            One app.{" "}
-            <span className="text-gradient-aurora">Everything you do.</span>
+            One app. <span className="text-gradient-aurora">Everything you do.</span>
           </h2>
           <p className="mt-6 text-lg text-muted-foreground max-w-xl mx-auto">
-            Be among the first to claim your handle on NEXUS. Limited early
-            access cohorts open monthly.
+            Be among the first to claim your handle on NEXUS. Limited early access cohorts open
+            monthly.
           </p>
           {done ? (
             <div className="mt-10 inline-flex items-center gap-2 rounded-md border border-primary/40 bg-surface-elevated px-5 py-3 text-sm text-foreground">

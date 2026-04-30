@@ -1,8 +1,21 @@
 import { motion } from "framer-motion";
 import {
-  Brain, Shield, Zap, Database, Globe, Lock,
-  Cpu, BarChart3, Eye, GitBranch, Radio, Layers,
-  Server, AlertTriangle, RefreshCw, Fingerprint,
+  Brain,
+  Shield,
+  Zap,
+  Database,
+  Globe,
+  Lock,
+  Cpu,
+  BarChart3,
+  Eye,
+  GitBranch,
+  Radio,
+  Layers,
+  Server,
+  AlertTriangle,
+  RefreshCw,
+  Fingerprint,
 } from "lucide-react";
 
 /* ── Backend / Identity features ──────────────────────────────────────── */
@@ -172,7 +185,13 @@ const DATA_STORES = [
   {
     name: "PostgreSQL 16",
     role: "Primary relational store",
-    uses: ["Users, metadata, payments", "Content catalogue, entitlements", "Moderation records", "pgvector extension for embeddings", "Citus for horizontal sharding"],
+    uses: [
+      "Users, metadata, payments",
+      "Content catalogue, entitlements",
+      "Moderation records",
+      "pgvector extension for embeddings",
+      "Citus for horizontal sharding",
+    ],
     color: "text-cyan-400",
     border: "border-cyan-500/25",
     bg: "from-cyan-500/10 to-cyan-500/5",
@@ -181,7 +200,13 @@ const DATA_STORES = [
   {
     name: "Cassandra 5 / ScyllaDB",
     role: "High-throughput write store",
-    uses: ["Feed events · 1M+ writes/sec", "Interaction logs (dwell/skip/replay)", "Notification history", "Video view events", "Zero-downtime rolling upgrades"],
+    uses: [
+      "Feed events · 1M+ writes/sec",
+      "Interaction logs (dwell/skip/replay)",
+      "Notification history",
+      "Video view events",
+      "Zero-downtime rolling upgrades",
+    ],
     color: "text-violet-400",
     border: "border-violet-500/25",
     bg: "from-violet-500/10 to-violet-500/5",
@@ -190,7 +215,13 @@ const DATA_STORES = [
   {
     name: "ClickHouse",
     role: "Analytics & QoE engine",
-    uses: ["A/B test results · funnel analysis", "Video QoE per CDN PoP", "CDN log aggregation", "100× faster than PostgreSQL", "1-second granularity metrics"],
+    uses: [
+      "A/B test results · funnel analysis",
+      "Video QoE per CDN PoP",
+      "CDN log aggregation",
+      "100× faster than PostgreSQL",
+      "1-second granularity metrics",
+    ],
     color: "text-amber-400",
     border: "border-amber-500/25",
     bg: "from-amber-500/10 to-amber-500/5",
@@ -199,7 +230,13 @@ const DATA_STORES = [
   {
     name: "Redis 7 Cluster",
     role: "Cache · realtime · rate-limit",
-    uses: ["Session store · feed cache", "Rate limit counters", "Pub/sub for realtime events", "Redis Stack: Search + JSON + TimeSeries", "Sub-millisecond response"],
+    uses: [
+      "Session store · feed cache",
+      "Rate limit counters",
+      "Pub/sub for realtime events",
+      "Redis Stack: Search + JSON + TimeSeries",
+      "Sub-millisecond response",
+    ],
     color: "text-pink-400",
     border: "border-pink-500/25",
     bg: "from-pink-500/10 to-pink-500/5",
@@ -208,7 +245,13 @@ const DATA_STORES = [
   {
     name: "Qdrant",
     role: "Vector similarity search",
-    uses: ["Content recommendations", "Semantic feed search", "In-video scene retrieval", "512-dim embeddings", "Sub-5ms at 1B items"],
+    uses: [
+      "Content recommendations",
+      "Semantic feed search",
+      "In-video scene retrieval",
+      "512-dim embeddings",
+      "Sub-5ms at 1B items",
+    ],
     color: "text-emerald-400",
     border: "border-emerald-500/25",
     bg: "from-emerald-500/10 to-emerald-500/5",
@@ -217,7 +260,13 @@ const DATA_STORES = [
   {
     name: "Neo4j AuraDB",
     role: "Social graph engine",
-    uses: ["Friend-of-friend traversal", "Interest clustering", "Trust propagation", "Reputation graph queries", "Cypher queries · millisecond hops"],
+    uses: [
+      "Friend-of-friend traversal",
+      "Interest clustering",
+      "Trust propagation",
+      "Reputation graph queries",
+      "Cypher queries · millisecond hops",
+    ],
     color: "text-cyan-400",
     border: "border-cyan-500/25",
     bg: "from-cyan-500/10 to-cyan-500/5",
@@ -357,7 +406,6 @@ export function TechDeepDive() {
       <div className="pointer-events-none absolute left-1/2 top-0 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-violet-500/5 blur-3xl -z-10" />
 
       <div className="mx-auto max-w-7xl space-y-28">
-
         {/* ── Header ── */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -366,14 +414,16 @@ export function TechDeepDive() {
           transition={{ duration: 0.6 }}
           className="max-w-3xl"
         >
-          <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-4">§ 08–13 · Backend · AI · Data · Infrastructure · Security</p>
+          <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-4">
+            § 08–13 · Backend · AI · Data · Infrastructure · Security
+          </p>
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.05]">
-            The full stack.{" "}
-            <span className="text-gradient-aurora">Nothing hidden.</span>
+            The full stack. <span className="text-gradient-aurora">Nothing hidden.</span>
           </h2>
           <p className="mt-6 text-lg text-muted-foreground leading-relaxed max-w-2xl">
-            Every layer of NEXUS — from identity microservices to AI inference to database sharding to
-            GitOps delivery — is architected with one goal: a platform users can't imagine living without.
+            Every layer of NEXUS — from identity microservices to AI inference to database sharding
+            to GitOps delivery — is architected with one goal: a platform users can't imagine living
+            without.
           </p>
         </motion.div>
 
@@ -386,7 +436,9 @@ export function TechDeepDive() {
             transition={{ duration: 0.5 }}
             className="mb-10"
           >
-            <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-2">§ 08A · Identity Service — Go</p>
+            <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-2">
+              § 08A · Identity Service — Go
+            </p>
             <h3 className="text-2xl sm:text-3xl font-bold tracking-tight">
               Passwordless. Persona-aware.{" "}
               <span className="text-gradient-aurora">Zero-knowledge.</span>
@@ -413,7 +465,11 @@ export function TechDeepDive() {
                       <Icon className={`h-4 w-4 ${f.color}`} strokeWidth={1.75} />
                     </div>
                     <div>
-                      <p className={`text-[9px] font-mono-display uppercase tracking-widest ${f.color}`}>{f.sub}</p>
+                      <p
+                        className={`text-[9px] font-mono-display uppercase tracking-widest ${f.color}`}
+                      >
+                        {f.sub}
+                      </p>
                       <h4 className="text-sm font-bold leading-tight">{f.title}</h4>
                     </div>
                   </div>
@@ -431,7 +487,9 @@ export function TechDeepDive() {
             transition={{ duration: 0.5 }}
             className="mt-16 mb-8"
           >
-            <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-2">§ 08B · Feed Ranking Engine — Rust</p>
+            <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-2">
+              § 08B · Feed Ranking Engine — Rust
+            </p>
             <h3 className="text-2xl sm:text-3xl font-bold tracking-tight">
               Two-tower retrieval.{" "}
               <span className="text-gradient-aurora">Sub-5ms at 1 billion items.</span>
@@ -449,7 +507,9 @@ export function TechDeepDive() {
                   transition={{ duration: 0.4, delay: i * 0.07 }}
                   className="rounded-xl border border-border bg-surface/40 p-5 hover:bg-surface transition-colors"
                 >
-                  <div className={`h-9 w-9 rounded-lg bg-surface-elevated border border-border grid place-items-center mb-3`}>
+                  <div
+                    className={`h-9 w-9 rounded-lg bg-surface-elevated border border-border grid place-items-center mb-3`}
+                  >
                     <Icon className={`h-4 w-4 ${f.color}`} strokeWidth={1.75} />
                   </div>
                   <h4 className={`text-sm font-bold mb-2 ${f.color}`}>{f.title}</h4>
@@ -469,7 +529,9 @@ export function TechDeepDive() {
             transition={{ duration: 0.5 }}
             className="mb-10"
           >
-            <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-2">§ 09 · AI &amp; ML Systems</p>
+            <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-2">
+              § 09 · AI &amp; ML Systems
+            </p>
             <h3 className="text-2xl sm:text-3xl font-bold tracking-tight">
               AI is load-bearing infrastructure.{" "}
               <span className="text-gradient-aurora">Not a bolt-on.</span>
@@ -495,7 +557,11 @@ export function TechDeepDive() {
                     <div className="h-7 w-7 rounded-md bg-surface-elevated border border-border grid place-items-center shrink-0">
                       <Icon className={`h-3.5 w-3.5 ${f.color}`} strokeWidth={1.75} />
                     </div>
-                    <p className={`text-[9px] font-mono-display uppercase tracking-widest ${f.color}`}>{f.sub}</p>
+                    <p
+                      className={`text-[9px] font-mono-display uppercase tracking-widest ${f.color}`}
+                    >
+                      {f.sub}
+                    </p>
                   </div>
                   <h4 className="text-sm font-bold mb-1.5">{f.title}</h4>
                   <p className="text-[11px] text-muted-foreground leading-relaxed">{f.desc}</p>
@@ -514,14 +580,16 @@ export function TechDeepDive() {
             transition={{ duration: 0.5 }}
             className="mb-10"
           >
-            <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-2">§ 10 · Data Architecture</p>
+            <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-2">
+              § 10 · Data Architecture
+            </p>
             <h3 className="text-2xl sm:text-3xl font-bold tracking-tight">
               Polyglot persistence.{" "}
               <span className="text-gradient-aurora">Right store for every problem.</span>
             </h3>
             <p className="mt-3 text-muted-foreground max-w-2xl">
-              Six purpose-built databases, each chosen for a specific access pattern.
-              Zero-copy analytics pipeline. Event-sourced. No single points of failure.
+              Six purpose-built databases, each chosen for a specific access pattern. Zero-copy
+              analytics pipeline. Event-sourced. No single points of failure.
             </p>
           </motion.div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -536,7 +604,11 @@ export function TechDeepDive() {
               >
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <p className={`text-[9px] font-mono-display uppercase tracking-widest ${ds.color} mb-0.5`}>{ds.badge}</p>
+                    <p
+                      className={`text-[9px] font-mono-display uppercase tracking-widest ${ds.color} mb-0.5`}
+                    >
+                      {ds.badge}
+                    </p>
                     <h4 className={`text-sm font-bold font-mono-display ${ds.color}`}>{ds.name}</h4>
                   </div>
                   <span className="text-[10px] text-muted-foreground font-mono-display bg-surface px-2 py-0.5 rounded-full border border-border">
@@ -545,8 +617,13 @@ export function TechDeepDive() {
                 </div>
                 <ul className="space-y-1.5">
                   {ds.uses.map((u) => (
-                    <li key={u} className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                      <span className={`h-1 w-1 rounded-full ${ds.color.replace("text-", "bg-")} shrink-0`} />
+                    <li
+                      key={u}
+                      className="flex items-center gap-2 text-[11px] text-muted-foreground"
+                    >
+                      <span
+                        className={`h-1 w-1 rounded-full ${ds.color.replace("text-", "bg-")} shrink-0`}
+                      />
                       {u}
                     </li>
                   ))}
@@ -565,7 +642,9 @@ export function TechDeepDive() {
             transition={{ duration: 0.5 }}
             className="mb-10"
           >
-            <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-2">§ 11 · Infrastructure &amp; DevOps</p>
+            <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-2">
+              § 11 · Infrastructure &amp; DevOps
+            </p>
             <h3 className="text-2xl sm:text-3xl font-bold tracking-tight">
               Multi-region active-active.{" "}
               <span className="text-gradient-aurora">GitOps. eBPF-native.</span>
@@ -605,7 +684,9 @@ export function TechDeepDive() {
             transition={{ duration: 0.5 }}
             className="mb-10"
           >
-            <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-2">§ 12 · Security Architecture</p>
+            <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-2">
+              § 12 · Security Architecture
+            </p>
             <h3 className="text-2xl sm:text-3xl font-bold tracking-tight">
               Zero-trust. SLSA Level 3.{" "}
               <span className="text-gradient-aurora">DRM-hardened. E2E encrypted.</span>
@@ -645,14 +726,16 @@ export function TechDeepDive() {
             transition={{ duration: 0.5 }}
             className="mb-10"
           >
-            <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-2">§ 13 · Engineering Principles</p>
+            <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-2">
+              § 13 · Engineering Principles
+            </p>
             <h3 className="text-2xl sm:text-3xl font-bold tracking-tight">
-              Eight principles.{" "}
-              <span className="text-gradient-aurora">Non-negotiable.</span>
+              Eight principles. <span className="text-gradient-aurora">Non-negotiable.</span>
             </h3>
             <p className="mt-3 text-muted-foreground max-w-2xl">
-              These are architectural constraints baked into NEXUS's engineering culture — not aspirational goals in a deck.
-              They govern every PR, every deploy, every on-call escalation.
+              These are architectural constraints baked into NEXUS's engineering culture — not
+              aspirational goals in a deck. They govern every PR, every deploy, every on-call
+              escalation.
             </p>
           </motion.div>
           <div className="grid md:grid-cols-2 gap-4">
@@ -665,7 +748,9 @@ export function TechDeepDive() {
                 transition={{ duration: 0.45, delay: i * 0.05 }}
                 className="flex gap-5 p-5 rounded-xl border border-border bg-surface/40"
               >
-                <span className="text-2xl font-bold font-mono-display text-primary/30 shrink-0 leading-none mt-0.5">{p.num}</span>
+                <span className="text-2xl font-bold font-mono-display text-primary/30 shrink-0 leading-none mt-0.5">
+                  {p.num}
+                </span>
                 <div>
                   <h4 className="text-sm font-bold mb-1.5">{p.title}</h4>
                   <p className="text-xs text-muted-foreground leading-relaxed">{p.desc}</p>
@@ -685,16 +770,19 @@ export function TechDeepDive() {
             <div className="absolute inset-0 bg-aurora opacity-10" />
             <div className="absolute inset-0 scanlines" />
             <div className="relative">
-              <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-4">NEXUS Architecture v4.0 · Closing Principle</p>
+              <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-4">
+                NEXUS Architecture v4.0 · Closing Principle
+              </p>
               <p className="text-2xl sm:text-3xl font-bold leading-snug max-w-3xl mx-auto">
                 "Build the platform{" "}
                 <span className="text-gradient-aurora">users can't imagine living without.</span>"
               </p>
-              <p className="mt-4 text-sm text-muted-foreground">Confidential — Internal Use Only · 2026 Edition</p>
+              <p className="mt-4 text-sm text-muted-foreground">
+                Confidential — Internal Use Only · 2026 Edition
+              </p>
             </div>
           </motion.div>
         </div>
-
       </div>
     </section>
   );

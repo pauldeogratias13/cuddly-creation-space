@@ -30,7 +30,7 @@ type VideoRow = {
 
 const SERVER_HEADERS = {
   "User-Agent": "NexusPlatform/1.0 (purge-broken)",
-  "Accept": "application/json",
+  Accept: "application/json",
 };
 
 const PROBE_TIMEOUT_MS = 8000;
@@ -46,46 +46,68 @@ async function probeNative(url: string): Promise<boolean> {
     const head = await timeout(
       fetch(url, { method: "HEAD", headers: { "User-Agent": SERVER_HEADERS["User-Agent"] } }),
       PROBE_TIMEOUT_MS,
-      null as unknown as Response
+      null as unknown as Response,
     );
     if (head?.ok) {
       const ct = head.headers.get("content-type") ?? "";
-      if (ct.startsWith("video/") || ct.includes("octet-stream") || /\.(mp4|webm|ogg)($|\?)/i.test(url)) return true;
+      if (
+        ct.startsWith("video/") ||
+        ct.includes("octet-stream") ||
+        /\.(mp4|webm|ogg)($|\?)/i.test(url)
+      )
+        return true;
     }
-  } catch { /* fall through */ }
+  } catch {
+    /* fall through */
+  }
   try {
     const get = await timeout(
-      fetch(url, { method: "GET", headers: { Range: "bytes=0-2047", "User-Agent": SERVER_HEADERS["User-Agent"] } }),
+      fetch(url, {
+        method: "GET",
+        headers: { Range: "bytes=0-2047", "User-Agent": SERVER_HEADERS["User-Agent"] },
+      }),
       PROBE_TIMEOUT_MS + 2000,
-      null as unknown as Response
+      null as unknown as Response,
     );
     if (!get) return false;
     if (!get.ok && get.status !== 206) return false;
     const ct = get.headers.get("content-type") ?? "";
-    return ct.startsWith("video/") || ct.includes("octet-stream") || /\.(mp4|webm|ogg)($|\?)/i.test(url);
-  } catch { return false; }
+    return (
+      ct.startsWith("video/") || ct.includes("octet-stream") || /\.(mp4|webm|ogg)($|\?)/i.test(url)
+    );
+  } catch {
+    return false;
+  }
 }
 
 async function probeYouTube(videoId: string): Promise<boolean> {
   try {
     const res = await timeout(
-      fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`, {
-        headers: SERVER_HEADERS,
-      }),
+      fetch(
+        `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`,
+        {
+          headers: SERVER_HEADERS,
+        },
+      ),
       PROBE_TIMEOUT_MS,
-      null as unknown as Response
+      null as unknown as Response,
     );
     return res?.status === 200;
-  } catch { return false; }
+  } catch {
+    return false;
+  }
 }
 
 async function probeVideo(row: VideoRow): Promise<boolean> {
   if (row.kind === "youtube" || row.provider === "youtube") {
     try {
       const url = new URL(row.source_url);
-      const videoId = url.searchParams.get("v") ?? url.pathname.split("/").filter(Boolean).pop() ?? "";
+      const videoId =
+        url.searchParams.get("v") ?? url.pathname.split("/").filter(Boolean).pop() ?? "";
       if (videoId.length >= 5) return await probeYouTube(videoId);
-    } catch { return false; }
+    } catch {
+      return false;
+    }
     return false;
   }
   return probeNative(row.source_url);
@@ -116,7 +138,10 @@ export const Route = createFileRoute("/api/public/hooks/purge-broken")({
 
 async function handle(request: Request) {
   const url = new URL(request.url);
-  const batchSize = Math.min(Math.max(parseInt(url.searchParams.get("batchSize") ?? "50"), 10), 200);
+  const batchSize = Math.min(
+    Math.max(parseInt(url.searchParams.get("batchSize") ?? "50"), 10),
+    200,
+  );
   const maxFailures = Math.max(parseInt(url.searchParams.get("maxFailures") ?? "3"), 1);
   const hardDelete = url.searchParams.get("hardDelete") !== "false";
 
@@ -161,7 +186,7 @@ async function handle(request: Request) {
 
   let checkedCount = 0;
   let stillWorking = 0;
-  let nowBroken: string[] = [];
+  const nowBroken: string[] = [];
 
   const videosToUpdate: Array<{ id: string; working: boolean }> = [];
 
@@ -184,7 +209,7 @@ async function handle(request: Request) {
 
   if (nowBroken.length > 0) {
     // Get current failure counts for broken videos
-    const brokenVideos = videosToCheck.filter(v => nowBroken.includes(v.id));
+    const brokenVideos = videosToCheck.filter((v) => nowBroken.includes(v.id));
 
     const toMarkInactive: string[] = [];
     const toDelete: string[] = [];
@@ -212,7 +237,7 @@ async function handle(request: Request) {
       if (updateErr) {
         // Fallback: update one by one
         for (const id of toMarkInactive) {
-          const video = brokenVideos.find(v => v.id === id);
+          const video = brokenVideos.find((v) => v.id === id);
           await supabaseAdmin
             .from("public_videos")
             .update({
@@ -244,7 +269,7 @@ async function handle(request: Request) {
   }
 
   // ── Step 5: Update working videos ──────────────────────────────────────
-  const workingIds = videosToUpdate.filter(v => v.working).map(v => v.id);
+  const workingIds = videosToUpdate.filter((v) => v.working).map((v) => v.id);
   if (workingIds.length > 0) {
     await supabaseAdmin
       .from("public_videos")

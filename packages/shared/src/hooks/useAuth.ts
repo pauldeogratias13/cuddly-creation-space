@@ -1,11 +1,11 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase, getCurrentUser, getProfile } from '../supabase';
-import type { Profile, AuthState } from '../types';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { AuthChangeEvent, Session } from "@supabase/supabase-js";
+import { supabase, getCurrentUser, getProfile } from "../supabase";
+import type { Profile, AuthState } from "../types";
 
 interface AuthContextType extends AuthState {
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, metadata: any) => Promise<void>;
+  signUp: (email: string, password: string, metadata: Record<string, unknown>) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -24,14 +24,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       setState((prev: AuthState) => ({ ...prev, isLoading: true, error: null }));
-      
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-      
+
       if (error) throw error;
-      
+
       if (data.user) {
         const profile = await getProfile(data.user.id);
         setState({
@@ -45,15 +45,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setState((prev: AuthState) => ({
         ...prev,
         isLoading: false,
-        error: error instanceof Error ? error.message : 'Sign in failed',
+        error: error instanceof Error ? error.message : "Sign in failed",
       }));
     }
   };
 
-  const signUp = async (email: string, password: string, metadata: any) => {
+  const signUp = async (email: string, password: string, metadata: Record<string, unknown>) => {
     try {
       setState((prev: AuthState) => ({ ...prev, isLoading: true, error: null }));
-      
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -61,9 +61,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           data: metadata,
         },
       });
-      
+
       if (error) throw error;
-      
+
       if (data.user) {
         const profile = await getProfile(data.user.id);
         setState({
@@ -77,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setState((prev: AuthState) => ({
         ...prev,
         isLoading: false,
-        error: error instanceof Error ? error.message : 'Sign up failed',
+        error: error instanceof Error ? error.message : "Sign up failed",
       }));
     }
   };
@@ -94,24 +94,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       setState((prev: AuthState) => ({
         ...prev,
-        error: error instanceof Error ? error.message : 'Sign out failed',
+        error: error instanceof Error ? error.message : "Sign out failed",
       }));
     }
   };
 
   const updateProfile = async (updates: Partial<Profile>) => {
     try {
-      if (!state.user) throw new Error('No user logged in');
-      
+      if (!state.user) throw new Error("No user logged in");
+
       const { data, error } = await supabase
-        .from('profiles')
+        .from("profiles")
         .update(updates)
-        .eq('id', state.user.id)
+        .eq("id", state.user.id)
         .select()
         .single();
-      
+
       if (error) throw error;
-      
+
       setState((prev: AuthState) => ({
         ...prev,
         profile: data,
@@ -119,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       setState((prev: AuthState) => ({
         ...prev,
-        error: error instanceof Error ? error.message : 'Profile update failed',
+        error: error instanceof Error ? error.message : "Profile update failed",
       }));
     }
   };
@@ -127,7 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshProfile = async () => {
     try {
       if (!state.user) return;
-      
+
       const profile = await getProfile(state.user.id);
       setState((prev: AuthState) => ({
         ...prev,
@@ -136,7 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       setState((prev: AuthState) => ({
         ...prev,
-        error: error instanceof Error ? error.message : 'Profile refresh failed',
+        error: error instanceof Error ? error.message : "Profile refresh failed",
       }));
     }
   };
@@ -145,8 +145,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Initialize auth state
     const initializeAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
         if (session?.user) {
           const profile = await getProfile(session.user.id);
           setState({
@@ -168,7 +170,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           user: null,
           profile: null,
           isLoading: false,
-          error: error instanceof Error ? error.message : 'Auth initialization failed',
+          error: error instanceof Error ? error.message : "Auth initialization failed",
         });
       }
     };
@@ -176,8 +178,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initializeAuth();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event: any, session: any) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(
+      async (_event: AuthChangeEvent, session: Session | null) => {
         if (session?.user) {
           const profile = await getProfile(session.user.id);
           setState({
@@ -194,7 +198,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             error: null,
           });
         }
-      }
+      },
     );
 
     return () => subscription.unsubscribe();
@@ -209,17 +213,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshProfile,
   };
 
-  return React.createElement(
-    AuthContext.Provider,
-    { value: contextValue },
-    children
-  );
+  return React.createElement(AuthContext.Provider, { value: contextValue }, children);
 }
 
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }

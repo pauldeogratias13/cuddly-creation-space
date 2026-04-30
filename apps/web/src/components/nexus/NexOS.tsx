@@ -32,34 +32,45 @@ export function NexOS() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-4">§ 03 · NexOS</p>
+            <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-4">
+              § 03 · NexOS
+            </p>
             <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.05]">
-              The app ecosystem{" "}
-              <span className="text-gradient-aurora">inside NEXUS.</span>
+              The app ecosystem <span className="text-gradient-aurora">inside NEXUS.</span>
             </h2>
             <p className="mt-6 text-lg text-muted-foreground leading-relaxed">
-              Paid subscribers can commission bespoke apps — web or mobile — built by the NEXUS team.
-              Hosted natively, connected to your identity and payments. A house with everything.
+              Paid subscribers can commission bespoke apps — web or mobile — built by the NEXUS
+              team. Hosted natively, connected to your identity and payments. A house with
+              everything.
             </p>
 
             {/* Stats grid */}
             <div className="mt-10 grid grid-cols-2 gap-px bg-border rounded-xl overflow-hidden border border-border">
               {stats.map((s) => (
                 <div key={s.label} className="bg-surface p-5">
-                  <div className="text-3xl sm:text-4xl font-bold text-gradient-aurora">{s.value}</div>
-                  <div className="mt-1 text-[10px] font-mono-display uppercase tracking-widest text-muted-foreground">{s.label}</div>
+                  <div className="text-3xl sm:text-4xl font-bold text-gradient-aurora">
+                    {s.value}
+                  </div>
+                  <div className="mt-1 text-[10px] font-mono-display uppercase tracking-widest text-muted-foreground">
+                    {s.label}
+                  </div>
                 </div>
               ))}
             </div>
 
             {/* Sandbox features */}
             <div className="mt-8 space-y-2">
-              <p className="text-xs font-mono-display uppercase tracking-widest text-muted-foreground mb-3">Sandbox Runtime</p>
+              <p className="text-xs font-mono-display uppercase tracking-widest text-muted-foreground mb-3">
+                Sandbox Runtime
+              </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {SANDBOX_FEATURES.map((f) => {
                   const Icon = f.icon;
                   return (
-                    <div key={f.label} className="flex items-start gap-3 rounded-lg border border-border bg-surface/40 p-3">
+                    <div
+                      key={f.label}
+                      className="flex items-start gap-3 rounded-lg border border-border bg-surface/40 p-3"
+                    >
                       <div className="mt-0.5 h-7 w-7 shrink-0 rounded-md bg-primary/10 grid place-items-center">
                         <Icon className="h-3.5 w-3.5 text-primary" strokeWidth={1.75} />
                       </div>
@@ -89,7 +100,9 @@ export function NexOS() {
                 <div className="h-2.5 w-2.5 rounded-full bg-destructive/60" />
                 <div className="h-2.5 w-2.5 rounded-full bg-accent/60" />
                 <div className="h-2.5 w-2.5 rounded-full bg-primary/60" />
-                <span className="ml-3 text-xs font-mono-display text-muted-foreground">nexos://your-app</span>
+                <span className="ml-3 text-xs font-mono-display text-muted-foreground">
+                  nexos://your-app
+                </span>
               </div>
 
               {/* App list */}
@@ -99,7 +112,12 @@ export function NexOS() {
                   { name: "Loyalty Programme", tag: "Beta", color: "bg-accent", perf: "8ms p99" },
                   { name: "Inventory Sync", tag: "Live", color: "bg-primary", perf: "5ms p99" },
                   { name: "Customer Portal", tag: "Building", color: "bg-violet", perf: "—" },
-                  { name: "Analytics Suite", tag: "Live", color: "bg-emerald-500", perf: "18ms p99" },
+                  {
+                    name: "Analytics Suite",
+                    tag: "Live",
+                    color: "bg-emerald-500",
+                    perf: "18ms p99",
+                  },
                 ].map((app, i) => (
                   <motion.div
                     key={app.name}
@@ -116,11 +134,15 @@ export function NexOS() {
                         <p className="text-[10px] text-muted-foreground font-mono">{app.perf}</p>
                       </div>
                     </div>
-                    <span className={`text-xs font-mono-display rounded-full px-2 py-0.5 ${
-                      app.tag === "Live" ? "bg-emerald-500/20 text-emerald-300" :
-                      app.tag === "Beta" ? "bg-amber-500/20 text-amber-300" :
-                      "bg-muted text-muted-foreground"
-                    }`}>
+                    <span
+                      className={`text-xs font-mono-display rounded-full px-2 py-0.5 ${
+                        app.tag === "Live"
+                          ? "bg-emerald-500/20 text-emerald-300"
+                          : app.tag === "Beta"
+                            ? "bg-amber-500/20 text-amber-300"
+                            : "bg-muted text-muted-foreground"
+                      }`}
+                    >
                       {app.tag}
                     </span>
                   </motion.div>
@@ -129,7 +151,9 @@ export function NexOS() {
 
               {/* Revenue share callout */}
               <div className="rounded-lg border border-primary/30 bg-primary/10 p-3">
-                <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-1">Revenue model</p>
+                <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-1">
+                  Revenue model
+                </p>
                 <div className="flex items-center gap-3">
                   <div className="flex-1 rounded-full h-2 bg-border overflow-hidden">
                     <div className="h-full bg-gradient-to-r from-cyan-400 to-violet-500 w-4/5" />
@@ -151,8 +175,8 @@ export function NexOS() {
         >
           <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
             NexOS turns NEXUS into a{" "}
-            <span className="text-foreground font-semibold">'house with everything.'</span>{" "}
-            Your business website, booking app, and loyalty programme — all inside NEXUS, all connected
+            <span className="text-foreground font-semibold">'house with everything.'</span> Your
+            business website, booking app, and loyalty programme — all inside NEXUS, all connected
             to your identity and payments. No third-party APIs. No data leakage.
           </p>
         </motion.div>

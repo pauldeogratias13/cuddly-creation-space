@@ -3,13 +3,13 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 
 const links = [
-  { label: "Pillars",   href: "#pillars" },
-  { label: "Vision",    href: "#vision" },
+  { label: "Pillars", href: "#pillars" },
+  { label: "Vision", href: "#vision" },
   { label: "Streaming", href: "#streaming" },
-  { label: "Social",    href: "#social" },
-  { label: "NexOS",     href: "#nexos" },
-  { label: "Pricing",   href: "#pricing" },
-  { label: "▶ Feed",    href: null, action: "feed" },
+  { label: "Social", href: "#social" },
+  { label: "NexOS", href: "#nexos" },
+  { label: "Pricing", href: "#pricing" },
+  { label: "▶ Feed", href: null, action: "feed" },
 ];
 
 export function Nav({ onOpenFeed }: { onOpenFeed?: () => void }) {
@@ -27,9 +27,7 @@ export function Nav({ onOpenFeed }: { onOpenFeed?: () => void }) {
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        scrolled
-          ? "bg-background/80 backdrop-blur-xl border-b border-border"
-          : "bg-transparent"
+        scrolled ? "bg-background/80 backdrop-blur-xl border-b border-border" : "bg-transparent"
       }`}
     >
       <div className="mx-auto max-w-7xl flex items-center justify-between px-6 py-4">
@@ -67,7 +65,7 @@ export function Nav({ onOpenFeed }: { onOpenFeed?: () => void }) {
               >
                 {l.label}
               </a>
-            )
+            ),
           )}
         </nav>
 
@@ -103,11 +101,18 @@ export function Nav({ onOpenFeed }: { onOpenFeed?: () => void }) {
             className="lg:hidden rounded-md border border-border p-2 text-muted-foreground hover:text-foreground"
             aria-label="Toggle menu"
           >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              {mobileOpen
-                ? <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                : <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-              }
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              {mobileOpen ? (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              )}
             </svg>
           </button>
         </div>
@@ -121,7 +126,10 @@ export function Nav({ onOpenFeed }: { onOpenFeed?: () => void }) {
               <button
                 key={l.label}
                 type="button"
-                onClick={() => { onOpenFeed?.(); setMobileOpen(false); }}
+                onClick={() => {
+                  onOpenFeed?.();
+                  setMobileOpen(false);
+                }}
                 className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium text-primary hover:bg-primary/10"
               >
                 <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse-glow" />
@@ -136,7 +144,7 @@ export function Nav({ onOpenFeed }: { onOpenFeed?: () => void }) {
               >
                 {l.label}
               </a>
-            )
+            ),
           )}
         </div>
       )}

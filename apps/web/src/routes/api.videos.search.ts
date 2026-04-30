@@ -37,7 +37,8 @@ const ALWAYS_ON: VideoHit[] = [
     description: "Open movie by the Blender Foundation.",
     source: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
     pageUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-    poster: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg",
+    poster:
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg",
     provider: "Google sample video",
     kind: "native",
     origin: "gcs",
@@ -48,7 +49,8 @@ const ALWAYS_ON: VideoHit[] = [
     title: "Elephant's Dream",
     source: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
     pageUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-    poster: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ElephantsDream.jpg",
+    poster:
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ElephantsDream.jpg",
     provider: "Google sample video",
     kind: "native",
     origin: "gcs",
@@ -70,7 +72,8 @@ const ALWAYS_ON: VideoHit[] = [
     title: "Tears of Steel",
     source: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
     pageUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
-    poster: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/TearsOfSteel.jpg",
+    poster:
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/TearsOfSteel.jpg",
     provider: "Google sample video",
     kind: "native",
     origin: "gcs",
@@ -79,9 +82,12 @@ const ALWAYS_ON: VideoHit[] = [
   {
     id: "gcs-volkswagen",
     title: "Volkswagen GTI Review",
-    source: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4",
-    pageUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4",
-    poster: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/VolkswagenGTIReview.jpg",
+    source:
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4",
+    pageUrl:
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4",
+    poster:
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/VolkswagenGTIReview.jpg",
     provider: "Google sample video",
     kind: "native",
     origin: "gcs",
@@ -92,7 +98,8 @@ const ALWAYS_ON: VideoHit[] = [
     title: "For Bigger Fun",
     source: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
     pageUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
-    poster: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerFun.jpg",
+    poster:
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerFun.jpg",
     provider: "Google sample video",
     kind: "native",
     origin: "gcs",
@@ -101,9 +108,12 @@ const ALWAYS_ON: VideoHit[] = [
   {
     id: "gcs-escapes",
     title: "For Bigger Escapes",
-    source: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-    pageUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-    poster: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerEscapes.jpg",
+    source:
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+    pageUrl:
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+    poster:
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerEscapes.jpg",
     provider: "Google sample video",
     kind: "native",
     origin: "gcs",
@@ -112,9 +122,12 @@ const ALWAYS_ON: VideoHit[] = [
   {
     id: "gcs-meltdowns",
     title: "For Bigger Meltdowns",
-    source: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",
-    pageUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",
-    poster: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerMeltdowns.jpg",
+    source:
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",
+    pageUrl:
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",
+    poster:
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerMeltdowns.jpg",
     provider: "Google sample video",
     kind: "native",
     origin: "gcs",
@@ -125,7 +138,8 @@ const ALWAYS_ON: VideoHit[] = [
     title: "W3C Demo · Bunny Trailer",
     source: "https://www.w3schools.com/html/mov_bbb.mp4",
     pageUrl: "https://www.w3schools.com/html/mov_bbb.mp4",
-    poster: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg",
+    poster:
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg",
     provider: "W3Schools",
     kind: "native",
     origin: "w3",
@@ -200,10 +214,7 @@ async function withSoftTimeout<T>(promise: Promise<T>, ms: number, fallback: T):
 async function verify(url: string): Promise<boolean> {
   try {
     // Try HEAD first (fastest)
-    const head = await withTimeout(
-      fetch(url, { method: "HEAD", redirect: "follow" }),
-      4000,
-    );
+    const head = await withTimeout(fetch(url, { method: "HEAD", redirect: "follow" }), 4000);
     if (head.ok) {
       const ct = head.headers.get("content-type") || "";
       if (ct.startsWith("video/") || ct.includes("octet-stream") || /\.mp4($|\?)/i.test(url)) {
@@ -263,13 +274,17 @@ async function searchArchive(q: string, limit: number, page = 1): Promise<VideoH
           files.find((f) => /\.mp4$/i.test(f.name));
         if (!mp4) return null;
         const poster =
-          files.find((f) => /\.(jpg|jpeg|png)$/i.test(f.name) && /thumb|cover|still|001\./i.test(f.name)) ||
-          files.find((f) => /\.(jpg|jpeg|png)$/i.test(f.name));
-        const desc = typeof doc.description === "string"
-          ? doc.description.replace(/<[^>]+>/g, "").slice(0, 240)
-          : Array.isArray(doc.description)
-            ? String(doc.description[0] ?? "").replace(/<[^>]+>/g, "").slice(0, 240)
-            : undefined;
+          files.find(
+            (f) => /\.(jpg|jpeg|png)$/i.test(f.name) && /thumb|cover|still|001\./i.test(f.name),
+          ) || files.find((f) => /\.(jpg|jpeg|png)$/i.test(f.name));
+        const desc =
+          typeof doc.description === "string"
+            ? doc.description.replace(/<[^>]+>/g, "").slice(0, 240)
+            : Array.isArray(doc.description)
+              ? String(doc.description[0] ?? "")
+                  .replace(/<[^>]+>/g, "")
+                  .slice(0, 240)
+              : undefined;
         return {
           id: `ia-${doc.identifier}`,
           title: doc.title || doc.identifier,
@@ -316,8 +331,16 @@ export const Route = createFileRoute("/api/videos/search")({
         const [remote, youtube] = skipRemote
           ? [[], []]
           : await Promise.all([
-              withSoftTimeout(searchArchive(q || "feature film", limit, page), 1400, [] as VideoHit[]),
-              withSoftTimeout(searchYouTube(q || "trailers", Math.min(limit, 8), page), 1400, [] as VideoHit[]),
+              withSoftTimeout(
+                searchArchive(q || "feature film", limit, page),
+                1400,
+                [] as VideoHit[],
+              ),
+              withSoftTimeout(
+                searchYouTube(q || "trailers", Math.min(limit, 8), page),
+                1400,
+                [] as VideoHit[],
+              ),
             ]);
 
         // Combine + dedupe by source URL

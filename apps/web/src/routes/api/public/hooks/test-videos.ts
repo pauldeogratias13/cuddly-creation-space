@@ -24,18 +24,16 @@ type TestResult = {
  * Test a YouTube video via oEmbed.
  * Returns { playable: true } if 200, otherwise { playable: false, reason }.
  */
-async function testYouTubeVideo(
-  url: string
-): Promise<{ playable: boolean; reason?: string }> {
+async function testYouTubeVideo(url: string): Promise<{ playable: boolean; reason?: string }> {
   try {
     const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
     const res = await fetch(oembedUrl, {
       method: "GET",
       headers: {
         "User-Agent": "NexusPlatform/1.0 (video-tester)",
-        "Accept": "application/json",
-        "Referer": "https://cuddly-creation-space.lovable.app/",
-        "Origin": "https://cuddly-creation-space.lovable.app",
+        Accept: "application/json",
+        Referer: "https://cuddly-creation-space.lovable.app/",
+        Origin: "https://cuddly-creation-space.lovable.app",
       },
       signal: AbortSignal.timeout(6000),
     });
@@ -58,15 +56,13 @@ async function testYouTubeVideo(
  * Test a generic video URL by performing a HEAD request.
  * Works for mp4, hls, dash, etc.
  */
-async function testGenericVideo(
-  url: string
-): Promise<{ playable: boolean; reason?: string }> {
+async function testGenericVideo(url: string): Promise<{ playable: boolean; reason?: string }> {
   try {
     const res = await fetch(url, {
       method: "HEAD",
       headers: {
         "User-Agent": "NexusPlatform/1.0 (video-tester)",
-        "Referer": "https://cuddly-creation-space.lovable.app/",
+        Referer: "https://cuddly-creation-space.lovable.app/",
       },
       signal: AbortSignal.timeout(8000),
     });
@@ -81,9 +77,7 @@ async function testGenericVideo(
 /**
  * Route all test logic by provider/kind.
  */
-async function testVideo(
-  row: VideoRow
-): Promise<{ playable: boolean; reason?: string }> {
+async function testVideo(row: VideoRow): Promise<{ playable: boolean; reason?: string }> {
   if (row.provider === "youtube" || row.kind === "youtube") {
     return testYouTubeVideo(row.source_url);
   }
@@ -146,7 +140,7 @@ async function handleTest(request: Request) {
       batch.map(async (row) => {
         const { playable, reason } = await testVideo(row);
         return { id: row.id, source_url: row.source_url, title: row.title, playable, reason };
-      })
+      }),
     );
 
     for (const r of batchResults) {

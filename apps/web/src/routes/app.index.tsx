@@ -18,13 +18,15 @@ function Dashboard() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <p className="text-xs font-mono-display uppercase tracking-widest text-primary">Dashboard</p>
+        <p className="text-xs font-mono-display uppercase tracking-widest text-primary">
+          Dashboard
+        </p>
         <h1 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">
           Welcome back, <span className="text-gradient-aurora">{name}</span>.
         </h1>
         <p className="mt-4 max-w-xl text-muted-foreground">
-          Your seven pillars are spinning up. Pick one to begin - or wait for early-access cohorts to
-          open across the network.
+          Your seven pillars are spinning up. Pick one to begin - or wait for early-access cohorts
+          to open across the network.
         </p>
       </motion.div>
 

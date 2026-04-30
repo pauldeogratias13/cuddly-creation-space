@@ -1,8 +1,20 @@
 import { motion } from "framer-motion";
 import {
-  Smartphone, Cpu, Shield, Zap, Radio, Eye,
-  Layers, Globe, Lock, BarChart3, Sparkles,
-  Wifi, Database, GitBranch, Brain,
+  Smartphone,
+  Cpu,
+  Shield,
+  Zap,
+  Radio,
+  Eye,
+  Layers,
+  Globe,
+  Lock,
+  BarChart3,
+  Sparkles,
+  Wifi,
+  Database,
+  GitBranch,
+  Brain,
 } from "lucide-react";
 
 /* ── iOS Features ─────────────────────────────────────────────────────── */
@@ -147,7 +159,6 @@ export function MobileSection() {
       <div className="pointer-events-none absolute right-0 bottom-0 h-[400px] w-[400px] rounded-full bg-violet-500/6 blur-3xl -z-10" />
 
       <div className="mx-auto max-w-7xl space-y-24">
-
         {/* ── Header ── */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -156,15 +167,17 @@ export function MobileSection() {
           transition={{ duration: 0.6 }}
           className="max-w-3xl"
         >
-          <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-4">§ 06 · Mobile — iOS &amp; Android</p>
+          <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-4">
+            § 06 · Mobile — iOS &amp; Android
+          </p>
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.05]">
             Native performance.{" "}
             <span className="text-gradient-aurora">On-device AI. Cinema-grade.</span>
           </h2>
           <p className="mt-6 text-lg text-muted-foreground leading-relaxed max-w-2xl">
             NEXUS is not a cross-platform React Native app. Both iOS and Android are fully native —
-            Swift 6 + SwiftUI 5 on Apple, Kotlin 2.0 + Jetpack Compose on Android.
-            Business logic is shared via Kotlin Multiplatform. Zero compromise on either platform.
+            Swift 6 + SwiftUI 5 on Apple, Kotlin 2.0 + Jetpack Compose on Android. Business logic is
+            shared via Kotlin Multiplatform. Zero compromise on either platform.
           </p>
         </motion.div>
 
@@ -187,7 +200,6 @@ export function MobileSection() {
 
         {/* ── iOS + Android side by side ── */}
         <div className="grid lg:grid-cols-2 gap-12">
-
           {/* iOS */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -201,7 +213,9 @@ export function MobileSection() {
               </div>
               <div>
                 <h3 className="text-xl font-bold tracking-tight">iOS — Swift 6 + SwiftUI 5</h3>
-                <p className="text-xs font-mono-display text-primary">visionOS-ready · TCA architecture</p>
+                <p className="text-xs font-mono-display text-primary">
+                  visionOS-ready · TCA architecture
+                </p>
               </div>
             </div>
             <div className="space-y-3">
@@ -216,7 +230,9 @@ export function MobileSection() {
                     transition={{ duration: 0.4, delay: i * 0.06 }}
                     className={`flex gap-4 p-4 rounded-xl border ${f.border} ${f.bg}`}
                   >
-                    <div className={`h-9 w-9 rounded-lg bg-surface-elevated border border-border grid place-items-center shrink-0`}>
+                    <div
+                      className={`h-9 w-9 rounded-lg bg-surface-elevated border border-border grid place-items-center shrink-0`}
+                    >
                       <Icon className={`h-4 w-4 ${f.color}`} strokeWidth={1.75} />
                     </div>
                     <div>
@@ -245,7 +261,9 @@ export function MobileSection() {
               </div>
               <div>
                 <h3 className="text-xl font-bold tracking-tight">Android — Kotlin 2.0 + Compose</h3>
-                <p className="text-xs font-mono-display text-emerald-400">Baseline Profiles · Media3 · ExoPlayer</p>
+                <p className="text-xs font-mono-display text-emerald-400">
+                  Baseline Profiles · Media3 · ExoPlayer
+                </p>
               </div>
             </div>
             <div className="space-y-3">
@@ -260,7 +278,9 @@ export function MobileSection() {
                     transition={{ duration: 0.4, delay: i * 0.06 }}
                     className={`flex gap-4 p-4 rounded-xl border ${f.border} ${f.bg}`}
                   >
-                    <div className={`h-9 w-9 rounded-lg bg-surface-elevated border border-border grid place-items-center shrink-0`}>
+                    <div
+                      className={`h-9 w-9 rounded-lg bg-surface-elevated border border-border grid place-items-center shrink-0`}
+                    >
                       <Icon className={`h-4 w-4 ${f.color}`} strokeWidth={1.75} />
                     </div>
                     <div>
@@ -287,14 +307,16 @@ export function MobileSection() {
         >
           <div className="flex flex-col sm:flex-row sm:items-center gap-6 mb-8">
             <div className="flex-1">
-              <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-2">Kotlin Multiplatform · Shared Layer</p>
+              <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-2">
+                Kotlin Multiplatform · Shared Layer
+              </p>
               <h3 className="text-2xl font-bold tracking-tight">
-                One source of truth.{" "}
-                <span className="text-gradient-aurora">Two native apps.</span>
+                One source of truth. <span className="text-gradient-aurora">Two native apps.</span>
               </h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                Business logic, networking, ML inference, and crypto primitives are written once in KMP
-                and compiled natively to both Swift and JVM. Zero performance overhead, zero drift between platforms.
+                Business logic, networking, ML inference, and crypto primitives are written once in
+                KMP and compiled natively to both Swift and JVM. Zero performance overhead, zero
+                drift between platforms.
               </p>
             </div>
             <div className="flex items-center gap-3 shrink-0">
@@ -311,7 +333,10 @@ export function MobileSection() {
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {SHARED_STACK.map((s) => (
-              <div key={s.label} className="rounded-lg border border-border bg-surface-elevated p-3">
+              <div
+                key={s.label}
+                className="rounded-lg border border-border bg-surface-elevated p-3"
+              >
                 <div className="flex items-center gap-2 mb-1">
                   <GitBranch className="h-3 w-3 text-primary shrink-0" strokeWidth={1.75} />
                   <span className="text-xs font-semibold">{s.label}</span>
@@ -367,7 +392,6 @@ export function MobileSection() {
             </div>
           ))}
         </motion.div>
-
       </div>
     </section>
   );

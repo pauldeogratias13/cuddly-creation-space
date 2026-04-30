@@ -95,7 +95,9 @@ export function Hero() {
           {STATS.map((s) => (
             <div key={s.label} className="bg-surface px-4 py-4 text-center">
               <div className="text-2xl font-bold text-gradient-aurora">{s.value}</div>
-              <div className="mt-0.5 text-[10px] font-mono-display uppercase tracking-widest text-muted-foreground">{s.label}</div>
+              <div className="mt-0.5 text-[10px] font-mono-display uppercase tracking-widest text-muted-foreground">
+                {s.label}
+              </div>
             </div>
           ))}
         </motion.div>

@@ -70,6 +70,18 @@ type StreamItem = {
   pageUrl: string;
   provider: string;
 };
+type StreamVideoRow = {
+  id: string;
+  title: string;
+  description: string | null;
+  provider: string | null;
+  source_url: string;
+  poster_url: string | null;
+  page_url: string | null;
+  kind: "native" | "youtube" | null;
+  category: StreamItem["category"] | null;
+  duration_label: string | null;
+};
 type NotificationType = "chat" | "social_comment" | "commerce" | "profile" | string;
 type Notification = {
   id: string;
@@ -203,7 +215,10 @@ export function SuperAppWorkspace({ name }: { name: string }) {
   const [videoDimensions, setVideoDimensions] = useState<
     Record<string, { width: number; height: number; aspectRatio: number }>
   >({});
-  const recordDimensions = (id: string, dims: { width: number; height: number; aspectRatio: number }) => {
+  const recordDimensions = (
+    id: string,
+    dims: { width: number; height: number; aspectRatio: number },
+  ) => {
     setVideoDimensions((prev) => (prev[id] ? prev : { ...prev, [id]: dims }));
   };
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -236,7 +251,9 @@ export function SuperAppWorkspace({ name }: { name: string }) {
   }, []);
 
   const filteredStreams = useMemo(() => {
-    const byCat = streamLibrary.filter((s) => streamFilter === "All" || s.category === streamFilter);
+    const byCat = streamLibrary.filter(
+      (s) => streamFilter === "All" || s.category === streamFilter,
+    );
     const q = streamSearch.trim().toLowerCase();
     if (!q) return byCat;
     return byCat.filter(
@@ -252,9 +269,10 @@ export function SuperAppWorkspace({ name }: { name: string }) {
     id: r.id,
     title: r.title,
     description: r.description ?? "Live source verified by NEXUS.",
-    category:
-      /trailer|short|clip|news/i.test(r.title) ? "Series"
-        : /doc|nature|space|history/i.test(`${r.title} ${r.description ?? ""}`) ? "Docs"
+    category: /trailer|short|clip|news/i.test(r.title)
+      ? "Series"
+      : /doc|nature|space|history/i.test(`${r.title} ${r.description ?? ""}`)
+        ? "Docs"
         : "Cinema",
     duration: r.durationLabel ?? "—",
     kind: r.kind,
@@ -278,7 +296,9 @@ export function SuperAppWorkspace({ name }: { name: string }) {
         const needle = streamSearch.trim();
         let q = supabaseTyped
           .from("public_videos")
-          .select("id,title,description,author,provider,source_url,poster_url,page_url,kind,category,duration_label")
+          .select(
+            "id,title,description,author,provider,source_url,poster_url,page_url,kind,category,duration_label",
+          )
           .eq("is_active", true)
           .order("sort_order", { ascending: true })
           .range(0, 11);
@@ -289,7 +309,7 @@ export function SuperAppWorkspace({ name }: { name: string }) {
         }
         const { data: rows, error: dbErr } = await q;
         if (dbErr) throw dbErr;
-        const mapped: StreamItem[] = (rows ?? []).map((row: any) => ({
+        const mapped: StreamItem[] = ((rows ?? []) as StreamVideoRow[]).map((row) => ({
           id: row.id,
           title: row.title,
           description: row.description ?? "Curated public video.",
@@ -337,7 +357,9 @@ export function SuperAppWorkspace({ name }: { name: string }) {
           const from = (nextPage - 1) * 12;
           let q = supabaseTyped
             .from("public_videos")
-            .select("id,title,description,author,provider,source_url,poster_url,page_url,kind,category,duration_label")
+            .select(
+              "id,title,description,author,provider,source_url,poster_url,page_url,kind,category,duration_label",
+            )
             .eq("is_active", true)
             .order("sort_order", { ascending: true })
             .range(from, from + 11);
@@ -348,7 +370,7 @@ export function SuperAppWorkspace({ name }: { name: string }) {
           }
           const { data: rows, error: dbErr } = await q;
           if (dbErr) throw dbErr;
-          const mapped: StreamItem[] = (rows ?? []).map((row: any) => ({
+          const mapped: StreamItem[] = ((rows ?? []) as StreamVideoRow[]).map((row) => ({
             id: row.id,
             title: row.title,
             description: row.description ?? "Curated public video.",
@@ -395,7 +417,10 @@ export function SuperAppWorkspace({ name }: { name: string }) {
     );
   }, [filteredStreams]);
 
-  const cartTotal = useMemo(() => cart.reduce((sum, item) => sum + item.price * item.quantity, 0), [cart]);
+  const cartTotal = useMemo(
+    () => cart.reduce((sum, item) => sum + item.price * item.quantity, 0),
+    [cart],
+  );
   const cartUnits = useMemo(() => cart.reduce((n, item) => n + item.quantity, 0), [cart]);
   const filteredPosts = useMemo(() => {
     const q = socialSearch.trim().toLowerCase();
@@ -469,17 +494,27 @@ export function SuperAppWorkspace({ name }: { name: string }) {
         ? messagesQuery.eq("thread_id", selectedThreadId)
         : messagesQuery;
 
-      const [threadsRes, threadReadsRes, threadMessagesRes, messagesRes, postsRes, likesRes, watchlistRes, appsRes, scoreRes, ordersRes, notificationsRes, cartRes] = await Promise.all([
+      const [
+        threadsRes,
+        threadReadsRes,
+        threadMessagesRes,
+        messagesRes,
+        postsRes,
+        likesRes,
+        watchlistRes,
+        appsRes,
+        scoreRes,
+        ordersRes,
+        notificationsRes,
+        cartRes,
+      ] = await Promise.all([
         supabase
           .from("chat_threads")
           .select("id, title, is_pinned")
           .eq("user_id", user.id)
           .order("is_pinned", { ascending: false })
           .order("created_at", { ascending: true }),
-        supabase
-          .from("chat_thread_reads")
-          .select("thread_id, last_read_at")
-          .eq("user_id", user.id),
+        supabase.from("chat_thread_reads").select("thread_id, last_read_at").eq("user_id", user.id),
         supabase
           .from("chat_messages")
           .select("thread_id, sender, text, created_at")
@@ -488,10 +523,18 @@ export function SuperAppWorkspace({ name }: { name: string }) {
           .order("created_at", { ascending: false })
           .limit(300),
         messagesScopedQuery,
-        supabase.from("social_posts").select("id, user_id, text, likes_count, created_at").order("created_at", { ascending: false }).limit(30),
+        supabase
+          .from("social_posts")
+          .select("id, user_id, text, likes_count, created_at")
+          .order("created_at", { ascending: false })
+          .limit(30),
         supabase.from("social_post_likes").select("post_id").eq("user_id", user.id),
         supabase.from("user_watchlist").select("stream_id").eq("user_id", user.id),
-        supabase.from("nexos_apps").select("id, name").eq("user_id", user.id).order("created_at", { ascending: false }),
+        supabase
+          .from("nexos_apps")
+          .select("id, name")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false }),
         supabase.from("gaming_scores").select("high_score").eq("user_id", user.id).maybeSingle(),
         supabase
           .from("commerce_orders")
@@ -540,12 +583,7 @@ export function SuperAppWorkspace({ name }: { name: string }) {
       const latestMessageSenderMap = new Map<string, "me" | "system">();
       const unreadMap = new Map<string, number>();
       (threadMessagesRes.data ?? []).forEach(
-        (m: {
-          thread_id: string | null;
-          sender: string;
-          text: string;
-          created_at: string;
-        }) => {
+        (m: { thread_id: string | null; sender: string; text: string; created_at: string }) => {
           if (!m.thread_id) return;
           if (!latestMessageMap.has(m.thread_id)) {
             latestMessageMap.set(m.thread_id, m.text);
@@ -597,13 +635,15 @@ export function SuperAppWorkspace({ name }: { name: string }) {
       );
       setShowJumpNewest(false);
       setPosts(
-        (postsRes.data ?? []).map((p: { id: string; user_id: string; text: string; likes_count: number }) => ({
-          id: p.id,
-          userId: p.user_id,
-          text: p.text,
-          likes: p.likes_count,
-          liked: false,
-        })),
+        (postsRes.data ?? []).map(
+          (p: { id: string; user_id: string; text: string; likes_count: number }) => ({
+            id: p.id,
+            userId: p.user_id,
+            text: p.text,
+            likes: p.likes_count,
+            liked: false,
+          }),
+        ),
       );
       const postIds = (postsRes.data ?? []).map((p: { id: string }) => p.id);
       const commentsRes =
@@ -615,33 +655,37 @@ export function SuperAppWorkspace({ name }: { name: string }) {
               .in("post_id", postIds)
               .order("created_at", { ascending: true });
       setComments(
-        (commentsRes.data ?? []).map((c: { id: string; post_id: string; user_id: string; text: string }) => ({
-          id: c.id,
-          postId: c.post_id,
-          userId: c.user_id,
-          text: c.text,
-        })),
+        (commentsRes.data ?? []).map(
+          (c: { id: string; post_id: string; user_id: string; text: string }) => ({
+            id: c.id,
+            postId: c.post_id,
+            userId: c.user_id,
+            text: c.text,
+          }),
+        ),
       );
       const likes = (likesRes.data ?? []).map((x: { post_id: string }) => x.post_id);
       setLikedPostIds(likes);
       setWatchlist((watchlistRes.data ?? []).map((w: { stream_id: string }) => w.stream_id));
       setNotifications(
-        (notificationsRes.data ?? []).map((n: {
-          id: string;
-          type: string;
-          title: string;
-          body: string | null;
-          read_at: string | null;
-          created_at: string;
-        }) => ({
-          id: n.id,
-          type: n.type,
-          title: n.title,
-          body: n.body,
-          readAt: n.read_at,
-          createdAt: new Date(n.created_at).toLocaleString(),
-          createdAtIso: n.created_at,
-        })),
+        (notificationsRes.data ?? []).map(
+          (n: {
+            id: string;
+            type: string;
+            title: string;
+            body: string | null;
+            read_at: string | null;
+            created_at: string;
+          }) => ({
+            id: n.id,
+            type: n.type,
+            title: n.title,
+            body: n.body,
+            readAt: n.read_at,
+            createdAt: new Date(n.created_at).toLocaleString(),
+            createdAtIso: n.created_at,
+          }),
+        ),
       );
       setNotificationsHasMore((notificationsRes.data ?? []).length === PAGE_SIZE);
       setOldestNotificationCursor(
@@ -649,14 +693,23 @@ export function SuperAppWorkspace({ name }: { name: string }) {
           ? (notificationsRes.data ?? [])[notificationsRes.data!.length - 1].created_at
           : null,
       );
-      setApps((appsRes.data ?? []).map((a: { id: string; name: string }) => ({ id: a.id, name: a.name })));
+      setApps(
+        (appsRes.data ?? []).map((a: { id: string; name: string }) => ({ id: a.id, name: a.name })),
+      );
       setCart(
-        (cartRes.data ?? []).map((row: { product_id: string; product_name: string; unit_price: number; quantity: number }) => ({
-          id: row.product_id,
-          name: row.product_name,
-          price: Number(row.unit_price),
-          quantity: row.quantity,
-        })),
+        (cartRes.data ?? []).map(
+          (row: {
+            product_id: string;
+            product_name: string;
+            unit_price: number;
+            quantity: number;
+          }) => ({
+            id: row.product_id,
+            name: row.product_name,
+            price: Number(row.unit_price),
+            quantity: row.quantity,
+          }),
+        ),
       );
       setHighScore(scoreRes.data?.high_score ?? 0);
       const orderIds = (ordersRes.data ?? []).map((o: { id: string }) => o.id);
@@ -668,32 +721,38 @@ export function SuperAppWorkspace({ name }: { name: string }) {
               .select("order_id, product_name, quantity")
               .in("order_id", orderIds);
       const itemMap = new Map<string, string[]>();
-      (orderItemsRes.data ?? []).forEach((item: { order_id: string; product_name: string; quantity: number }) => {
-        const list = itemMap.get(item.order_id) ?? [];
-        list.push(`${item.product_name} x${item.quantity}`);
-        itemMap.set(item.order_id, list);
-      });
+      (orderItemsRes.data ?? []).forEach(
+        (item: { order_id: string; product_name: string; quantity: number }) => {
+          const list = itemMap.get(item.order_id) ?? [];
+          list.push(`${item.product_name} x${item.quantity}`);
+          itemMap.set(item.order_id, list);
+        },
+      );
 
       const orderRows = ordersRes.data ?? [];
       setOrders(
-        orderRows.map((o: { id: string; total_amount: number; status: string; created_at: string }) => ({
-          id: o.id,
-          total: o.total_amount,
-          status: o.status,
-          createdAt: new Date(o.created_at).toLocaleDateString(),
-          createdAtIso: o.created_at,
-          itemSummary: (itemMap.get(o.id) ?? []).join(", ") || "No items",
-        })),
+        orderRows.map(
+          (o: { id: string; total_amount: number; status: string; created_at: string }) => ({
+            id: o.id,
+            total: o.total_amount,
+            status: o.status,
+            createdAt: new Date(o.created_at).toLocaleDateString(),
+            createdAtIso: o.created_at,
+            itemSummary: (itemMap.get(o.id) ?? []).join(", ") || "No items",
+          }),
+        ),
       );
       setOrdersHasMore(orderRows.length === ORDERS_PAGE);
       setOldestOrderCursorIso(
         orderRows.length > 0 ? orderRows[orderRows.length - 1].created_at : null,
       );
       setBooting(false);
-      setTabLoading((prev) =>
-        Object.fromEntries(
-          Object.keys(prev).map((k) => [k, false]),
-        ) as Record<PillarTab, boolean>,
+      setTabLoading(
+        (prev) =>
+          Object.fromEntries(Object.keys(prev).map((k) => [k, false])) as Record<
+            PillarTab,
+            boolean
+          >,
       );
     };
 
@@ -731,12 +790,19 @@ export function SuperAppWorkspace({ name }: { name: string }) {
         .eq("user_id", user.id);
       if (error) return;
       setCart(
-        (data ?? []).map((row: { product_id: string; product_name: string; unit_price: number; quantity: number }) => ({
-          id: row.product_id,
-          name: row.product_name,
-          price: Number(row.unit_price),
-          quantity: row.quantity,
-        })),
+        (data ?? []).map(
+          (row: {
+            product_id: string;
+            product_name: string;
+            unit_price: number;
+            quantity: number;
+          }) => ({
+            id: row.product_id,
+            name: row.product_name,
+            price: Number(row.unit_price),
+            quantity: row.quantity,
+          }),
+        ),
       );
     };
 
@@ -744,8 +810,21 @@ export function SuperAppWorkspace({ name }: { name: string }) {
       .channel(`nexus-realtime-${user.id}`)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "chat_messages", filter: `user_id=eq.${user.id}` },
-        (payload: RealtimePayload<{ id: string; sender: string; text: string; created_at: string; thread_id: string | null }>) => {
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "chat_messages",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (
+          payload: RealtimePayload<{
+            id: string;
+            sender: string;
+            text: string;
+            created_at: string;
+            thread_id: string | null;
+          }>,
+        ) => {
           const row = payload.new as {
             id: string;
             sender: string;
@@ -765,7 +844,10 @@ export function SuperAppWorkspace({ name }: { name: string }) {
                   id: row.id,
                   from: row.sender as "me" | "system",
                   text: row.text,
-                  at: new Date(row.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                  at: new Date(row.created_at).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }),
                   createdAtIso: row.created_at,
                 },
               ];
@@ -795,7 +877,12 @@ export function SuperAppWorkspace({ name }: { name: string }) {
       )
       .on(
         "postgres_changes",
-        { event: "DELETE", schema: "public", table: "chat_messages", filter: `user_id=eq.${user.id}` },
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "chat_messages",
+          filter: `user_id=eq.${user.id}`,
+        },
         (payload: { old?: { id: string } }) => {
           const id = payload.old?.id;
           if (!id) return;
@@ -804,8 +891,20 @@ export function SuperAppWorkspace({ name }: { name: string }) {
       )
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "chat_messages", filter: `user_id=eq.${user.id}` },
-        (payload: RealtimePayload<{ id: string; text: string; created_at: string; thread_id: string | null }>) => {
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "chat_messages",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (
+          payload: RealtimePayload<{
+            id: string;
+            text: string;
+            created_at: string;
+            thread_id: string | null;
+          }>,
+        ) => {
           const row = payload.new as {
             id: string;
             text: string;
@@ -835,7 +934,12 @@ export function SuperAppWorkspace({ name }: { name: string }) {
       )
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "chat_threads", filter: `user_id=eq.${user.id}` },
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "chat_threads",
+          filter: `user_id=eq.${user.id}`,
+        },
         (payload: RealtimePayload<{ id: string; title: string; is_pinned?: boolean }>) => {
           const row = payload.new as { id: string; title: string; is_pinned?: boolean };
           setThreads((prev) => {
@@ -857,7 +961,12 @@ export function SuperAppWorkspace({ name }: { name: string }) {
       )
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "chat_threads", filter: `user_id=eq.${user.id}` },
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "chat_threads",
+          filter: `user_id=eq.${user.id}`,
+        },
         (payload: RealtimePayload<{ id: string; title: string; is_pinned: boolean }>) => {
           const row = payload.new as { id: string; title: string; is_pinned: boolean };
           setThreads((prev) =>
@@ -871,7 +980,12 @@ export function SuperAppWorkspace({ name }: { name: string }) {
       )
       .on(
         "postgres_changes",
-        { event: "DELETE", schema: "public", table: "chat_threads", filter: `user_id=eq.${user.id}` },
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "chat_threads",
+          filter: `user_id=eq.${user.id}`,
+        },
         (payload: { old?: { id: string } }) => {
           const tid = payload.old?.id;
           if (!tid) return;
@@ -888,8 +1002,22 @@ export function SuperAppWorkspace({ name }: { name: string }) {
       )
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "user_notifications", filter: `user_id=eq.${user.id}` },
-        (payload: RealtimePayload<{ id: string; type: string; title: string; body: string | null; read_at: string | null; created_at: string }>) => {
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "user_notifications",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (
+          payload: RealtimePayload<{
+            id: string;
+            type: string;
+            title: string;
+            body: string | null;
+            read_at: string | null;
+            created_at: string;
+          }>,
+        ) => {
           const row = payload.new as {
             id: string;
             type: string;
@@ -915,12 +1043,33 @@ export function SuperAppWorkspace({ name }: { name: string }) {
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "social_posts" },
-        (payload: RealtimePayload<{ id: string; user_id: string; text: string; likes_count: number }>) => {
-          const row = payload.new as { id: string; user_id: string; text: string; likes_count: number };
+        (
+          payload: RealtimePayload<{
+            id: string;
+            user_id: string;
+            text: string;
+            likes_count: number;
+          }>,
+        ) => {
+          const row = payload.new as {
+            id: string;
+            user_id: string;
+            text: string;
+            likes_count: number;
+          };
           setPosts((prev) =>
             prev.some((p) => p.id === row.id)
               ? prev
-              : [{ id: row.id, userId: row.user_id, text: row.text, likes: row.likes_count, liked: false }, ...prev],
+              : [
+                  {
+                    id: row.id,
+                    userId: row.user_id,
+                    text: row.text,
+                    likes: row.likes_count,
+                    liked: false,
+                  },
+                  ...prev,
+                ],
           );
         },
       )
@@ -951,7 +1100,9 @@ export function SuperAppWorkspace({ name }: { name: string }) {
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "social_comments" },
-        (payload: RealtimePayload<{ id: string; post_id: string; user_id: string; text: string }>) => {
+        (
+          payload: RealtimePayload<{ id: string; post_id: string; user_id: string; text: string }>,
+        ) => {
           const row = payload.new as { id: string; post_id: string; user_id: string; text: string };
           setComments((prev) =>
             prev.some((c) => c.id === row.id)
@@ -984,7 +1135,9 @@ export function SuperAppWorkspace({ name }: { name: string }) {
         (payload: RealtimePayload<{ post_id: string; user_id: string }>) => {
           const row = payload.new as { post_id: string; user_id: string };
           if (row.user_id !== user.id) {
-            setPosts((prev) => prev.map((p) => (p.id === row.post_id ? { ...p, likes: p.likes + 1 } : p)));
+            setPosts((prev) =>
+              prev.map((p) => (p.id === row.post_id ? { ...p, likes: p.likes + 1 } : p)),
+            );
           }
           if (row.user_id === user.id) {
             setLikedPostIds((prev) => (prev.includes(row.post_id) ? prev : [...prev, row.post_id]));
@@ -999,7 +1152,9 @@ export function SuperAppWorkspace({ name }: { name: string }) {
           if (!row?.post_id) return;
           if (row.user_id !== user.id) {
             setPosts((prev) =>
-              prev.map((p) => (p.id === row.post_id ? { ...p, likes: Math.max(0, p.likes - 1) } : p)),
+              prev.map((p) =>
+                p.id === row.post_id ? { ...p, likes: Math.max(0, p.likes - 1) } : p,
+              ),
             );
           }
           if (row.user_id === user.id) {
@@ -1009,7 +1164,12 @@ export function SuperAppWorkspace({ name }: { name: string }) {
       )
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "user_watchlist", filter: `user_id=eq.${user.id}` },
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "user_watchlist",
+          filter: `user_id=eq.${user.id}`,
+        },
         (payload: RealtimePayload<{ stream_id: string }>) => {
           const row = payload.new as { stream_id: string };
           setWatchlist((prev) => (prev.includes(row.stream_id) ? prev : [...prev, row.stream_id]));
@@ -1017,7 +1177,12 @@ export function SuperAppWorkspace({ name }: { name: string }) {
       )
       .on(
         "postgres_changes",
-        { event: "DELETE", schema: "public", table: "user_watchlist", filter: `user_id=eq.${user.id}` },
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "user_watchlist",
+          filter: `user_id=eq.${user.id}`,
+        },
         (payload: { old?: { stream_id: string } }) => {
           const streamId = payload.old?.stream_id;
           if (!streamId) return;
@@ -1043,7 +1208,12 @@ export function SuperAppWorkspace({ name }: { name: string }) {
       )
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "gaming_scores", filter: `user_id=eq.${user.id}` },
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "gaming_scores",
+          filter: `user_id=eq.${user.id}`,
+        },
         (payload: RealtimePayload<{ high_score: number }>) => {
           const row = payload.new as { high_score: number };
           if (typeof row?.high_score === "number") setHighScore(row.high_score);
@@ -1051,9 +1221,26 @@ export function SuperAppWorkspace({ name }: { name: string }) {
       )
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "commerce_orders", filter: `user_id=eq.${user.id}` },
-        (payload: RealtimePayload<{ id: string; total_amount: number; status: string; created_at: string }>) => {
-          const row = payload.new as { id: string; total_amount: number; status: string; created_at: string };
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "commerce_orders",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (
+          payload: RealtimePayload<{
+            id: string;
+            total_amount: number;
+            status: string;
+            created_at: string;
+          }>,
+        ) => {
+          const row = payload.new as {
+            id: string;
+            total_amount: number;
+            status: string;
+            created_at: string;
+          };
           setOrders((prev) => {
             if (prev.some((o) => o.id === row.id)) return prev;
             const entry: OrderSummary = {
@@ -1070,8 +1257,20 @@ export function SuperAppWorkspace({ name }: { name: string }) {
       )
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "commerce_orders", filter: `user_id=eq.${user.id}` },
-        (payload: RealtimePayload<{ id: string; total_amount: number; status: string; created_at: string }>) => {
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "commerce_orders",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (
+          payload: RealtimePayload<{
+            id: string;
+            total_amount: number;
+            status: string;
+            created_at: string;
+          }>,
+        ) => {
           const row = payload.new as {
             id: string;
             total_amount: number;
@@ -1095,7 +1294,12 @@ export function SuperAppWorkspace({ name }: { name: string }) {
       )
       .on(
         "postgres_changes",
-        { event: "DELETE", schema: "public", table: "user_notifications", filter: `user_id=eq.${user.id}` },
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "user_notifications",
+          filter: `user_id=eq.${user.id}`,
+        },
         (payload: { old?: { id: string } }) => {
           const id = payload.old?.id;
           if (!id) return;
@@ -1104,7 +1308,12 @@ export function SuperAppWorkspace({ name }: { name: string }) {
       )
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "user_notifications", filter: `user_id=eq.${user.id}` },
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "user_notifications",
+          filter: `user_id=eq.${user.id}`,
+        },
         (payload: RealtimePayload<{ id: string; read_at: string | null }>) => {
           const row = payload.new as { id: string; read_at: string | null };
           if (!row?.id) return;
@@ -1115,21 +1324,36 @@ export function SuperAppWorkspace({ name }: { name: string }) {
       )
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "commerce_cart_items", filter: `user_id=eq.${user.id}` },
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "commerce_cart_items",
+          filter: `user_id=eq.${user.id}`,
+        },
         () => {
           void syncCartFromDb();
         },
       )
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "commerce_cart_items", filter: `user_id=eq.${user.id}` },
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "commerce_cart_items",
+          filter: `user_id=eq.${user.id}`,
+        },
         () => {
           void syncCartFromDb();
         },
       )
       .on(
         "postgres_changes",
-        { event: "DELETE", schema: "public", table: "commerce_cart_items", filter: `user_id=eq.${user.id}` },
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "commerce_cart_items",
+          filter: `user_id=eq.${user.id}`,
+        },
         () => {
           void syncCartFromDb();
         },
@@ -1163,22 +1387,24 @@ export function SuperAppWorkspace({ name }: { name: string }) {
       if (!active) return;
       setNotificationsLoadingMore(false);
       if (error) return toast.error("Failed to load filtered notifications");
-      const next = (data ?? []).map((n: {
-        id: string;
-        type: string;
-        title: string;
-        body: string | null;
-        read_at: string | null;
-        created_at: string;
-      }) => ({
-        id: n.id,
-        type: n.type,
-        title: n.title,
-        body: n.body,
-        readAt: n.read_at,
-        createdAt: new Date(n.created_at).toLocaleString(),
-        createdAtIso: n.created_at,
-      }));
+      const next = (data ?? []).map(
+        (n: {
+          id: string;
+          type: string;
+          title: string;
+          body: string | null;
+          read_at: string | null;
+          created_at: string;
+        }) => ({
+          id: n.id,
+          type: n.type,
+          title: n.title,
+          body: n.body,
+          readAt: n.read_at,
+          createdAt: new Date(n.created_at).toLocaleString(),
+          createdAtIso: n.created_at,
+        }),
+      );
       setNotifications(next);
       setNotificationsHasMore((data ?? []).length === PAGE_SIZE);
       setOldestNotificationCursor(
@@ -1211,20 +1437,21 @@ export function SuperAppWorkspace({ name }: { name: string }) {
         id: data.id,
         from: "me",
         text: data.text,
-        at: new Date(data.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        at: new Date(data.created_at).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
         createdAtIso: data.created_at,
       },
     ]);
     setChatInput("");
     setTimeout(async () => {
-      await supabase
-        .from("chat_messages")
-        .insert({
-          user_id: user.id,
-          sender: "system",
-          text: "Relay received. Message queued with secure routing.",
-          thread_id: selectedThreadId,
-        });
+      await supabase.from("chat_messages").insert({
+        user_id: user.id,
+        sender: "system",
+        text: "Relay received. Message queued with secure routing.",
+        thread_id: selectedThreadId,
+      });
       await supabase.from("user_notifications").insert({
         user_id: user.id,
         type: "chat",
@@ -1282,9 +1509,7 @@ export function SuperAppWorkspace({ name }: { name: string }) {
       return;
     }
     setThreads((prev) =>
-      prev.map((t) =>
-        t.id === renameThreadId ? { ...t, title: nextTitle } : t,
-      ),
+      prev.map((t) => (t.id === renameThreadId ? { ...t, title: nextTitle } : t)),
     );
     setRenameThreadId(null);
     setRenameThreadValue("");
@@ -1312,12 +1537,7 @@ export function SuperAppWorkspace({ name }: { name: string }) {
       .eq("id", thread.id);
     if (error) return toast.error("Could not update pin");
     setThreads((prev) =>
-      sortThreads(
-        prev
-        .map((t) =>
-          t.id === thread.id ? { ...t, isPinned: !t.isPinned } : t,
-        )
-      ),
+      sortThreads(prev.map((t) => (t.id === thread.id ? { ...t, isPinned: !t.isPinned } : t))),
     );
   };
 
@@ -1328,11 +1548,7 @@ export function SuperAppWorkspace({ name }: { name: string }) {
       .from("chat_thread_reads")
       .upsert({ thread_id: threadId, user_id: user.id, last_read_at: nowIso });
     if (!error) {
-      setThreads((prev) =>
-        prev.map((t) =>
-          t.id === threadId ? { ...t, unreadCount: 0 } : t,
-        ),
-      );
+      setThreads((prev) => prev.map((t) => (t.id === threadId ? { ...t, unreadCount: 0 } : t)));
     }
   };
 
@@ -1499,18 +1715,18 @@ export function SuperAppWorkspace({ name }: { name: string }) {
       setLikedPostIds((prev) => prev.filter((id) => id !== post.id));
       setPosts((prev) =>
         prev.map((p) =>
-          p.id === post.id
-            ? { ...p, likes: Math.max(0, p.likes - 1), liked: false }
-            : p,
+          p.id === post.id ? { ...p, likes: Math.max(0, p.likes - 1), liked: false } : p,
         ),
       );
-      const { error } = await supabase.from("social_post_likes").delete().eq("post_id", post.id).eq("user_id", user.id);
+      const { error } = await supabase
+        .from("social_post_likes")
+        .delete()
+        .eq("post_id", post.id)
+        .eq("user_id", user.id);
       if (error) {
         setLikedPostIds((prev) => (prev.includes(post.id) ? prev : [...prev, post.id]));
         setPosts((prev) =>
-          prev.map((p) =>
-            p.id === post.id ? { ...p, likes: p.likes + 1, liked: true } : p,
-          ),
+          prev.map((p) => (p.id === post.id ? { ...p, likes: p.likes + 1, liked: true } : p)),
         );
         return toast.error("Could not remove like");
       }
@@ -1520,7 +1736,9 @@ export function SuperAppWorkspace({ name }: { name: string }) {
     setPosts((prev) =>
       prev.map((p) => (p.id === post.id ? { ...p, likes: p.likes + 1, liked: true } : p)),
     );
-    const { error } = await supabase.from("social_post_likes").insert({ post_id: post.id, user_id: user.id });
+    const { error } = await supabase
+      .from("social_post_likes")
+      .insert({ post_id: post.id, user_id: user.id });
     if (error && error.code !== "23505") {
       setLikedPostIds((prev) => prev.filter((id) => id !== post.id));
       setPosts((prev) =>
@@ -1553,7 +1771,10 @@ export function SuperAppWorkspace({ name }: { name: string }) {
     setComments((prev) => {
       const withoutTemp = prev.filter((c) => c.id !== optimisticId);
       if (withoutTemp.some((c) => c.id === data.id)) return withoutTemp;
-      return [...withoutTemp, { id: data.id, postId: data.post_id, userId: data.user_id, text: data.text }];
+      return [
+        ...withoutTemp,
+        { id: data.id, postId: data.post_id, userId: data.user_id, text: data.text },
+      ];
     });
     await supabase.from("user_notifications").insert({
       user_id: user.id,
@@ -1575,12 +1796,18 @@ export function SuperAppWorkspace({ name }: { name: string }) {
     if (!user) return;
     const isSaved = watchlist.includes(streamId);
     if (isSaved) {
-      const { error } = await supabase.from("user_watchlist").delete().eq("user_id", user.id).eq("stream_id", streamId);
+      const { error } = await supabase
+        .from("user_watchlist")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("stream_id", streamId);
       if (error) return toast.error("Unable to remove from watchlist");
       setWatchlist((prev) => prev.filter((id) => id !== streamId));
       return;
     }
-    const { error } = await supabase.from("user_watchlist").insert({ user_id: user.id, stream_id: streamId });
+    const { error } = await supabase
+      .from("user_watchlist")
+      .insert({ user_id: user.id, stream_id: streamId });
     if (error && error.code !== "23505") return toast.error("Unable to save to watchlist");
     setWatchlist((prev) => (prev.includes(streamId) ? prev : [...prev, streamId]));
   };
@@ -1601,7 +1828,11 @@ export function SuperAppWorkspace({ name }: { name: string }) {
 
   const removeNexosApp = async (appId: string) => {
     if (!user) return;
-    const { error } = await supabase.from("nexos_apps").delete().eq("id", appId).eq("user_id", user.id);
+    const { error } = await supabase
+      .from("nexos_apps")
+      .delete()
+      .eq("id", appId)
+      .eq("user_id", user.id);
     if (error) return toast.error("Could not remove app");
     setApps((prev) => prev.filter((a) => a.id !== appId));
   };
@@ -1625,7 +1856,10 @@ export function SuperAppWorkspace({ name }: { name: string }) {
     if (error) return toast.error("Could not update cart");
     setCart((prev) => {
       const rest = prev.filter((c) => c.id !== catalogItem.id);
-      return [...rest, { id: catalogItem.id, name: catalogItem.name, price: catalogItem.price, quantity: nextQty }];
+      return [
+        ...rest,
+        { id: catalogItem.id, name: catalogItem.name, price: catalogItem.price, quantity: nextQty },
+      ];
     });
   };
 
@@ -1672,7 +1906,10 @@ export function SuperAppWorkspace({ name }: { name: string }) {
     );
     if (itemsError) return toast.error("Order saved but line items failed");
 
-    const { error: clearCartError } = await supabase.from("commerce_cart_items").delete().eq("user_id", user.id);
+    const { error: clearCartError } = await supabase
+      .from("commerce_cart_items")
+      .delete()
+      .eq("user_id", user.id);
     if (clearCartError) toast.error("Order placed but cart could not be cleared in the database");
 
     const summaryLines = cart.map((item) => `${item.name} x${item.quantity}`);
@@ -1684,7 +1921,10 @@ export function SuperAppWorkspace({ name }: { name: string }) {
       createdAtIso: order.created_at,
       itemSummary: summaryLines.join(", "),
     };
-    const nextOrders = [newEntry, ...orders.filter((o) => o.id !== newEntry.id).slice(0, ORDERS_PAGE - 1)];
+    const nextOrders = [
+      newEntry,
+      ...orders.filter((o) => o.id !== newEntry.id).slice(0, ORDERS_PAGE - 1),
+    ];
     setOrders(nextOrders);
     setOldestOrderCursorIso(nextOrders[nextOrders.length - 1]?.createdAtIso ?? null);
     setCart([]);
@@ -1714,7 +1954,9 @@ export function SuperAppWorkspace({ name }: { name: string }) {
     }
     setOrderItemsById((prev) => ({
       ...prev,
-      [orderId]: (data ?? []).map((i: { product_name: string; quantity: number }) => `${i.product_name} x${i.quantity}`),
+      [orderId]: (data ?? []).map(
+        (i: { product_name: string; quantity: number }) => `${i.product_name} x${i.quantity}`,
+      ),
     }));
   };
 
@@ -1744,19 +1986,23 @@ export function SuperAppWorkspace({ name }: { name: string }) {
             .select("order_id, product_name, quantity")
             .in("order_id", newIds);
     const itemMap = new Map<string, string[]>();
-    (itemsRes.data ?? []).forEach((item: { order_id: string; product_name: string; quantity: number }) => {
-      const list = itemMap.get(item.order_id) ?? [];
-      list.push(`${item.product_name} x${item.quantity}`);
-      itemMap.set(item.order_id, list);
-    });
-    const mapped: OrderSummary[] = next.map((o: { id: string; total_amount: number; status: string; created_at: string }) => ({
-      id: o.id,
-      total: o.total_amount,
-      status: o.status,
-      createdAt: new Date(o.created_at).toLocaleDateString(),
-      createdAtIso: o.created_at,
-      itemSummary: (itemMap.get(o.id) ?? []).join(", ") || "No items",
-    }));
+    (itemsRes.data ?? []).forEach(
+      (item: { order_id: string; product_name: string; quantity: number }) => {
+        const list = itemMap.get(item.order_id) ?? [];
+        list.push(`${item.product_name} x${item.quantity}`);
+        itemMap.set(item.order_id, list);
+      },
+    );
+    const mapped: OrderSummary[] = next.map(
+      (o: { id: string; total_amount: number; status: string; created_at: string }) => ({
+        id: o.id,
+        total: o.total_amount,
+        status: o.status,
+        createdAt: new Date(o.created_at).toLocaleDateString(),
+        createdAtIso: o.created_at,
+        itemSummary: (itemMap.get(o.id) ?? []).join(", ") || "No items",
+      }),
+    );
     setOrders((prev) => [...prev, ...mapped]);
     setOrdersHasMore(next.length === ORDERS_PAGE);
     setOldestOrderCursorIso(next[next.length - 1].created_at);
@@ -1905,22 +2151,24 @@ export function SuperAppWorkspace({ name }: { name: string }) {
     const { data, error } = await query;
     setNotificationsLoadingMore(false);
     if (error) return toast.error("Failed to load older notifications");
-    const next = (data ?? []).map((n: {
-      id: string;
-      type: string;
-      title: string;
-      body: string | null;
-      read_at: string | null;
-      created_at: string;
-    }) => ({
-      id: n.id,
-      type: n.type,
-      title: n.title,
-      body: n.body,
-      readAt: n.read_at,
-      createdAt: new Date(n.created_at).toLocaleString(),
-      createdAtIso: n.created_at,
-    }));
+    const next = (data ?? []).map(
+      (n: {
+        id: string;
+        type: string;
+        title: string;
+        body: string | null;
+        read_at: string | null;
+        created_at: string;
+      }) => ({
+        id: n.id,
+        type: n.type,
+        title: n.title,
+        body: n.body,
+        readAt: n.read_at,
+        createdAt: new Date(n.created_at).toLocaleString(),
+        createdAtIso: n.created_at,
+      }),
+    );
     setNotifications((prev) => [...prev, ...next]);
     setNotificationsHasMore((data ?? []).length === PAGE_SIZE);
     setOldestNotificationCursor(
@@ -1940,7 +2188,9 @@ export function SuperAppWorkspace({ name }: { name: string }) {
       query.includes("tier") ||
       query.includes("plan")
     ) {
-      setAiResponse("Best pillar: Commerce. Compare add-ons, checkout, and blueprint §05 tier previews.");
+      setAiResponse(
+        "Best pillar: Commerce. Compare add-ons, checkout, and blueprint §05 tier previews.",
+      );
       setActiveTab("commerce");
       return;
     }
@@ -1973,7 +2223,12 @@ export function SuperAppWorkspace({ name }: { name: string }) {
       setActiveTab("social");
       return;
     }
-    if (query.includes("post") || query.includes("social") || query.includes("feed") || query.includes("comment")) {
+    if (
+      query.includes("post") ||
+      query.includes("social") ||
+      query.includes("feed") ||
+      query.includes("comment")
+    ) {
       setAiResponse("Best pillar: Social. Let's publish to your feed.");
       setActiveTab("social");
       return;
@@ -1990,7 +2245,9 @@ export function SuperAppWorkspace({ name }: { name: string }) {
       query.includes("bio") ||
       query.includes("handle")
     ) {
-      setAiResponse("Best pillar: Settings. You can edit identity here or on the Profile page in the header.");
+      setAiResponse(
+        "Best pillar: Settings. You can edit identity here or on the Profile page in the header.",
+      );
       setActiveTab("settings");
       return;
     }
@@ -2010,14 +2267,18 @@ export function SuperAppWorkspace({ name }: { name: string }) {
       setActiveTab("gaming");
       return;
     }
-    setAiResponse("Best pillar: NexOS. I'll route this to your app ecosystem for custom workflows.");
+    setAiResponse(
+      "Best pillar: NexOS. I'll route this to your app ecosystem for custom workflows.",
+    );
     setActiveTab("nexos");
   };
 
   return (
     <div className="mt-12 space-y-6">
       <div className="rounded-2xl border border-border bg-surface/70 p-5">
-        <p className="text-xs font-mono-display uppercase tracking-widest text-primary">Workspace</p>
+        <p className="text-xs font-mono-display uppercase tracking-widest text-primary">
+          Workspace
+        </p>
         <h2 className="mt-2 text-2xl font-semibold tracking-tight">Run your pillars, {name}</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           This MVP implements functional modules for the super-app blueprint. Open the{" "}
@@ -2030,7 +2291,9 @@ export function SuperAppWorkspace({ name }: { name: string }) {
           </button>{" "}
           tab to compare against your 2026 PDF outline.
         </p>
-        {booting && <p className="mt-2 text-xs text-muted-foreground">Syncing modules from Supabase…</p>}
+        {booting && (
+          <p className="mt-2 text-xs text-muted-foreground">Syncing modules from Supabase…</p>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-5">
@@ -2071,1054 +2334,1118 @@ export function SuperAppWorkspace({ name }: { name: string }) {
           </div>
         ) : (
           <>
-        {activeTab === "chat" && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Secure Chat</h3>
-            <p className="text-sm text-muted-foreground">
-              Native messaging pillar with threaded history, pins, read markers, and delete-own-message (blueprint
-              chat + backend §08). E2E encryption is not simulated here.
-            </p>
-            <div className="space-y-2 rounded-md border border-border bg-background/50 p-3">
-              <div className="flex gap-2">
-                <input
-                  value={newThreadTitle}
-                  onChange={(e) => setNewThreadTitle(e.target.value)}
-                  placeholder="New conversation title"
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                />
-                <button onClick={createThread} className="rounded-md border border-border px-3 py-2 text-sm">
-                  Create
-                </button>
-              </div>
-              <div className="flex max-h-48 flex-col gap-1.5 overflow-y-auto pr-1">
-                {threads.map((t) => {
-                  const active = selectedThreadId === t.id;
-                  return (
-                    <div
-                      key={t.id}
-                      className={`flex min-w-0 items-stretch gap-1 rounded-lg border px-2 py-1.5 text-xs ${
-                        active ? "border-primary bg-primary/10" : "border-border bg-background/40"
-                      }`}
+            {activeTab === "chat" && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Secure Chat</h3>
+                <p className="text-sm text-muted-foreground">
+                  Native messaging pillar with threaded history, pins, read markers, and
+                  delete-own-message (blueprint chat + backend §08). E2E encryption is not simulated
+                  here.
+                </p>
+                <div className="space-y-2 rounded-md border border-border bg-background/50 p-3">
+                  <div className="flex gap-2">
+                    <input
+                      value={newThreadTitle}
+                      onChange={(e) => setNewThreadTitle(e.target.value)}
+                      placeholder="New conversation title"
+                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                    />
+                    <button
+                      onClick={createThread}
+                      className="rounded-md border border-border px-3 py-2 text-sm"
                     >
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedThreadId(t.id);
-                          markThreadRead(t.id);
-                        }}
-                        className="min-w-0 flex-1 text-left"
-                      >
-                        <div className="flex items-baseline justify-between gap-2">
-                          <span className="truncate font-medium text-foreground">
-                            {t.isPinned ? "📌 " : ""}
-                            {t.title}
-                            {t.unreadCount > 0 && (
-                              <span className="ml-1 inline-flex min-w-4 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground align-middle">
-                                {t.unreadCount}
-                              </span>
-                            )}
-                          </span>
-                          <span className="shrink-0 text-[10px] text-muted-foreground tabular-nums">
-                            {toRelativeTime(t.lastMessageAtIso)}
-                          </span>
-                        </div>
-                        <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
-                          {t.lastMessageSender === "me" ? "You" : "Relay"} · {t.lastMessagePreview}
-                        </p>
-                      </button>
-                      <div className="flex shrink-0 flex-col justify-center gap-0.5 border-l border-border pl-1">
-                        <button
-                          type="button"
-                          onClick={() => togglePinThread(t)}
-                          className="rounded border border-border px-1.5 py-0.5 text-[10px] leading-tight"
-                        >
-                          {t.isPinned ? "Unpin" : "Pin"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => startRenameThread(t)}
-                          className="rounded border border-border px-1.5 py-0.5 text-[10px] leading-tight"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => deleteThread(t.id)}
-                          className="rounded border border-border px-1.5 py-0.5 text-[10px] leading-tight"
-                        >
-                          Del
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              {selectedThread && (
-                <div className="text-xs text-muted-foreground">
-                  <p className="truncate">{selectedThread.lastMessagePreview}</p>
-                  <p className="mt-1">
-                    {selectedThread.lastMessageSender === "me" ? "You" : "Relay"} ·{" "}
-                    {toRelativeTime(selectedThread.lastMessageAtIso)}
-                  </p>
-                </div>
-              )}
-              {renameThreadId && (
-                <div className="flex gap-2">
-                  <input
-                    value={renameThreadValue}
-                    onChange={(e) => setRenameThreadValue(e.target.value)}
-                    placeholder="Rename conversation"
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                  />
-                  <button onClick={saveRenameThread} className="rounded-md border border-border px-3 py-2 text-sm">
-                    Save
-                  </button>
-                </div>
-              )}
-            </div>
-            <div
-              ref={chatScrollRef}
-              onScroll={updateChatStickFromScroll}
-              className="space-y-2 max-h-56 overflow-y-auto overflow-x-hidden pr-1"
-            >
-              {messages.map((m, i) => (
-                <div
-                  key={`${m.id}-${i}`}
-                  className={`rounded-lg border px-3 py-2 text-sm ${
-                    m.from === "me" ? "border-primary/30 bg-primary/10" : "border-border bg-background/60"
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-2 font-medium text-xs uppercase tracking-widest text-muted-foreground">
-                    <span>
-                      {m.from === "me" ? "You" : "Relay"} · {m.at}
-                    </span>
-                    {m.from === "me" && editingMessageId !== m.id && (
-                      <span className="flex gap-1">
-                        <button
-                          type="button"
-                          onClick={() => beginEditMessage(m)}
-                          className="normal-case rounded border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => void deleteOwnMessage(m)}
-                          className="normal-case rounded border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
-                        >
-                          Delete
-                        </button>
-                      </span>
-                    )}
+                      Create
+                    </button>
                   </div>
-                  {editingMessageId === m.id ? (
-                    <div className="mt-2 space-y-2">
-                      <textarea
-                        value={editingMessageText}
-                        onChange={(e) => setEditingMessageText(e.target.value)}
-                        rows={3}
-                        maxLength={2000}
-                        className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
-                      />
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() => void saveMessageEdit()}
-                          className="rounded-md bg-primary px-2 py-1 text-[11px] font-semibold text-primary-foreground"
-                        >
-                          Save
-                        </button>
-                        <button
-                          type="button"
-                          onClick={cancelEditMessage}
-                          className="rounded-md border border-border px-2 py-1 text-[11px]"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="mt-1">{m.text}</p>
-                  )}
-                </div>
-              ))}
-            </div>
-            {messagesHasMore && (
-              <div className="flex gap-2">
-                <button
-                  onClick={loadMoreMessages}
-                  disabled={messagesLoadingMore}
-                  className="rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground disabled:opacity-60"
-                >
-                  {messagesLoadingMore ? "Loading…" : "Load older messages"}
-                </button>
-                {showJumpNewest && (
-                  <button
-                    onClick={jumpToNewestMessages}
-                    className="rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
-                  >
-                    Jump to newest
-                  </button>
-                )}
-              </div>
-            )}
-            <div className="flex gap-2">
-              <input
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    void submitChat();
-                  }
-                }}
-                placeholder="Type a message..."
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-              />
-              <button
-                type="button"
-                onClick={() => void submitChat()}
-                className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
-              >
-                Send
-              </button>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "commerce" && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Commerce</h3>
-            <p className="text-sm text-muted-foreground">
-              Checkout and catalog align with blueprint pillars for native commerce. Subscription and ad tiers (§05)
-              are previewed below; billing integration is not wired yet.
-            </p>
-            <div className="grid sm:grid-cols-3 gap-3">
-              {shopCatalog.map((item) => (
-                <div key={item.id} className="rounded-lg border border-border bg-background/60 p-3">
-                  <p className="font-medium">{item.name}</p>
-                  <p className="text-sm text-muted-foreground">${item.price}/mo</p>
-                  <button
-                    type="button"
-                    onClick={() => void addCatalogToCart(item)}
-                    className="mt-3 rounded-md border border-border px-3 py-1.5 text-sm hover:bg-surface"
-                  >
-                    Add to cart
-                  </button>
-                </div>
-              ))}
-            </div>
-            <div className="space-y-2">
-              <h4 className="text-sm font-semibold tracking-tight">Plans & tiers (blueprint §05)</h4>
-              <div className="grid gap-3 md:grid-cols-3">
-                {SUBSCRIPTION_TIER_CARDS.map((tier) => (
-                  <div
-                    key={tier.id}
-                    className="rounded-lg border border-border bg-background/50 p-3 text-sm shadow-sm"
-                  >
-                    <p className="text-xs font-mono-display uppercase tracking-widest text-muted-foreground">
-                      {tier.blueprintRef}
-                    </p>
-                    <p className="mt-1 text-lg font-semibold">{tier.name}</p>
-                    <p className="text-primary font-medium">{tier.priceLabel}</p>
-                    <p className="mt-2 text-muted-foreground">{tier.blurb}</p>
-                    <ul className="mt-2 list-inside list-disc space-y-0.5 text-xs text-muted-foreground">
-                      {tier.features.map((f) => (
-                        <li key={f}>{f}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Privacy-first advertising engine (§04) stays on the roadmap until consent, inventory, and
-                measurement APIs are defined.
-              </p>
-            </div>
-            <div className="rounded-lg border border-border bg-background/60 p-3">
-              <p className="text-sm text-muted-foreground">
-                Cart: {cart.length} line{cart.length === 1 ? "" : "s"} · {cartUnits} unit{cartUnits === 1 ? "" : "s"}
-              </p>
-              {cart.length > 0 && (
-                <ul className="mt-2 space-y-2 text-sm">
-                  {cart.map((line) => (
-                    <li
-                      key={line.id}
-                      className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/80 bg-background/40 px-2 py-1.5"
-                    >
-                      <span className="font-medium">
-                        {line.name}{" "}
-                        <span className="font-normal text-muted-foreground">
-                          (${line.price} × {line.quantity})
-                        </span>
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => void setCartLineQuantity(line.id, line.quantity - 1)}
-                          className="rounded border border-border px-2 py-0.5 text-xs"
-                        >
-                          −
-                        </button>
-                        <span className="min-w-6 text-center tabular-nums">{line.quantity}</span>
-                        <button
-                          type="button"
-                          onClick={() => void setCartLineQuantity(line.id, line.quantity + 1)}
-                          className="rounded border border-border px-2 py-0.5 text-xs"
-                        >
-                          +
-                        </button>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <p className="mt-2 font-semibold">Total: ${cartTotal}</p>
-              <button
-                type="button"
-                onClick={() => void checkoutCart()}
-                className="mt-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
-                disabled={!cart.length}
-              >
-                Checkout
-              </button>
-              <div className="mt-3 space-y-1 text-xs text-muted-foreground">
-                <p className="uppercase tracking-widest">Recent orders</p>
-                {orders.length === 0 ? (
-                  <p>No purchases yet</p>
-                ) : (
-                  orders.map((o) => (
-                    <div key={o.id} className="flex flex-wrap items-baseline justify-between gap-2">
-                      <button
-                        type="button"
-                        onClick={() => toggleOrderItems(o.id)}
-                        className="text-left hover:text-foreground"
-                      >
-                        #{o.id.slice(0, 8)} · ${o.total} ·{" "}
-                        <span
-                          className={
-                            o.status === "cancelled"
-                              ? "text-muted-foreground line-through"
-                              : o.status === "pending"
-                                ? "text-amber-600 dark:text-amber-400"
-                                : ""
-                          }
-                        >
-                          {o.status}
-                        </span>{" "}
-                        · {o.createdAt}
-                      </button>
-                      {o.status !== "cancelled" && (
-                        <button
-                          type="button"
-                          onClick={() => void cancelOrder(o)}
-                          className="rounded border border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
-                        >
-                          Cancel order
-                        </button>
-                      )}
-                      {expandedOrderId === o.id && (
-                        <div className="basis-full mt-1 pl-2 text-[11px]">
-                          {(orderItemsById[o.id] ?? [o.itemSummary]).map((item) => (
-                            <p key={`${o.id}-${item}`}>- {item}</p>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))
-                )}
-                {ordersHasMore && (
-                  <button
-                    type="button"
-                    onClick={() => void loadMoreOrders()}
-                    disabled={ordersLoadingMore}
-                    className="mt-2 rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground disabled:opacity-60"
-                  >
-                    {ordersLoadingMore ? "Loading…" : "Load older orders"}
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "social" && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Social Feed</h3>
-            <input
-              value={socialSearch}
-              onChange={(e) => setSocialSearch(e.target.value)}
-              placeholder="Search posts…"
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-            />
-            <div className="flex gap-2">
-              <input
-                value={postInput}
-                onChange={(e) => setPostInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    void publishPost();
-                  }
-                }}
-                placeholder="Share an update..."
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-              />
-              <button
-                type="button"
-                onClick={() => void publishPost()}
-                className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
-              >
-                Post
-              </button>
-            </div>
-            <div className="space-y-2">
-              {filteredPosts.map((post) => (
-                <article key={post.id} className="rounded-lg border border-border bg-background/60 p-3">
-                  <div className="flex items-start justify-between gap-2">
-                    {editingPostId === post.id ? (
-                      <div className="min-w-0 flex-1 space-y-2">
-                        <textarea
-                          value={editingPostText}
-                          onChange={(e) => setEditingPostText(e.target.value)}
-                          rows={3}
-                          maxLength={500}
-                          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                        />
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() => void savePostEdit()}
-                            className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
-                          >
-                            Save
-                          </button>
-                          <button
-                            type="button"
-                            onClick={cancelEditPost}
-                            className="rounded-md border border-border px-3 py-1.5 text-xs"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="flex-1">{post.text}</p>
-                    )}
-                    {user?.id === post.userId && editingPostId !== post.id && (
-                      <div className="flex shrink-0 flex-col gap-1">
-                        <button
-                          type="button"
-                          onClick={() => beginEditPost(post)}
-                          className="rounded border border-border px-2 py-0.5 text-xs text-muted-foreground hover:text-foreground"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => void deletePost(post)}
-                          className="rounded border border-border px-2 py-0.5 text-xs text-muted-foreground hover:text-foreground"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => void toggleLike(post)}
-                    className="mt-2 text-sm text-muted-foreground hover:text-foreground"
-                  >
-                    {post.liked ? "Unlike" : "Like"} · {post.likes}
-                  </button>
-                  <div className="mt-3 space-y-2 border-t border-border pt-3">
-                    {comments
-                      .filter((c) => c.postId === post.id)
-                      .map((comment) => (
+                  <div className="flex max-h-48 flex-col gap-1.5 overflow-y-auto pr-1">
+                    {threads.map((t) => {
+                      const active = selectedThreadId === t.id;
+                      return (
                         <div
-                          key={comment.id}
-                          className="rounded-md border border-border/60 bg-background/40 px-2 py-1.5 text-sm text-muted-foreground"
+                          key={t.id}
+                          className={`flex min-w-0 items-stretch gap-1 rounded-lg border px-2 py-1.5 text-xs ${
+                            active
+                              ? "border-primary bg-primary/10"
+                              : "border-border bg-background/40"
+                          }`}
                         >
-                          {editingCommentId === comment.id ? (
-                            <div className="space-y-2">
-                              <textarea
-                                value={editingCommentText}
-                                onChange={(e) => setEditingCommentText(e.target.value)}
-                                rows={2}
-                                maxLength={280}
-                                className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
-                              />
-                              <div className="flex flex-wrap gap-1.5">
-                                <button
-                                  type="button"
-                                  onClick={() => void saveCommentEdit()}
-                                  className="rounded border border-border bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground"
-                                >
-                                  Save
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={cancelEditComment}
-                                  className="rounded border border-border px-2 py-0.5 text-[11px]"
-                                >
-                                  Cancel
-                                </button>
-                              </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedThreadId(t.id);
+                              markThreadRead(t.id);
+                            }}
+                            className="min-w-0 flex-1 text-left"
+                          >
+                            <div className="flex items-baseline justify-between gap-2">
+                              <span className="truncate font-medium text-foreground">
+                                {t.isPinned ? "📌 " : ""}
+                                {t.title}
+                                {t.unreadCount > 0 && (
+                                  <span className="ml-1 inline-flex min-w-4 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground align-middle">
+                                    {t.unreadCount}
+                                  </span>
+                                )}
+                              </span>
+                              <span className="shrink-0 text-[10px] text-muted-foreground tabular-nums">
+                                {toRelativeTime(t.lastMessageAtIso)}
+                              </span>
                             </div>
-                          ) : (
-                            <div className="flex items-start justify-between gap-2">
-                              <p>
-                                <span className="font-medium text-foreground/90">
-                                  {user?.id === comment.userId ? "You" : "Member"}
-                                </span>
-                                : {comment.text}
-                              </p>
-                              {user?.id === comment.userId && (
-                                <span className="flex shrink-0 flex-col gap-0.5">
-                                  <button
-                                    type="button"
-                                    onClick={() => beginEditComment(comment)}
-                                    className="rounded border border-border px-2 py-0.5 text-[11px] hover:text-foreground"
-                                  >
-                                    Edit
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => void deleteComment(comment)}
-                                    className="rounded border border-border px-2 py-0.5 text-[11px] hover:text-foreground"
-                                  >
-                                    Remove
-                                  </button>
-                                </span>
-                              )}
-                            </div>
-                          )}
+                            <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                              {t.lastMessageSender === "me" ? "You" : "Relay"} ·{" "}
+                              {t.lastMessagePreview}
+                            </p>
+                          </button>
+                          <div className="flex shrink-0 flex-col justify-center gap-0.5 border-l border-border pl-1">
+                            <button
+                              type="button"
+                              onClick={() => togglePinThread(t)}
+                              className="rounded border border-border px-1.5 py-0.5 text-[10px] leading-tight"
+                            >
+                              {t.isPinned ? "Unpin" : "Pin"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => startRenameThread(t)}
+                              className="rounded border border-border px-1.5 py-0.5 text-[10px] leading-tight"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => deleteThread(t.id)}
+                              className="rounded border border-border px-1.5 py-0.5 text-[10px] leading-tight"
+                            >
+                              Del
+                            </button>
+                          </div>
                         </div>
-                      ))}
+                      );
+                    })}
+                  </div>
+                  {selectedThread && (
+                    <div className="text-xs text-muted-foreground">
+                      <p className="truncate">{selectedThread.lastMessagePreview}</p>
+                      <p className="mt-1">
+                        {selectedThread.lastMessageSender === "me" ? "You" : "Relay"} ·{" "}
+                        {toRelativeTime(selectedThread.lastMessageAtIso)}
+                      </p>
+                    </div>
+                  )}
+                  {renameThreadId && (
                     <div className="flex gap-2">
                       <input
-                        value={commentInputByPost[post.id] ?? ""}
-                        onChange={(e) =>
-                          setCommentInputByPost((prev) => ({
-                            ...prev,
-                            [post.id]: e.target.value,
-                          }))
-                        }
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && !e.shiftKey) {
-                            e.preventDefault();
-                            void addComment(post.id);
-                          }
-                        }}
-                        placeholder="Add a comment..."
+                        value={renameThreadValue}
+                        onChange={(e) => setRenameThreadValue(e.target.value)}
+                        placeholder="Rename conversation"
                         className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
                       />
                       <button
-                        type="button"
-                        onClick={() => void addComment(post.id)}
+                        onClick={saveRenameThread}
                         className="rounded-md border border-border px-3 py-2 text-sm"
                       >
-                        Comment
+                        Save
                       </button>
                     </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {activeTab === "streaming" && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Streaming Hub</h3>
-            <p className="text-sm text-muted-foreground">
-              Live-discovered video sources. NEXUS searches public catalogs (Internet Archive + curated CDNs) in
-              real time, HEAD-verifies each URL on the server, and the player auto-removes any source that still
-              fails to play.
-            </p>
-            <input
-              value={streamSearch}
-              onChange={(e) => setStreamSearch(e.target.value)}
-              placeholder="Search any movie, doc, or topic…"
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-            />
-            {streamLoading && (
-              <p className="text-xs text-muted-foreground">Searching live sources for verified, playable videos…</p>
-            )}
-            {streamSearchError && !streamLoading && (
-              <p className="text-xs text-destructive">
-                Live search failed ({streamSearchError}). Showing always-on demo sources.
-              </p>
-            )}
-            {watchlist.length > 0 && (
-              <div className="space-y-1.5">
-                <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">My watchlist</p>
-                <div className="flex flex-wrap gap-2">
-                  {watchlist.map((id) => {
-                    const meta = streamLibrary.find((s) => s.id === id);
-                    return (
+                  )}
+                </div>
+                <div
+                  ref={chatScrollRef}
+                  onScroll={updateChatStickFromScroll}
+                  className="space-y-2 max-h-56 overflow-y-auto overflow-x-hidden pr-1"
+                >
+                  {messages.map((m, i) => (
+                    <div
+                      key={`${m.id}-${i}`}
+                      className={`rounded-lg border px-3 py-2 text-sm ${
+                        m.from === "me"
+                          ? "border-primary/30 bg-primary/10"
+                          : "border-border bg-background/60"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2 font-medium text-xs uppercase tracking-widest text-muted-foreground">
+                        <span>
+                          {m.from === "me" ? "You" : "Relay"} · {m.at}
+                        </span>
+                        {m.from === "me" && editingMessageId !== m.id && (
+                          <span className="flex gap-1">
+                            <button
+                              type="button"
+                              onClick={() => beginEditMessage(m)}
+                              className="normal-case rounded border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void deleteOwnMessage(m)}
+                              className="normal-case rounded border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
+                            >
+                              Delete
+                            </button>
+                          </span>
+                        )}
+                      </div>
+                      {editingMessageId === m.id ? (
+                        <div className="mt-2 space-y-2">
+                          <textarea
+                            value={editingMessageText}
+                            onChange={(e) => setEditingMessageText(e.target.value)}
+                            rows={3}
+                            maxLength={2000}
+                            className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
+                          />
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() => void saveMessageEdit()}
+                              className="rounded-md bg-primary px-2 py-1 text-[11px] font-semibold text-primary-foreground"
+                            >
+                              Save
+                            </button>
+                            <button
+                              type="button"
+                              onClick={cancelEditMessage}
+                              className="rounded-md border border-border px-2 py-1 text-[11px]"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="mt-1">{m.text}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {messagesHasMore && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={loadMoreMessages}
+                      disabled={messagesLoadingMore}
+                      className="rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground disabled:opacity-60"
+                    >
+                      {messagesLoadingMore ? "Loading…" : "Load older messages"}
+                    </button>
+                    {showJumpNewest && (
                       <button
-                        key={id}
-                        type="button"
-                        onClick={() => {
-                          setStreamFilter("All");
-                          setStreamSearch("");
-                          setPlaybackStreamId(id);
-                        }}
-                        className="rounded-full border border-border bg-background/80 px-3 py-1 text-xs hover:border-primary hover:text-foreground"
+                        onClick={jumpToNewestMessages}
+                        className="rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
                       >
-                        {meta?.title ?? id}
+                        Jump to newest
                       </button>
+                    )}
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <input
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        void submitChat();
+                      }
+                    }}
+                    placeholder="Type a message..."
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void submitChat()}
+                    className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+                  >
+                    Send
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "commerce" && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Commerce</h3>
+                <p className="text-sm text-muted-foreground">
+                  Checkout and catalog align with blueprint pillars for native commerce.
+                  Subscription and ad tiers (§05) are previewed below; billing integration is not
+                  wired yet.
+                </p>
+                <div className="grid sm:grid-cols-3 gap-3">
+                  {shopCatalog.map((item) => (
+                    <div
+                      key={item.id}
+                      className="rounded-lg border border-border bg-background/60 p-3"
+                    >
+                      <p className="font-medium">{item.name}</p>
+                      <p className="text-sm text-muted-foreground">${item.price}/mo</p>
+                      <button
+                        type="button"
+                        onClick={() => void addCatalogToCart(item)}
+                        className="mt-3 rounded-md border border-border px-3 py-1.5 text-sm hover:bg-surface"
+                      >
+                        Add to cart
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold tracking-tight">
+                    Plans & tiers (blueprint §05)
+                  </h4>
+                  <div className="grid gap-3 md:grid-cols-3">
+                    {SUBSCRIPTION_TIER_CARDS.map((tier) => (
+                      <div
+                        key={tier.id}
+                        className="rounded-lg border border-border bg-background/50 p-3 text-sm shadow-sm"
+                      >
+                        <p className="text-xs font-mono-display uppercase tracking-widest text-muted-foreground">
+                          {tier.blueprintRef}
+                        </p>
+                        <p className="mt-1 text-lg font-semibold">{tier.name}</p>
+                        <p className="text-primary font-medium">{tier.priceLabel}</p>
+                        <p className="mt-2 text-muted-foreground">{tier.blurb}</p>
+                        <ul className="mt-2 list-inside list-disc space-y-0.5 text-xs text-muted-foreground">
+                          {tier.features.map((f) => (
+                            <li key={f}>{f}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Privacy-first advertising engine (§04) stays on the roadmap until consent,
+                    inventory, and measurement APIs are defined.
+                  </p>
+                </div>
+                <div className="rounded-lg border border-border bg-background/60 p-3">
+                  <p className="text-sm text-muted-foreground">
+                    Cart: {cart.length} line{cart.length === 1 ? "" : "s"} · {cartUnits} unit
+                    {cartUnits === 1 ? "" : "s"}
+                  </p>
+                  {cart.length > 0 && (
+                    <ul className="mt-2 space-y-2 text-sm">
+                      {cart.map((line) => (
+                        <li
+                          key={line.id}
+                          className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/80 bg-background/40 px-2 py-1.5"
+                        >
+                          <span className="font-medium">
+                            {line.name}{" "}
+                            <span className="font-normal text-muted-foreground">
+                              (${line.price} × {line.quantity})
+                            </span>
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => void setCartLineQuantity(line.id, line.quantity - 1)}
+                              className="rounded border border-border px-2 py-0.5 text-xs"
+                            >
+                              −
+                            </button>
+                            <span className="min-w-6 text-center tabular-nums">
+                              {line.quantity}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => void setCartLineQuantity(line.id, line.quantity + 1)}
+                              className="rounded border border-border px-2 py-0.5 text-xs"
+                            >
+                              +
+                            </button>
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <p className="mt-2 font-semibold">Total: ${cartTotal}</p>
+                  <button
+                    type="button"
+                    onClick={() => void checkoutCart()}
+                    className="mt-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+                    disabled={!cart.length}
+                  >
+                    Checkout
+                  </button>
+                  <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+                    <p className="uppercase tracking-widest">Recent orders</p>
+                    {orders.length === 0 ? (
+                      <p>No purchases yet</p>
+                    ) : (
+                      orders.map((o) => (
+                        <div
+                          key={o.id}
+                          className="flex flex-wrap items-baseline justify-between gap-2"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => toggleOrderItems(o.id)}
+                            className="text-left hover:text-foreground"
+                          >
+                            #{o.id.slice(0, 8)} · ${o.total} ·{" "}
+                            <span
+                              className={
+                                o.status === "cancelled"
+                                  ? "text-muted-foreground line-through"
+                                  : o.status === "pending"
+                                    ? "text-amber-600 dark:text-amber-400"
+                                    : ""
+                              }
+                            >
+                              {o.status}
+                            </span>{" "}
+                            · {o.createdAt}
+                          </button>
+                          {o.status !== "cancelled" && (
+                            <button
+                              type="button"
+                              onClick={() => void cancelOrder(o)}
+                              className="rounded border border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
+                            >
+                              Cancel order
+                            </button>
+                          )}
+                          {expandedOrderId === o.id && (
+                            <div className="basis-full mt-1 pl-2 text-[11px]">
+                              {(orderItemsById[o.id] ?? [o.itemSummary]).map((item) => (
+                                <p key={`${o.id}-${item}`}>- {item}</p>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    )}
+                    {ordersHasMore && (
+                      <button
+                        type="button"
+                        onClick={() => void loadMoreOrders()}
+                        disabled={ordersLoadingMore}
+                        className="mt-2 rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground disabled:opacity-60"
+                      >
+                        {ordersLoadingMore ? "Loading…" : "Load older orders"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "social" && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Social Feed</h3>
+                <input
+                  value={socialSearch}
+                  onChange={(e) => setSocialSearch(e.target.value)}
+                  placeholder="Search posts…"
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                />
+                <div className="flex gap-2">
+                  <input
+                    value={postInput}
+                    onChange={(e) => setPostInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        void publishPost();
+                      }
+                    }}
+                    placeholder="Share an update..."
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void publishPost()}
+                    className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+                  >
+                    Post
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {filteredPosts.map((post) => (
+                    <article
+                      key={post.id}
+                      className="rounded-lg border border-border bg-background/60 p-3"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        {editingPostId === post.id ? (
+                          <div className="min-w-0 flex-1 space-y-2">
+                            <textarea
+                              value={editingPostText}
+                              onChange={(e) => setEditingPostText(e.target.value)}
+                              rows={3}
+                              maxLength={500}
+                              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                            />
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                onClick={() => void savePostEdit()}
+                                className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
+                              >
+                                Save
+                              </button>
+                              <button
+                                type="button"
+                                onClick={cancelEditPost}
+                                className="rounded-md border border-border px-3 py-1.5 text-xs"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="flex-1">{post.text}</p>
+                        )}
+                        {user?.id === post.userId && editingPostId !== post.id && (
+                          <div className="flex shrink-0 flex-col gap-1">
+                            <button
+                              type="button"
+                              onClick={() => beginEditPost(post)}
+                              className="rounded border border-border px-2 py-0.5 text-xs text-muted-foreground hover:text-foreground"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void deletePost(post)}
+                              className="rounded border border-border px-2 py-0.5 text-xs text-muted-foreground hover:text-foreground"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => void toggleLike(post)}
+                        className="mt-2 text-sm text-muted-foreground hover:text-foreground"
+                      >
+                        {post.liked ? "Unlike" : "Like"} · {post.likes}
+                      </button>
+                      <div className="mt-3 space-y-2 border-t border-border pt-3">
+                        {comments
+                          .filter((c) => c.postId === post.id)
+                          .map((comment) => (
+                            <div
+                              key={comment.id}
+                              className="rounded-md border border-border/60 bg-background/40 px-2 py-1.5 text-sm text-muted-foreground"
+                            >
+                              {editingCommentId === comment.id ? (
+                                <div className="space-y-2">
+                                  <textarea
+                                    value={editingCommentText}
+                                    onChange={(e) => setEditingCommentText(e.target.value)}
+                                    rows={2}
+                                    maxLength={280}
+                                    className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
+                                  />
+                                  <div className="flex flex-wrap gap-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => void saveCommentEdit()}
+                                      className="rounded border border-border bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground"
+                                    >
+                                      Save
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={cancelEditComment}
+                                      className="rounded border border-border px-2 py-0.5 text-[11px]"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="flex items-start justify-between gap-2">
+                                  <p>
+                                    <span className="font-medium text-foreground/90">
+                                      {user?.id === comment.userId ? "You" : "Member"}
+                                    </span>
+                                    : {comment.text}
+                                  </p>
+                                  {user?.id === comment.userId && (
+                                    <span className="flex shrink-0 flex-col gap-0.5">
+                                      <button
+                                        type="button"
+                                        onClick={() => beginEditComment(comment)}
+                                        className="rounded border border-border px-2 py-0.5 text-[11px] hover:text-foreground"
+                                      >
+                                        Edit
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => void deleteComment(comment)}
+                                        className="rounded border border-border px-2 py-0.5 text-[11px] hover:text-foreground"
+                                      >
+                                        Remove
+                                      </button>
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        <div className="flex gap-2">
+                          <input
+                            value={commentInputByPost[post.id] ?? ""}
+                            onChange={(e) =>
+                              setCommentInputByPost((prev) => ({
+                                ...prev,
+                                [post.id]: e.target.value,
+                              }))
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" && !e.shiftKey) {
+                                e.preventDefault();
+                                void addComment(post.id);
+                              }
+                            }}
+                            placeholder="Add a comment..."
+                            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => void addComment(post.id)}
+                            className="rounded-md border border-border px-3 py-2 text-sm"
+                          >
+                            Comment
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activeTab === "streaming" && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Streaming Hub</h3>
+                <p className="text-sm text-muted-foreground">
+                  Live-discovered video sources. NEXUS searches public catalogs (Internet Archive +
+                  curated CDNs) in real time, HEAD-verifies each URL on the server, and the player
+                  auto-removes any source that still fails to play.
+                </p>
+                <input
+                  value={streamSearch}
+                  onChange={(e) => setStreamSearch(e.target.value)}
+                  placeholder="Search any movie, doc, or topic…"
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                />
+                {streamLoading && (
+                  <p className="text-xs text-muted-foreground">
+                    Searching live sources for verified, playable videos…
+                  </p>
+                )}
+                {streamSearchError && !streamLoading && (
+                  <p className="text-xs text-destructive">
+                    Live search failed ({streamSearchError}). Showing always-on demo sources.
+                  </p>
+                )}
+                {watchlist.length > 0 && (
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                      My watchlist
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {watchlist.map((id) => {
+                        const meta = streamLibrary.find((s) => s.id === id);
+                        return (
+                          <button
+                            key={id}
+                            type="button"
+                            onClick={() => {
+                              setStreamFilter("All");
+                              setStreamSearch("");
+                              setPlaybackStreamId(id);
+                            }}
+                            className="rounded-full border border-border bg-background/80 px-3 py-1 text-xs hover:border-primary hover:text-foreground"
+                          >
+                            {meta?.title ?? id}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                <div className="flex flex-wrap gap-2">
+                  {(["All", "Cinema", "Series", "Docs"] as const).map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setStreamFilter(f)}
+                      className={`rounded-md border px-3 py-1.5 text-sm ${
+                        streamFilter === f ? "border-primary bg-primary/15" : "border-border"
+                      }`}
+                    >
+                      {f}
+                    </button>
+                  ))}
+                </div>
+                {playbackStream && (
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const current = filteredStreams.findIndex(
+                          (item) => item.id === playbackStream.id,
+                        );
+                        const next = filteredStreams[(current + 1) % filteredStreams.length];
+                        setPlaybackStreamId(next?.id ?? playbackStream.id);
+                      }}
+                      className="rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      Play next
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void toggleWatchlist(playbackStream.id)}
+                      className="rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      {watchlist.includes(playbackStream.id)
+                        ? "Remove from watchlist"
+                        : "Save current title"}
+                    </button>
+                  </div>
+                )}
+                {playbackStream && (
+                  <div className="overflow-hidden rounded-xl border border-border bg-black shadow-card-elevated">
+                    <VideoPlayer
+                      key={playbackStream.id}
+                      className="aspect-video max-h-[min(420px,70vh)] w-full object-contain"
+                      poster={playbackStream.poster}
+                      embedUrl={
+                        playbackStream.kind === "youtube"
+                          ? playbackStream.videoSources[0]
+                          : undefined
+                      }
+                      sources={playbackStream.videoSources}
+                      controls
+                      preload="metadata"
+                      onAllSourcesFailed={() => removeBrokenStream(playbackStream.id)}
+                      initialAspectRatio={videoDimensions[playbackStream.id]?.aspectRatio ?? 16 / 9}
+                      onDimensions={(dims) => recordDimensions(playbackStream.id, dims)}
+                    />
+                    <div className="space-y-1 border-t border-border bg-background/95 p-3">
+                      <p className="text-sm font-medium text-foreground">
+                        Now playing: {playbackStream.title}{" "}
+                        <span className="font-normal text-muted-foreground">
+                          ({playbackStream.category} · {playbackStream.duration})
+                        </span>
+                      </p>
+                      <p className="text-sm text-muted-foreground">{playbackStream.description}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Source: {playbackStream.provider}
+                      </p>
+                      <p className="break-all text-[11px] text-muted-foreground">
+                        {playbackStream.pageUrl}
+                      </p>
+                      <p className="break-all font-mono text-[11px] text-muted-foreground">
+                        {playbackStream.videoSources.join(" | ")}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {filteredStreams.length === 0 && (
+                  <div className="rounded-lg border border-dashed border-border bg-background/40 p-6 text-sm text-muted-foreground">
+                    No stream matches that filter yet. Try a different title or reset the category.
+                  </div>
+                )}
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {filteredStreams.map((item) => {
+                    const isSaved = watchlist.includes(item.id);
+                    const isPlaying = playbackStreamId === item.id;
+                    const knownAspect = videoDimensions[item.id]?.aspectRatio ?? 16 / 9;
+                    return (
+                      <div
+                        key={item.id}
+                        className={`rounded-lg border bg-background/60 p-3 ${
+                          isPlaying ? "border-primary ring-1 ring-primary/40" : "border-border"
+                        }`}
+                      >
+                        {item.poster && (
+                          <div
+                            className="mb-2 overflow-hidden rounded-md bg-black"
+                            style={{ aspectRatio: knownAspect }}
+                          >
+                            <img
+                              src={item.poster}
+                              alt=""
+                              loading="lazy"
+                              className="h-full w-full object-cover"
+                              onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).style.display = "none";
+                              }}
+                            />
+                          </div>
+                        )}
+                        <p className="font-medium">{item.title}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {item.category} · {item.duration}
+                        </p>
+                        <p className="mt-2 text-sm text-muted-foreground">{item.description}</p>
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          Source: {item.provider}
+                        </p>
+                        <p className="mt-1 line-clamp-2 break-all text-[10px] text-muted-foreground">
+                          {item.pageUrl}
+                        </p>
+                        <p className="mt-2 line-clamp-2 break-all font-mono text-[10px] text-muted-foreground">
+                          {item.videoSources[0]}
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setPlaybackStreamId(item.id)}
+                            className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
+                          >
+                            Play in player
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => toggleWatchlist(item.id)}
+                            className="rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+                          >
+                            {isSaved ? "Remove from watchlist" : "Save to watchlist"}
+                          </button>
+                        </div>
+                      </div>
                     );
                   })}
                 </div>
-              </div>
-            )}
-            <div className="flex flex-wrap gap-2">
-              {(["All", "Cinema", "Series", "Docs"] as const).map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setStreamFilter(f)}
-                  className={`rounded-md border px-3 py-1.5 text-sm ${
-                    streamFilter === f ? "border-primary bg-primary/15" : "border-border"
-                  }`}
-                >
-                  {f}
-                </button>
-              ))}
-            </div>
-            {playbackStream && (
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const current = filteredStreams.findIndex((item) => item.id === playbackStream.id);
-                    const next = filteredStreams[(current + 1) % filteredStreams.length];
-                    setPlaybackStreamId(next?.id ?? playbackStream.id);
-                  }}
-                  className="rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
-                >
-                  Play next
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void toggleWatchlist(playbackStream.id)}
-                  className="rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
-                >
-                  {watchlist.includes(playbackStream.id) ? "Remove from watchlist" : "Save current title"}
-                </button>
-              </div>
-            )}
-            {playbackStream && (
-              <div className="overflow-hidden rounded-xl border border-border bg-black shadow-card-elevated">
-                <VideoPlayer
-                  key={playbackStream.id}
-                  className="aspect-video max-h-[min(420px,70vh)] w-full object-contain"
-                  poster={playbackStream.poster}
-                  embedUrl={playbackStream.kind === "youtube" ? playbackStream.videoSources[0] : undefined}
-                  sources={playbackStream.videoSources}
-                  controls
-                  preload="metadata"
-                  onAllSourcesFailed={() => removeBrokenStream(playbackStream.id)}
-                  initialAspectRatio={videoDimensions[playbackStream.id]?.aspectRatio ?? 16 / 9}
-                  onDimensions={(dims) => recordDimensions(playbackStream.id, dims)}
-                />
-                <div className="space-y-1 border-t border-border bg-background/95 p-3">
-                  <p className="text-sm font-medium text-foreground">
-                    Now playing: {playbackStream.title}{" "}
-                    <span className="font-normal text-muted-foreground">
-                      ({playbackStream.category} · {playbackStream.duration})
-                    </span>
-                  </p>
-                  <p className="text-sm text-muted-foreground">{playbackStream.description}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Source: {playbackStream.provider}
-                  </p>
-                  <p className="break-all text-[11px] text-muted-foreground">{playbackStream.pageUrl}</p>
-                  <p className="break-all font-mono text-[11px] text-muted-foreground">
-                    {playbackStream.videoSources.join(" | ")}
-                  </p>
-                </div>
-              </div>
-            )}
-            {filteredStreams.length === 0 && (
-              <div className="rounded-lg border border-dashed border-border bg-background/40 p-6 text-sm text-muted-foreground">
-                No stream matches that filter yet. Try a different title or reset the category.
-              </div>
-            )}
-            <div className="grid sm:grid-cols-2 gap-3">
-              {filteredStreams.map((item) => {
-                const isSaved = watchlist.includes(item.id);
-                const isPlaying = playbackStreamId === item.id;
-                const knownAspect = videoDimensions[item.id]?.aspectRatio ?? 16 / 9;
-                return (
-                  <div
-                    key={item.id}
-                    className={`rounded-lg border bg-background/60 p-3 ${
-                      isPlaying ? "border-primary ring-1 ring-primary/40" : "border-border"
-                    }`}
-                  >
-                    {item.poster && (
-                      <div
-                        className="mb-2 overflow-hidden rounded-md bg-black"
-                        style={{ aspectRatio: knownAspect }}
-                      >
-                        <img
-                          src={item.poster}
-                          alt=""
-                          loading="lazy"
-                          className="h-full w-full object-cover"
-                          onError={(e) => {
-                            (e.currentTarget as HTMLImageElement).style.display = "none";
-                          }}
-                        />
-                      </div>
-                    )}
-                    <p className="font-medium">{item.title}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {item.category} · {item.duration}
-                    </p>
-                    <p className="mt-2 text-sm text-muted-foreground">{item.description}</p>
-                    <p className="mt-2 text-xs text-muted-foreground">Source: {item.provider}</p>
-                    <p className="mt-1 line-clamp-2 break-all text-[10px] text-muted-foreground">
-                      {item.pageUrl}
-                    </p>
-                    <p className="mt-2 line-clamp-2 break-all font-mono text-[10px] text-muted-foreground">
-                      {item.videoSources[0]}
-                    </p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setPlaybackStreamId(item.id)}
-                        className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
-                      >
-                        Play in player
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => toggleWatchlist(item.id)}
-                        className="rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
-                      >
-                        {isSaved ? "Remove from watchlist" : "Save to watchlist"}
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            {/* Infinite-scroll sentinel — observed only while the Stream tab is
+                {/* Infinite-scroll sentinel — observed only while the Stream tab is
                 active. Triggers the next page fetch when within 400px of view. */}
-            {streamHasMore && (
-              <div ref={sentinelRef} className="flex h-12 items-center justify-center">
-                {streamLoadingMore && (
-                  <span className="text-xs text-muted-foreground">Loading more videos…</span>
+                {streamHasMore && (
+                  <div ref={sentinelRef} className="flex h-12 items-center justify-center">
+                    {streamLoadingMore && (
+                      <span className="text-xs text-muted-foreground">Loading more videos…</span>
+                    )}
+                  </div>
+                )}
+                {!streamHasMore && filteredStreams.length > 0 && (
+                  <p className="pt-2 text-center text-xs text-muted-foreground">
+                    You've reached the end of the live results.
+                  </p>
                 )}
               </div>
             )}
-            {!streamHasMore && filteredStreams.length > 0 && (
-              <p className="pt-2 text-center text-xs text-muted-foreground">
-                You've reached the end of the live results.
-              </p>
-            )}
-          </div>
-        )}
 
-        {activeTab === "gaming" && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Gaming</h3>
-            <p className="text-sm text-muted-foreground">Tap challenge: beat your personal best score.</p>
-            <div className="rounded-lg border border-border bg-background/60 p-4">
-              <p>Current score: {clicks}</p>
-              <p>High score: {highScore}</p>
-              <div className="mt-3 flex gap-2">
-                <button
-                  onClick={() => setClicks((v) => v + 1)}
-                  className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
-                >
-                  Tap
-                </button>
-                <button
-                  onClick={saveScore}
-                  className="rounded-md border border-border px-4 py-2 text-sm"
-                >
-                  Save & reset
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "nexos" && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">NexOS App Ecosystem</h3>
-            <p className="text-sm text-muted-foreground">
-              Blueprint §03 — composable mini-apps inside your private NEXUS workspace. Each app is a row in
-              Supabase with realtime sync across sessions.
-            </p>
-            <div className="flex gap-2">
-              <input
-                value={appInput}
-                onChange={(e) => setAppInput(e.target.value)}
-                placeholder="Add custom mini-app name"
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-              />
-              <button
-                type="button"
-                onClick={() => void addNexosApp()}
-                className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
-              >
-                Add
-              </button>
-            </div>
-            <div className="grid sm:grid-cols-2 gap-3">
-              {apps.map((app) => (
-                <div key={app.id} className="rounded-lg border border-border bg-background/60 p-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="font-medium">{app.name}</p>
+            {activeTab === "gaming" && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Gaming</h3>
+                <p className="text-sm text-muted-foreground">
+                  Tap challenge: beat your personal best score.
+                </p>
+                <div className="rounded-lg border border-border bg-background/60 p-4">
+                  <p>Current score: {clicks}</p>
+                  <p>High score: {highScore}</p>
+                  <div className="mt-3 flex gap-2">
                     <button
-                      type="button"
-                      onClick={() => void removeNexosApp(app.id)}
-                      className="shrink-0 rounded border border-border px-2 py-0.5 text-xs text-muted-foreground hover:text-foreground"
+                      onClick={() => setClicks((v) => v + 1)}
+                      className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
                     >
-                      Remove
+                      Tap
+                    </button>
+                    <button
+                      onClick={saveScore}
+                      className="rounded-md border border-border px-4 py-2 text-sm"
+                    >
+                      Save & reset
                     </button>
                   </div>
-                  <p className="text-sm text-muted-foreground">Composable app in your private workspace.</p>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+              </div>
+            )}
 
-        {activeTab === "ai" && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">AI Twin Router</h3>
-            <p className="text-sm text-muted-foreground">
-              Intent-first assistant (blueprint key theme) that routes actions to the right NEXUS pillar. Hosted LLM
-              calls are not enabled here; this router is deterministic. Your briefing is stored only in this browser.
-            </p>
-            <div className="rounded-lg border border-border bg-background/60 p-3 space-y-2">
-              <label className="text-xs font-mono-display uppercase tracking-widest text-muted-foreground">
-                Twin briefing (local only)
-              </label>
-              <textarea
-                value={twinBriefing}
-                onChange={(e) => setTwinBriefing(e.target.value)}
-                placeholder="How should your twin sound? What guardrails or goals matter?"
-                rows={4}
-                maxLength={2000}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  try {
-                    localStorage.setItem(AI_TWIN_BRIEFING_STORAGE_KEY, twinBriefing);
-                    toast.success("Twin briefing saved in this browser");
-                  } catch {
-                    toast.error("Could not save briefing");
-                  }
-                }}
-                className="rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-surface"
-              >
-                Save briefing
-              </button>
-            </div>
-            <div className="flex gap-2">
-              <input
-                value={intentInput}
-                onChange={(e) => setIntentInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    runIntent();
-                  }
-                }}
-                placeholder="e.g. watch a movie · blueprint roadmap · search neon · open alerts"
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-              />
-              <button
-                type="button"
-                onClick={runIntent}
-                className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
-              >
-                Route
-              </button>
-            </div>
-            <div className="rounded-lg border border-border bg-background/60 p-3 text-sm">{aiResponse}</div>
-          </div>
-        )}
-
-        {activeTab === "blueprint" && (
-          <div className="space-y-5">
-            <div>
-              <h3 className="text-lg font-semibold">Blueprint coverage (2026 edition)</h3>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Cross-checked against your PDF outline. The file on disk is a one-page summary TOC; detailed
-                narrative sections may live elsewhere. This matrix tracks what the web MVP implements today.
-              </p>
-              <p className="mt-2 break-all font-mono text-[11px] text-muted-foreground">{BLUEPRINT_SOURCE}</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Local path (for your review):{" "}
-                <span className="break-all">
-                  file:///c:/Users/LENOVO/Downloads/NEXUS_Super_App_Blueprint_2026.pdf
-                </span>
-              </p>
-            </div>
-            <div className="rounded-lg border border-border bg-background/50 p-4">
-              <p className="text-xs font-mono-display uppercase tracking-widest text-primary">Key themes</p>
-              <ul className="mt-2 grid gap-1 text-sm text-muted-foreground sm:grid-cols-2">
-                {BLUEPRINT_KEY_THEMES.map((t) => (
-                  <li key={t} className="flex gap-2">
-                    <span className="text-primary">·</span>
-                    <span>{t}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="space-y-2">
-              <p className="text-xs font-mono-display uppercase tracking-widest text-muted-foreground">
-                Sections 01–13
-              </p>
-              <div className="grid gap-2 md:grid-cols-2">
-                {BLUEPRINT_SECTIONS.map((row) => (
-                  <div
-                    key={row.id}
-                    className={`rounded-lg border p-3 text-sm ${
-                      row.coverage === "mvp"
-                        ? "border-emerald-500/35 bg-emerald-500/[0.06]"
-                        : row.coverage === "partial"
-                          ? "border-amber-500/35 bg-amber-500/[0.06]"
-                          : "border-border bg-muted/15"
-                    }`}
+            {activeTab === "nexos" && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">NexOS App Ecosystem</h3>
+                <p className="text-sm text-muted-foreground">
+                  Blueprint §03 — composable mini-apps inside your private NEXUS workspace. Each app
+                  is a row in Supabase with realtime sync across sessions.
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    value={appInput}
+                    onChange={(e) => setAppInput(e.target.value)}
+                    placeholder="Add custom mini-app name"
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void addNexosApp()}
+                    className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
                   >
-                    <div className="flex items-baseline justify-between gap-2">
-                      <span className="font-mono text-xs text-muted-foreground">{row.id}</span>
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
-                          row.coverage === "mvp"
-                            ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"
-                            : row.coverage === "partial"
-                              ? "bg-amber-500/20 text-amber-800 dark:text-amber-200"
-                              : "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        {row.coverage}
-                      </span>
-                    </div>
-                    <p className="mt-1 font-medium text-foreground">{row.title}</p>
-                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{row.detail}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Mobile native shells (§06), multi-region active-active (§11), and the full advertising engine (§04) are
-              explicitly out of scope for this repository until product attaches specs and APIs.
-            </p>
-          </div>
-        )}
-
-        {activeTab === "settings" && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Profile Settings</h3>
-            <p className="text-sm text-muted-foreground rounded-lg border border-border bg-background/40 p-3">
-              <span className="font-medium text-foreground">Security (blueprint §12):</span> You are on
-              password- or OAuth-backed Supabase Auth with row-level security on user data. Device posture,
-              continuous verification, and org-wide SSO are roadmap items once requirements land.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              A dedicated profile page is available from the header. Edits here use the same form.
-            </p>
-            <ProfileSettingsForm />
-          </div>
-        )}
-
-        {activeTab === "notifications" && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between gap-2">
-              <h3 className="text-lg font-semibold">Notification Center</h3>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">
-                  Unread: {unreadNotificationCount}
-                </span>
-                <button
-                  onClick={markAllNotificationsRead}
-                  className="rounded-md border border-border px-2 py-1 text-xs"
-                >
-                  Mark all read
-                </button>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {(
-                [
-                  ["all", "All"],
-                  ["chat", "Chat"],
-                  ["social_comment", "Comments"],
-                  ["commerce", "Commerce"],
-                  ["profile", "Profile"],
-                ] as const
-              ).map(([id, label]) => (
-                <button
-                  key={id}
-                  onClick={() => setNotificationFilter(id)}
-                  className={`rounded-md border px-3 py-1.5 text-xs ${
-                    notificationFilter === id
-                      ? "border-primary bg-primary/15"
-                      : "border-border"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-            <div className="space-y-2">
-              {filteredNotifications.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No notifications yet.</p>
-              ) : (
-                filteredNotifications.map((n) => (
-                  <div key={n.id} className="rounded-lg border border-border bg-background/60 p-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="font-medium">{n.title}</p>
-                        {n.body && <p className="text-sm text-muted-foreground">{n.body}</p>}
-                        <p className="mt-1 text-[11px] text-muted-foreground">{n.createdAt}</p>
-                      </div>
-                      <div className="flex shrink-0 flex-col items-end gap-1">
-                        {!n.readAt && (
-                          <button
-                            type="button"
-                            onClick={() => void markNotificationRead(n.id)}
-                            className="rounded-md border border-border px-2 py-1 text-xs"
-                          >
-                            Mark read
-                          </button>
-                        )}
+                    Add
+                  </button>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {apps.map((app) => (
+                    <div
+                      key={app.id}
+                      className="rounded-lg border border-border bg-background/60 p-3"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="font-medium">{app.name}</p>
                         <button
                           type="button"
-                          onClick={() => void deleteNotification(n.id)}
-                          className="rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
+                          onClick={() => void removeNexosApp(app.id)}
+                          className="shrink-0 rounded border border-border px-2 py-0.5 text-xs text-muted-foreground hover:text-foreground"
                         >
-                          Delete
+                          Remove
                         </button>
                       </div>
+                      <p className="text-sm text-muted-foreground">
+                        Composable app in your private workspace.
+                      </p>
                     </div>
-                  </div>
-                ))
-              )}
-            </div>
-            {notificationsHasMore && (
-              <button
-                onClick={loadMoreNotifications}
-                disabled={notificationsLoadingMore}
-                className="rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground disabled:opacity-60"
-              >
-                {notificationsLoadingMore ? "Loading…" : "Load older notifications"}
-              </button>
+                  ))}
+                </div>
+              </div>
             )}
-          </div>
-        )}
+
+            {activeTab === "ai" && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">AI Twin Router</h3>
+                <p className="text-sm text-muted-foreground">
+                  Intent-first assistant (blueprint key theme) that routes actions to the right
+                  NEXUS pillar. Hosted LLM calls are not enabled here; this router is deterministic.
+                  Your briefing is stored only in this browser.
+                </p>
+                <div className="rounded-lg border border-border bg-background/60 p-3 space-y-2">
+                  <label className="text-xs font-mono-display uppercase tracking-widest text-muted-foreground">
+                    Twin briefing (local only)
+                  </label>
+                  <textarea
+                    value={twinBriefing}
+                    onChange={(e) => setTwinBriefing(e.target.value)}
+                    placeholder="How should your twin sound? What guardrails or goals matter?"
+                    rows={4}
+                    maxLength={2000}
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      try {
+                        localStorage.setItem(AI_TWIN_BRIEFING_STORAGE_KEY, twinBriefing);
+                        toast.success("Twin briefing saved in this browser");
+                      } catch {
+                        toast.error("Could not save briefing");
+                      }
+                    }}
+                    className="rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-surface"
+                  >
+                    Save briefing
+                  </button>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    value={intentInput}
+                    onChange={(e) => setIntentInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        runIntent();
+                      }
+                    }}
+                    placeholder="e.g. watch a movie · blueprint roadmap · search neon · open alerts"
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={runIntent}
+                    className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+                  >
+                    Route
+                  </button>
+                </div>
+                <div className="rounded-lg border border-border bg-background/60 p-3 text-sm">
+                  {aiResponse}
+                </div>
+              </div>
+            )}
+
+            {activeTab === "blueprint" && (
+              <div className="space-y-5">
+                <div>
+                  <h3 className="text-lg font-semibold">Blueprint coverage (2026 edition)</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Cross-checked against your PDF outline. The file on disk is a one-page summary
+                    TOC; detailed narrative sections may live elsewhere. This matrix tracks what the
+                    web MVP implements today.
+                  </p>
+                  <p className="mt-2 break-all font-mono text-[11px] text-muted-foreground">
+                    {BLUEPRINT_SOURCE}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Local path (for your review):{" "}
+                    <span className="break-all">
+                      file:///c:/Users/LENOVO/Downloads/NEXUS_Super_App_Blueprint_2026.pdf
+                    </span>
+                  </p>
+                </div>
+                <div className="rounded-lg border border-border bg-background/50 p-4">
+                  <p className="text-xs font-mono-display uppercase tracking-widest text-primary">
+                    Key themes
+                  </p>
+                  <ul className="mt-2 grid gap-1 text-sm text-muted-foreground sm:grid-cols-2">
+                    {BLUEPRINT_KEY_THEMES.map((t) => (
+                      <li key={t} className="flex gap-2">
+                        <span className="text-primary">·</span>
+                        <span>{t}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xs font-mono-display uppercase tracking-widest text-muted-foreground">
+                    Sections 01–13
+                  </p>
+                  <div className="grid gap-2 md:grid-cols-2">
+                    {BLUEPRINT_SECTIONS.map((row) => (
+                      <div
+                        key={row.id}
+                        className={`rounded-lg border p-3 text-sm ${
+                          row.coverage === "mvp"
+                            ? "border-emerald-500/35 bg-emerald-500/[0.06]"
+                            : row.coverage === "partial"
+                              ? "border-amber-500/35 bg-amber-500/[0.06]"
+                              : "border-border bg-muted/15"
+                        }`}
+                      >
+                        <div className="flex items-baseline justify-between gap-2">
+                          <span className="font-mono text-xs text-muted-foreground">{row.id}</span>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                              row.coverage === "mvp"
+                                ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"
+                                : row.coverage === "partial"
+                                  ? "bg-amber-500/20 text-amber-800 dark:text-amber-200"
+                                  : "bg-muted text-muted-foreground"
+                            }`}
+                          >
+                            {row.coverage}
+                          </span>
+                        </div>
+                        <p className="mt-1 font-medium text-foreground">{row.title}</p>
+                        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                          {row.detail}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Mobile native shells (§06), multi-region active-active (§11), and the full
+                  advertising engine (§04) are explicitly out of scope for this repository until
+                  product attaches specs and APIs.
+                </p>
+              </div>
+            )}
+
+            {activeTab === "settings" && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Profile Settings</h3>
+                <p className="text-sm text-muted-foreground rounded-lg border border-border bg-background/40 p-3">
+                  <span className="font-medium text-foreground">Security (blueprint §12):</span> You
+                  are on password- or OAuth-backed Supabase Auth with row-level security on user
+                  data. Device posture, continuous verification, and org-wide SSO are roadmap items
+                  once requirements land.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  A dedicated profile page is available from the header. Edits here use the same
+                  form.
+                </p>
+                <ProfileSettingsForm />
+              </div>
+            )}
+
+            {activeTab === "notifications" && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-lg font-semibold">Notification Center</h3>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      Unread: {unreadNotificationCount}
+                    </span>
+                    <button
+                      onClick={markAllNotificationsRead}
+                      className="rounded-md border border-border px-2 py-1 text-xs"
+                    >
+                      Mark all read
+                    </button>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {(
+                    [
+                      ["all", "All"],
+                      ["chat", "Chat"],
+                      ["social_comment", "Comments"],
+                      ["commerce", "Commerce"],
+                      ["profile", "Profile"],
+                    ] as const
+                  ).map(([id, label]) => (
+                    <button
+                      key={id}
+                      onClick={() => setNotificationFilter(id)}
+                      className={`rounded-md border px-3 py-1.5 text-xs ${
+                        notificationFilter === id ? "border-primary bg-primary/15" : "border-border"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <div className="space-y-2">
+                  {filteredNotifications.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No notifications yet.</p>
+                  ) : (
+                    filteredNotifications.map((n) => (
+                      <div
+                        key={n.id}
+                        className="rounded-lg border border-border bg-background/60 p-3"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="font-medium">{n.title}</p>
+                            {n.body && <p className="text-sm text-muted-foreground">{n.body}</p>}
+                            <p className="mt-1 text-[11px] text-muted-foreground">{n.createdAt}</p>
+                          </div>
+                          <div className="flex shrink-0 flex-col items-end gap-1">
+                            {!n.readAt && (
+                              <button
+                                type="button"
+                                onClick={() => void markNotificationRead(n.id)}
+                                className="rounded-md border border-border px-2 py-1 text-xs"
+                              >
+                                Mark read
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => void deleteNotification(n.id)}
+                              className="rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+                {notificationsHasMore && (
+                  <button
+                    onClick={loadMoreNotifications}
+                    disabled={notificationsLoadingMore}
+                    className="rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground disabled:opacity-60"
+                  >
+                    {notificationsLoadingMore ? "Loading…" : "Load older notifications"}
+                  </button>
+                )}
+              </div>
+            )}
           </>
         )}
       </div>
@@ -3154,9 +3481,13 @@ export function SuperAppWorkspace({ name }: { name: string }) {
 
       <div className="rounded-lg border border-border bg-surface/40 p-4 text-sm text-muted-foreground">
         <Globe className="mr-2 inline-block h-4 w-4" />
-        Multi-region backend, privacy-first advertising, and full zero-trust rollout remain roadmap items (see
-        Blueprint §04, §11–12).{" "}
-        <button type="button" onClick={() => setActiveTab("blueprint")} className="text-primary hover:underline">
+        Multi-region backend, privacy-first advertising, and full zero-trust rollout remain roadmap
+        items (see Blueprint §04, §11–12).{" "}
+        <button
+          type="button"
+          onClick={() => setActiveTab("blueprint")}
+          className="text-primary hover:underline"
+        >
           Coverage matrix
         </button>
       </div>

@@ -1,41 +1,41 @@
-import { format, formatDistanceToNow, parseISO } from 'date-fns';
+import { format, formatDistanceToNow, parseISO } from "date-fns";
 
 // Date utilities
-export const formatDate = (date: string | Date, formatStr = 'MMM d, yyyy') => {
-  const dateObj = typeof date === 'string' ? parseISO(date) : date;
+export const formatDate = (date: string | Date, formatStr = "MMM d, yyyy") => {
+  const dateObj = typeof date === "string" ? parseISO(date) : date;
   return format(dateObj, formatStr);
 };
 
 export const formatRelativeTime = (date: string | Date) => {
-  const dateObj = typeof date === 'string' ? parseISO(date) : date;
+  const dateObj = typeof date === "string" ? parseISO(date) : date;
   return formatDistanceToNow(dateObj, { addSuffix: true });
 };
 
 export const isToday = (date: string | Date) => {
-  const dateObj = typeof date === 'string' ? parseISO(date) : date;
+  const dateObj = typeof date === "string" ? parseISO(date) : date;
   const today = new Date();
-  return format(dateObj, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
+  return format(dateObj, "yyyy-MM-dd") === format(today, "yyyy-MM-dd");
 };
 
 export const isYesterday = (date: string | Date) => {
-  const dateObj = typeof date === 'string' ? parseISO(date) : date;
+  const dateObj = typeof date === "string" ? parseISO(date) : date;
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
-  return format(dateObj, 'yyyy-MM-dd') === format(yesterday, 'yyyy-MM-dd');
+  return format(dateObj, "yyyy-MM-dd") === format(yesterday, "yyyy-MM-dd");
 };
 
 // String utilities
 export const truncateText = (text: string, maxLength: number) => {
   if (text.length <= maxLength) return text;
-  return text.slice(0, maxLength) + '...';
+  return text.slice(0, maxLength) + "...";
 };
 
 export const slugify = (text: string) => {
   return text
     .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 };
 
 export const capitalizeFirst = (text: string) => {
@@ -43,17 +43,17 @@ export const capitalizeFirst = (text: string) => {
 };
 
 export const generateUsername = (email: string) => {
-  const username = email.split('@')[0];
+  const username = email.split("@")[0];
   return slugify(username);
 };
 
 // Number utilities
 export const formatNumber = (num: number) => {
   if (num >= 1000000) {
-    return (num / 1000000).toFixed(1) + 'M';
+    return (num / 1000000).toFixed(1) + "M";
   }
   if (num >= 1000) {
-    return (num / 1000).toFixed(1) + 'K';
+    return (num / 1000).toFixed(1) + "K";
   }
   return num.toString();
 };
@@ -64,17 +64,17 @@ export const formatDuration = (seconds: number) => {
   const remainingSeconds = seconds % 60;
 
   if (hours > 0) {
-    return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+    return `${hours}:${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
   }
-  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
 };
 
 export const formatFileSize = (bytes: number) => {
-  if (bytes === 0) return '0 Bytes';
+  if (bytes === 0) return "0 Bytes";
   const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const sizes = ["Bytes", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 };
 
 // URL utilities
@@ -89,25 +89,27 @@ export const isValidUrl = (string: string) => {
 
 export const extractVideoId = (url: string) => {
   // YouTube
-  const youtubeMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/);
+  const youtubeMatch = url.match(
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+  );
   if (youtubeMatch) return youtubeMatch[1];
-  
+
   // Vimeo
   const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
   if (vimeoMatch) return vimeoMatch[1];
-  
+
   return null;
 };
 
 export const getVideoThumbnail = (url: string) => {
   const videoId = extractVideoId(url);
   if (!videoId) return null;
-  
+
   // YouTube thumbnail
-  if (url.includes('youtube.com') || url.includes('youtu.be')) {
+  if (url.includes("youtube.com") || url.includes("youtu.be")) {
     return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
   }
-  
+
   return null;
 };
 
@@ -125,25 +127,37 @@ export const uniqueArray = <T>(array: T[]): T[] => {
   return [...new Set(array)];
 };
 
-export const groupBy = <T, K extends keyof any>(array: T[], key: (item: T) => K): Record<K, T[]> => {
-  return array.reduce((groups, item) => {
-    const group = key(item);
-    groups[group] = groups[group] || [];
-    groups[group].push(item);
-    return groups;
-  }, {} as Record<K, T[]>);
+export const groupBy = <T, K extends PropertyKey>(
+  array: T[],
+  key: (item: T) => K,
+): Record<K, T[]> => {
+  return array.reduce(
+    (groups, item) => {
+      const group = key(item);
+      groups[group] = groups[group] || [];
+      groups[group].push(item);
+      return groups;
+    },
+    {} as Record<K, T[]>,
+  );
 };
 
 // Object utilities
-export const omit = <T extends Record<string, any>, K extends keyof T>(obj: T, keys: K[]): Omit<T, K> => {
+export const omit = <T extends Record<string, unknown>, K extends keyof T>(
+  obj: T,
+  keys: K[],
+): Omit<T, K> => {
   const result = { ...obj };
-  keys.forEach(key => delete result[key]);
+  keys.forEach((key) => delete result[key]);
   return result;
 };
 
-export const pick = <T extends Record<string, any>, K extends keyof T>(obj: T, keys: K[]): Pick<T, K> => {
+export const pick = <T extends Record<string, unknown>, K extends keyof T>(
+  obj: T,
+  keys: K[],
+): Pick<T, K> => {
   const result = {} as Pick<T, K>;
-  keys.forEach(key => {
+  keys.forEach((key) => {
     if (key in obj) {
       result[key] = obj[key];
     }
@@ -152,13 +166,13 @@ export const pick = <T extends Record<string, any>, K extends keyof T>(obj: T, k
 };
 
 export const deepClone = <T>(obj: T): T => {
-  if (obj === null || typeof obj !== 'object') return obj;
+  if (obj === null || typeof obj !== "object") return obj;
   if (obj instanceof Date) return new Date(obj.getTime()) as unknown as T;
-  if (obj instanceof Array) return obj.map(item => deepClone(item)) as unknown as T;
-  if (typeof obj === 'object') {
+  if (obj instanceof Array) return obj.map((item) => deepClone(item)) as unknown as T;
+  if (typeof obj === "object") {
     const cloned = {} as T;
-    Object.keys(obj).forEach(key => {
-      (cloned as any)[key] = deepClone((obj as any)[key]);
+    Object.keys(obj).forEach((key) => {
+      (cloned as Record<string, unknown>)[key] = deepClone((obj as Record<string, unknown>)[key]);
     });
     return cloned;
   }
@@ -183,7 +197,7 @@ export const validateUsername = (username: string) => {
 // Storage utilities
 export const storage = {
   get: (key: string) => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       try {
         const item = localStorage.getItem(key);
         return item ? JSON.parse(item) : null;
@@ -193,9 +207,9 @@ export const storage = {
     }
     return null;
   },
-  
-  set: (key: string, value: any) => {
-    if (typeof window !== 'undefined') {
+
+  set: (key: string, value: unknown) => {
+    if (typeof window !== "undefined") {
       try {
         localStorage.setItem(key, JSON.stringify(value));
       } catch {
@@ -203,29 +217,29 @@ export const storage = {
       }
     }
   },
-  
+
   remove: (key: string) => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       localStorage.removeItem(key);
     }
   },
-  
+
   clear: () => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       localStorage.clear();
     }
-  }
+  },
 };
 
 // Platform utilities
-export const isWeb = () => typeof window !== 'undefined' && typeof document !== 'undefined';
-export const isServer = () => typeof window === 'undefined';
+export const isWeb = () => typeof window !== "undefined" && typeof document !== "undefined";
+export const isServer = () => typeof window === "undefined";
 
 // Debounce utility
-export const debounce = <T extends (...args: any[]) => any>(
+export const debounce = <T extends (...args: unknown[]) => unknown>(
   func: T,
-  wait: number
-): (...args: Parameters<T>) => void => {
+  wait: number,
+): ((...args: Parameters<T>) => void) => {
   let timeout: NodeJS.Timeout;
   return (...args: Parameters<T>) => {
     clearTimeout(timeout);
@@ -234,16 +248,16 @@ export const debounce = <T extends (...args: any[]) => any>(
 };
 
 // Throttle utility
-export const throttle = <T extends (...args: any[]) => any>(
+export const throttle = <T extends (...args: unknown[]) => unknown>(
   func: T,
-  limit: number
-): (...args: Parameters<T>) => void => {
+  limit: number,
+): ((...args: Parameters<T>) => void) => {
   let inThrottle: boolean;
   return (...args: Parameters<T>) => {
     if (!inThrottle) {
       func(...args);
       inThrottle = true;
-      setTimeout(() => inThrottle = false, limit);
+      setTimeout(() => (inThrottle = false), limit);
     }
   };
 };
@@ -260,25 +274,29 @@ export const generateAvatarColor = (str: string) => {
 
 export const hexToRgb = (hex: string) => {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result ? {
-    r: parseInt(result[1], 16),
-    g: parseInt(result[2], 16),
-    b: parseInt(result[3], 16)
-  } : null;
+  return result
+    ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16),
+      }
+    : null;
 };
 
 // Error utilities
 export const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) return error.message;
-  if (typeof error === 'string') return error;
-  return 'An unknown error occurred';
+  if (typeof error === "string") return error;
+  return "An unknown error occurred";
 };
 
 export const isNetworkError = (error: unknown): boolean => {
   if (error instanceof Error) {
-    return error.message.includes('fetch') || 
-           error.message.includes('network') ||
-           error.message.includes('connection');
+    return (
+      error.message.includes("fetch") ||
+      error.message.includes("network") ||
+      error.message.includes("connection")
+    );
   }
   return false;
 };

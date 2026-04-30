@@ -75,7 +75,11 @@ async function probeNativeUrl(url: string): Promise<boolean> {
     clearTimeout(timer);
     if (res.ok) {
       const ct = res.headers.get("content-type") ?? "";
-      if (ct.startsWith("video/") || ct.includes("octet-stream") || /\.(mp4|webm|ogv)($|\?)/i.test(url)) {
+      if (
+        ct.startsWith("video/") ||
+        ct.includes("octet-stream") ||
+        /\.(mp4|webm|ogv)($|\?)/i.test(url)
+      ) {
         return true;
       }
       // Some CDNs return 200 with text/html on redirect — do a small GET
@@ -99,7 +103,9 @@ async function probeNativeUrl(url: string): Promise<boolean> {
     clearTimeout(t2);
     if (!res.ok && res.status !== 206) return false;
     const ct = res.headers.get("content-type") ?? "";
-    return ct.startsWith("video/") || ct.includes("octet-stream") || /\.(mp4|webm|ogv)($|\?)/i.test(url);
+    return (
+      ct.startsWith("video/") || ct.includes("octet-stream") || /\.(mp4|webm|ogv)($|\?)/i.test(url)
+    );
   } catch {
     clearTimeout(t2);
     return false;
@@ -126,7 +132,7 @@ async function probeYouTubeUrl(sourceUrl: string): Promise<boolean> {
   try {
     const res = await fetch(
       `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`,
-      { signal: controller.signal }
+      { signal: controller.signal },
     );
     clearTimeout(timer);
     return res.status === 200;
@@ -148,7 +154,7 @@ async function probeRows(rows: DbRow[], concurrency = PROBE_CONCURRENCY): Promis
   const results: boolean[] = new Array(rows.length).fill(false);
   for (let i = 0; i < rows.length; i += concurrency) {
     const batch = rows.slice(i, i + concurrency);
-    const settled = await Promise.allSettled(batch.map(r => probeVideo(r)));
+    const settled = await Promise.allSettled(batch.map((r) => probeVideo(r)));
     settled.forEach((r, j) => {
       results[i + j] = r.status === "fulfilled" ? r.value : false;
     });
@@ -173,8 +179,10 @@ function markBrokenAsync(brokenIds: string[]) {
 
 function inferCategory(text: string): VideoCategory {
   const t = text.toLowerCase();
-  if (/(documentary|interview|science|nature|history|space|wildlife|geo|bbc|national)/.test(t)) return "Docs";
-  if (/(clip|short|trailer|episode|series|vlog|review|tutorial|cooking|fitness)/.test(t)) return "Series";
+  if (/(documentary|interview|science|nature|history|space|wildlife|geo|bbc|national)/.test(t))
+    return "Docs";
+  if (/(clip|short|trailer|episode|series|vlog|review|tutorial|cooking|fitness)/.test(t))
+    return "Series";
   return "Cinema";
 }
 
@@ -201,7 +209,7 @@ function mapRow(row: DbRow): DiscoveredVideo {
 
 function dedupeById(items: DiscoveredVideo[]): DiscoveredVideo[] {
   const seen = new Set<string>();
-  return items.filter(v => {
+  return items.filter((v) => {
     const key = v.embedUrl ?? v.sources[0] ?? v.id;
     if (seen.has(key)) return false;
     seen.add(key);
@@ -240,120 +248,124 @@ export function useVideoDiscovery(options?: Options) {
   }, [query]);
 
   // ── Core loader ────────────────────────────────────────────────────────
-  const loadMore = useCallback(async (reset = false) => {
-    if (loadingRef.current && !reset) return;
-    if (!hasMoreRef.current && !reset) return;
+  const loadMore = useCallback(
+    async (reset = false) => {
+      if (loadingRef.current && !reset) return;
+      if (!hasMoreRef.current && !reset) return;
 
-    const reqId = ++reqIdRef.current;
-    loadingRef.current = true;
-    setIsLoading(true);
-    setError(null);
+      const reqId = ++reqIdRef.current;
+      loadingRef.current = true;
+      setIsLoading(true);
+      setError(null);
 
-    if (reset) {
-      dbOffsetRef.current = 0;
-      hasMoreRef.current = true;
-      seenIdsRef.current = new Set();
-    }
-
-    const collectedVerified: DiscoveredVideo[] = [];
-    // We keep fetching until we have `batchSize` verified videos or DB is exhausted
-    const target = batchSize;
-    let attempts = 0;
-    const maxAttempts = 6; // prevent infinite loop
-
-    while (collectedVerified.length < target && hasMoreRef.current && attempts < maxAttempts) {
-      attempts++;
-      if (reqId !== reqIdRef.current) break; // stale request
-
-      const fetchCount = Math.min(
-        Math.max(batchSize, target - collectedVerified.length) * DB_FETCH_MULTIPLIER,
-        MAX_ROWS_PER_ATTEMPT
-      );
-      const from = dbOffsetRef.current;
-      const to = from + fetchCount - 1;
-
-      try {
-        let q = supabase
-          .from("public_videos")
-          .select("id,title,description,author,provider,source_url,poster_url,page_url,kind,category,duration_label")
-          .eq("is_active", true)
-          .order("sort_order", { ascending: true })
-          .order("created_at", { ascending: false })
-          .range(from, to);
-
-        if (debouncedQuery) {
-          q = q.or(
-            `title.ilike.%${debouncedQuery}%,description.ilike.%${debouncedQuery}%,category.ilike.%${debouncedQuery}%,author.ilike.%${debouncedQuery}%,provider.ilike.%${debouncedQuery}%`
-          );
-        }
-
-        const { data, error: dbErr } = await q;
-        if (dbErr) throw dbErr;
-        if (reqId !== reqIdRef.current) break;
-
-        const rows = (data ?? []) as DbRow[];
-        dbOffsetRef.current += rows.length;
-
-        if (rows.length < fetchCount) {
-          hasMoreRef.current = false;
-          setHasMore(false);
-        }
-
-        if (rows.length === 0) break;
-
-        // Filter already-seen
-        const unseenRows = rows.filter(r => !seenIdsRef.current.has(r.id));
-        if (!unseenRows.length) continue;
-
-        // ── Probe all unseen rows ──────────────────────────────────────
-        const playable = await probeRows(unseenRows);
-        if (reqId !== reqIdRef.current) break;
-
-        const brokenIds: string[] = [];
-        const verifiedRows: DbRow[] = [];
-
-        unseenRows.forEach((row, i) => {
-          seenIdsRef.current.add(row.id);
-          if (playable[i]) {
-            verifiedRows.push(row);
-          } else {
-            brokenIds.push(row.id);
-          }
-        });
-
-        // Mark broken silently
-        markBrokenAsync(brokenIds);
-
-        // Map to DiscoveredVideo
-        const newVideos = verifiedRows.map(mapRow);
-        collectedVerified.push(...newVideos);
-
-      } catch (err) {
-        if (reqId !== reqIdRef.current) break;
-        const msg = err instanceof Error ? err.message : "Failed to load videos";
-        setError(msg);
-        break;
+      if (reset) {
+        dbOffsetRef.current = 0;
+        hasMoreRef.current = true;
+        seenIdsRef.current = new Set();
       }
-    }
 
-    if (reqId !== reqIdRef.current) return;
+      const collectedVerified: DiscoveredVideo[] = [];
+      // We keep fetching until we have `batchSize` verified videos or DB is exhausted
+      const target = batchSize;
+      let attempts = 0;
+      const maxAttempts = 6; // prevent infinite loop
 
-    if (collectedVerified.length > 0) {
-      setVideos(prev =>
-        reset
-          ? dedupeById(collectedVerified)
-          : dedupeById([...prev, ...collectedVerified])
-      );
-    }
+      while (collectedVerified.length < target && hasMoreRef.current && attempts < maxAttempts) {
+        attempts++;
+        if (reqId !== reqIdRef.current) break; // stale request
 
-    // If we got nothing at all on a reset, set error so UI can show a helpful message
-    if (reset && collectedVerified.length === 0) {
-      setError("No playable videos found. Run /api/public/hooks/crawl-and-seed to populate the feed.");
-    }
+        const fetchCount = Math.min(
+          Math.max(batchSize, target - collectedVerified.length) * DB_FETCH_MULTIPLIER,
+          MAX_ROWS_PER_ATTEMPT,
+        );
+        const from = dbOffsetRef.current;
+        const to = from + fetchCount - 1;
 
-    loadingRef.current = false;
-    setIsLoading(false);
-  }, [batchSize, debouncedQuery]);
+        try {
+          let q = supabase
+            .from("public_videos")
+            .select(
+              "id,title,description,author,provider,source_url,poster_url,page_url,kind,category,duration_label",
+            )
+            .eq("is_active", true)
+            .order("sort_order", { ascending: true })
+            .order("created_at", { ascending: false })
+            .range(from, to);
+
+          if (debouncedQuery) {
+            q = q.or(
+              `title.ilike.%${debouncedQuery}%,description.ilike.%${debouncedQuery}%,category.ilike.%${debouncedQuery}%,author.ilike.%${debouncedQuery}%,provider.ilike.%${debouncedQuery}%`,
+            );
+          }
+
+          const { data, error: dbErr } = await q;
+          if (dbErr) throw dbErr;
+          if (reqId !== reqIdRef.current) break;
+
+          const rows = (data ?? []) as DbRow[];
+          dbOffsetRef.current += rows.length;
+
+          if (rows.length < fetchCount) {
+            hasMoreRef.current = false;
+            setHasMore(false);
+          }
+
+          if (rows.length === 0) break;
+
+          // Filter already-seen
+          const unseenRows = rows.filter((r) => !seenIdsRef.current.has(r.id));
+          if (!unseenRows.length) continue;
+
+          // ── Probe all unseen rows ──────────────────────────────────────
+          const playable = await probeRows(unseenRows);
+          if (reqId !== reqIdRef.current) break;
+
+          const brokenIds: string[] = [];
+          const verifiedRows: DbRow[] = [];
+
+          unseenRows.forEach((row, i) => {
+            seenIdsRef.current.add(row.id);
+            if (playable[i]) {
+              verifiedRows.push(row);
+            } else {
+              brokenIds.push(row.id);
+            }
+          });
+
+          // Mark broken silently
+          markBrokenAsync(brokenIds);
+
+          // Map to DiscoveredVideo
+          const newVideos = verifiedRows.map(mapRow);
+          collectedVerified.push(...newVideos);
+        } catch (err) {
+          if (reqId !== reqIdRef.current) break;
+          const msg = err instanceof Error ? err.message : "Failed to load videos";
+          setError(msg);
+          break;
+        }
+      }
+
+      if (reqId !== reqIdRef.current) return;
+
+      if (collectedVerified.length > 0) {
+        setVideos((prev) =>
+          reset ? dedupeById(collectedVerified) : dedupeById([...prev, ...collectedVerified]),
+        );
+      }
+
+      // If we got nothing at all on a reset, set error so UI can show a helpful message
+      if (reset && collectedVerified.length === 0) {
+        setError(
+          "No playable videos found. Run /api/public/hooks/crawl-and-seed to populate the feed.",
+        );
+      }
+
+      loadingRef.current = false;
+      setIsLoading(false);
+    },
+    [batchSize, debouncedQuery],
+  );
 
   // ── Reset on query change ──────────────────────────────────────────────
   useEffect(() => {
@@ -364,17 +376,20 @@ export function useVideoDiscovery(options?: Options) {
   }, [debouncedQuery, loadMore]);
 
   const removeVideo = useCallback((id: string) => {
-    setVideos(prev => prev.filter(v => v.id !== id));
+    setVideos((prev) => prev.filter((v) => v.id !== id));
     seenIdsRef.current.add(id); // prevent re-fetching
   }, []);
 
-  return useMemo(() => ({
-    videos,
-    hasMore,
-    isLoading,
-    error,
-    loadMore: () => loadMore(false),
-    removeVideo,
-    query: debouncedQuery,
-  }), [videos, hasMore, isLoading, error, loadMore, removeVideo, debouncedQuery]);
+  return useMemo(
+    () => ({
+      videos,
+      hasMore,
+      isLoading,
+      error,
+      loadMore: () => loadMore(false),
+      removeVideo,
+      query: debouncedQuery,
+    }),
+    [videos, hasMore, isLoading, error, loadMore, removeVideo, debouncedQuery],
+  );
 }

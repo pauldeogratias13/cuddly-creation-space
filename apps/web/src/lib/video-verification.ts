@@ -55,7 +55,9 @@ export async function verifyVideoUrl(url: string): Promise<VideoVerificationResu
   }
 }
 
-export async function storeVerifiedVideo(_video: Omit<VerifiedVideo, "id" | "lastVerifiedAt" | "verificationAttempts">): Promise<string | null> {
+export async function storeVerifiedVideo(
+  _video: Omit<VerifiedVideo, "id" | "lastVerifiedAt" | "verificationAttempts">,
+): Promise<string | null> {
   return null;
 }
 

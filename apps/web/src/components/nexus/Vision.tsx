@@ -1,8 +1,17 @@
 import { motion } from "framer-motion";
 import {
-  Sparkles, GitBranch, ShieldCheck, Radio,
-  Database, Cpu, Layers, Zap, Globe, Lock,
-  BarChart3, Film,
+  Sparkles,
+  GitBranch,
+  ShieldCheck,
+  Radio,
+  Database,
+  Cpu,
+  Layers,
+  Zap,
+  Globe,
+  Lock,
+  BarChart3,
+  Film,
 } from "lucide-react";
 
 const VISION_ITEMS = [
@@ -106,17 +115,24 @@ export function Vision() {
             transition={{ duration: 0.6 }}
             className="lg:col-span-5 lg:sticky lg:top-32 lg:self-start"
           >
-            <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-4">§ 01 · Platform Vision</p>
+            <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-4">
+              § 01 · Platform Vision
+            </p>
             <h2 className="text-4xl sm:text-5xl font-bold tracking-tight leading-[1.05]">
               Engineered to outcompete{" "}
               <span className="text-gradient-aurora">every incumbent.</span>
             </h2>
             <p className="mt-6 text-lg text-muted-foreground leading-relaxed">
-              AI-first, streaming-native, privacy-preserving. Built from the
-              ground up to be unmissable — and to give users what they actually asked for.
+              AI-first, streaming-native, privacy-preserving. Built from the ground up to be
+              unmissable — and to give users what they actually asked for.
             </p>
             <div className="mt-8 space-y-2 text-sm font-mono-display text-muted-foreground">
-              {["Intent respect principle", "Zero third-party cookies", "Signal-protocol E2E", "On-device ML inference"].map((t) => (
+              {[
+                "Intent respect principle",
+                "Zero third-party cookies",
+                "Signal-protocol E2E",
+                "On-device ML inference",
+              ].map((t) => (
                 <div key={t} className="flex items-center gap-2">
                   <span className="h-1 w-1 rounded-full bg-primary" />
                   {t}
@@ -143,7 +159,9 @@ export function Vision() {
                   <div className="flex-1">
                     <div className="flex items-baseline justify-between gap-2 mb-1.5">
                       <h3 className="text-lg font-semibold tracking-tight">{it.title}</h3>
-                      <span className="shrink-0 text-xs font-mono-display text-muted-foreground/50">{it.badge}</span>
+                      <span className="shrink-0 text-xs font-mono-display text-muted-foreground/50">
+                        {it.badge}
+                      </span>
                     </div>
                     <p className="text-sm text-muted-foreground leading-relaxed">{it.desc}</p>
                   </div>
@@ -161,14 +179,15 @@ export function Vision() {
           transition={{ duration: 0.6 }}
           className="mb-12"
         >
-          <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-4">§ 08–11 · Engineering Stack</p>
+          <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-4">
+            § 08–11 · Engineering Stack
+          </p>
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight leading-tight mb-3">
-            Built faster than TikTok.{" "}
-            <span className="text-gradient-aurora">By design.</span>
+            Built faster than TikTok. <span className="text-gradient-aurora">By design.</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl">
-            Every component in the stack was chosen to eliminate latency, maximise quality, and protect privacy.
-            No compromise between performance and ethics.
+            Every component in the stack was chosen to eliminate latency, maximise quality, and
+            protect privacy. No compromise between performance and ethics.
           </p>
         </motion.div>
 
@@ -188,7 +207,9 @@ export function Vision() {
                   <div className="h-9 w-9 rounded-lg bg-surface-elevated border border-border grid place-items-center">
                     <Icon className={`h-4 w-4 ${item.accent}`} strokeWidth={1.75} />
                   </div>
-                  <h3 className={`text-sm font-bold font-mono-display ${item.accent}`}>{item.title}</h3>
+                  <h3 className={`text-sm font-bold font-mono-display ${item.accent}`}>
+                    {item.title}
+                  </h3>
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
               </motion.div>
@@ -204,7 +225,9 @@ export function Vision() {
           transition={{ duration: 0.6 }}
           className="mt-10 rounded-2xl border border-border bg-surface/40 p-8 text-center"
         >
-          <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-4">§ 13 · Engineering Principle</p>
+          <p className="text-xs font-mono-display uppercase tracking-widest text-primary mb-4">
+            § 13 · Engineering Principle
+          </p>
           <blockquote className="text-2xl sm:text-3xl font-semibold leading-snug max-w-3xl mx-auto">
             "Video is a first-class primitive, not an afterthought.{" "}
             <span className="text-gradient-aurora">QoE metrics gate every deploy.</span>"

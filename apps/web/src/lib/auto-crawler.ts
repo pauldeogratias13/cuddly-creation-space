@@ -1,10 +1,10 @@
 /**
  * auto-crawler.ts
- * 
+ *
  * Background service that automatically runs the crawl-and-seed process
  * at regular intervals to ensure the database is always populated with
  * fresh, working videos.
- * 
+ *
  * Features:
  * - Runs every 6 hours by default (configurable)
  * - Tracks last run time to avoid duplicate runs
@@ -51,10 +51,10 @@ export class AutoCrawler {
     }
 
     console.log(`[auto-crawler] Starting with interval ${this.config.intervalMs}ms`);
-    
+
     // Run immediately on start
     this.run();
-    
+
     // Set up periodic runs
     this.intervalId = setInterval(() => {
       this.run();
@@ -83,7 +83,7 @@ export class AutoCrawler {
 
     this.isRunning = true;
     const startTime = Date.now();
-    
+
     try {
       // Check if we need to crawl (below threshold)
       const { count: videoCount } = await supabaseAdmin
@@ -99,17 +99,20 @@ export class AutoCrawler {
       console.log(`[auto-crawler] Video count (${videoCount}) below threshold, starting crawl...`);
 
       // Trigger the crawl-and-seed endpoint
-      const response = await fetch(`${process.env.APP_URL || "http://localhost:3000"}/api/public/hooks/crawl-and-seed`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          limit: this.config.maxInsertPerCrawl,
-          purge: this.config.purgeBroken,
-        }),
-      });
+      const response = await fetch(
+        `${process.env.APP_URL || "http://localhost:3000"}/api/public/hooks/crawl-and-seed`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            limit: this.config.maxInsertPerCrawl,
+            purge: this.config.purgeBroken,
+          }),
+        },
+      );
 
       const result = await response.json();
-      
+
       if (result.ok) {
         console.log(`[auto-crawler] Crawl completed in ${Date.now() - startTime}ms:`, {
           purged: result.purged,
