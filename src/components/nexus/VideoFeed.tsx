@@ -129,7 +129,8 @@ export function VideoFeed() {
         >
           <AspectRatioGuard minRatio={0.3} maxRatio={3.0} fallbackRatio={16/9}>
             <VideoPlayer
-              sources={currentVideo.sources}
+              sources={currentVideo.kind === "youtube" ? [] : currentVideo.sources}
+              embedUrl={currentVideo.embedUrl}
               poster={currentVideo.poster}
               className={mediaClassName}
               autoPlay={isPlaying}

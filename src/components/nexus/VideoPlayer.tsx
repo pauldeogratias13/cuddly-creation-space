@@ -45,10 +45,46 @@ export function VideoPlayer({
   emptyLabel = "No video source available.",
 }: VideoPlayerProps) {
   if (embedUrl) {
+    // Normalise any YouTube URL variant into an embed URL with autoplay/mute params
+    const buildEmbedSrc = (raw: string): string => {
+      try {
+        const url = new URL(raw);
+        let videoId: string | null = null;
+
+        // https://www.youtube.com/watch?v=VIDEO_ID
+        if (url.hostname.includes("youtube.com") && url.pathname === "/watch") {
+          videoId = url.searchParams.get("v");
+        }
+        // https://youtu.be/VIDEO_ID
+        if (url.hostname === "youtu.be") {
+          videoId = url.pathname.replace("/", "");
+        }
+        // Already an embed URL – just append params
+        if (url.hostname.includes("youtube.com") && url.pathname.startsWith("/embed/")) {
+          videoId = url.pathname.replace("/embed/", "");
+        }
+
+        if (videoId) {
+          const params = new URLSearchParams({
+            autoplay: autoPlay ? "1" : "0",
+            mute: muted ? "1" : "0",
+            loop: loop ? "1" : "0",
+            rel: "0",
+            modestbranding: "1",
+            ...(loop && videoId ? { playlist: videoId } : {}),
+          });
+          return `https://www.youtube-nocookie.com/embed/${videoId}?${params.toString()}`;
+        }
+      } catch {
+        // not a parseable URL – fall through
+      }
+      return raw;
+    };
+
     return (
       <div className="relative w-full" style={{ aspectRatio: initialAspectRatio }}>
         <iframe
-          src={embedUrl}
+          src={buildEmbedSrc(embedUrl)}
           title="Embedded video player"
           className={className ?? "h-full w-full"}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
