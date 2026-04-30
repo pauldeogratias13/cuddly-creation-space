@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ChevronDown, ChevronUp, Heart, MessageCircle, Pause, Play,
+  Heart, MessageCircle, Pause, Play,
   Share2, Volume2, VolumeX, Bookmark, Users, Zap, Radio,
   MoreHorizontal, Send,
 } from "lucide-react";
@@ -352,26 +352,6 @@ export function VideoFeed() {
             {/* More */}
             <button type="button" className="rounded-full bg-black/30 p-2 backdrop-blur">
               <MoreHorizontal className="h-5 w-5 text-white/60" />
-            </button>
-          </div>
-
-          {/* ── Navigation arrows ─────────────────────────────────────── */}
-          <div className="absolute right-3 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-2">
-            <button
-              type="button"
-              onClick={goPrevious}
-              disabled={currentIndex === 0}
-              className="rounded-full bg-black/30 p-1.5 text-white backdrop-blur disabled:opacity-20"
-            >
-              <ChevronUp className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              onClick={goNext}
-              disabled={currentIndex === videos.length - 1 && !hasMore}
-              className="rounded-full bg-black/30 p-1.5 text-white backdrop-blur disabled:opacity-20"
-            >
-              <ChevronDown className="h-4 w-4" />
             </button>
           </div>
 

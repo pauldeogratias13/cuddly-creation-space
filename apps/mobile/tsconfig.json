@@ -1,0 +1,25 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@nexus/shared": ["../../packages/shared/src"]
+    },
+    "allowJs": true,
+    "jsx": "react-native",
+    "noEmit": true
+  },
+  "include": [
+    "app/**/*",
+    "*.ts",
+    "*.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "expo-module"
+  ],
+  "references": [
+    { "path": "../../packages/shared" }
+  ]
+}
