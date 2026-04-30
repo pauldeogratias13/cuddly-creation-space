@@ -441,6 +441,42 @@ export type Database = {
         }
         Relationships: []
       }
+      youtube_sources: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          is_active: boolean
+          kind: string
+          last_error: string | null
+          last_synced_at: string | null
+          max_results: number
+          value: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          kind: string
+          last_error?: string | null
+          last_synced_at?: string | null
+          max_results?: number
+          value: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          kind?: string
+          last_error?: string | null
+          last_synced_at?: string | null
+          max_results?: number
+          value?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
