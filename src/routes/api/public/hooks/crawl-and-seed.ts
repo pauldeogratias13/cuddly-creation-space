@@ -61,22 +61,47 @@ const SERVER_HEADERS = {
   "Origin": "https://cuddly-creation-space.lovable.app",
 };
 
-/** YouTube search terms × categories to crawl */
+/** YouTube search terms × categories to crawl - EXPANDED for maximum coverage */
 const YT_QUERIES: Array<{ q: string; category: string }> = [
-  // Cinema
+  // Cinema - Short Films & Independent
   { q: "best short films 2024", category: "Cinema" },
   { q: "award winning short film", category: "Cinema" },
   { q: "independent film full movie", category: "Cinema" },
   { q: "sci-fi short film 2024", category: "Cinema" },
   { q: "drama short film festival", category: "Cinema" },
-  // Docs
+  { q: "horror short film", category: "Cinema" },
+  { q: "comedy short film", category: "Cinema" },
+  { q: "thriller short film", category: "Cinema" },
+  { q: "romantic short film", category: "Cinema" },
+  { q: "action short film", category: "Cinema" },
+  { q: "fantasy short film", category: "Cinema" },
+  { q: "experimental film", category: "Cinema" },
+  { q: "student film award", category: "Cinema" },
+  { q: "film festival winner", category: "Cinema" },
+  { q: "cannes short film", category: "Cinema" },
+  { q: "sundance short film", category: "Cinema" },
+  
+  // Docs - Nature, Science, History
   { q: "nature documentary full", category: "Docs" },
   { q: "space documentary 2024", category: "Docs" },
   { q: "history documentary", category: "Docs" },
   { q: "science documentary", category: "Docs" },
   { q: "wildlife documentary BBC", category: "Docs" },
   { q: "ocean documentary free", category: "Docs" },
-  // Series / clips
+  { q: "planet earth documentary", category: "Docs" },
+  { q: "cosmos documentary", category: "Docs" },
+  { q: "ancient history documentary", category: "Docs" },
+  { q: "war documentary", category: "Docs" },
+  { q: "biography documentary", category: "Docs" },
+  { q: "social documentary", category: "Docs" },
+  { q: "environmental documentary", category: "Docs" },
+  { q: "technology documentary", category: "Docs" },
+  { q: "medical documentary", category: "Docs" },
+  { q: "psychology documentary", category: "Docs" },
+  { q: "crime documentary", category: "Docs" },
+  { q: "investigative documentary", category: "Docs" },
+  
+  // Series / Clips - Entertainment & Education
   { q: "funny viral video 2024", category: "Series" },
   { q: "travel vlog cinematic", category: "Series" },
   { q: "cooking tutorial short", category: "Series" },
@@ -86,6 +111,19 @@ const YT_QUERIES: Array<{ q: string; category: string }> = [
   { q: "animation short film", category: "Cinema" },
   { q: "street photography cinematic", category: "Docs" },
   { q: "time lapse nature stunning", category: "Docs" },
+  { q: "music video official", category: "Series" },
+  { q: "stand up comedy", category: "Series" },
+  { q: "magic tricks tutorial", category: "Series" },
+  { q: "art tutorial painting", category: "Series" },
+  { q: "dance performance", category: "Series" },
+  { q: "sports highlights", category: "Series" },
+  { q: "gaming walkthrough", category: "Series" },
+  { q: "diy project tutorial", category: "Series" },
+  { q: "life hacks", category: "Series" },
+  { q: "educational video kids", category: "Series" },
+  { q: "language learning", category: "Series" },
+  { q: "meditation relaxation", category: "Series" },
+  { q: "yoga tutorial", category: "Series" },
 ];
 
 /** Internet Archive queries × categories */

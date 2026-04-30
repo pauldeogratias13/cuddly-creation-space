@@ -11,7 +11,18 @@
 -- 3. Ensure unauthenticated visitors can read posts and comments
 --    (so like/comment counts are visible to everyone).
 
--- 1. Unique index on post text (idempotent)
+-- 1. Clean up duplicate posts before creating unique index
+DELETE FROM public.social_posts ct
+USING (
+  SELECT text, MIN(id::text)::uuid as min_id
+  FROM public.social_posts
+  GROUP BY text
+  HAVING COUNT(*) > 1
+) duplicates
+WHERE ct.text = duplicates.text 
+  AND ct.id != duplicates.min_id;
+
+-- 2. Unique index on post text (idempotent)
 CREATE UNIQUE INDEX IF NOT EXISTS social_posts_text_unique
   ON public.social_posts (text);
 
