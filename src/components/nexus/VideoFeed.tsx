@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import { VideoPlayer } from "@/components/nexus/VideoPlayer";
 import { useVideoDiscovery } from "@/hooks/use-video-discovery";
-import { AspectRatioGuard } from "@/components/ui/aspect-ratio-guard";
 import { useVideoSocial } from "@/hooks/use-video-social";
 
 export function VideoFeed() {
@@ -127,15 +126,19 @@ export function VideoFeed() {
           transition={{ duration: 0.35, ease: "easeInOut" }}
           className="absolute inset-0"
         >
-          <AspectRatioGuard minRatio={0.3} maxRatio={3.0} fallbackRatio={16/9}>
+          <div className="absolute inset-0 flex items-center justify-center bg-black">
             <VideoPlayer
               sources={currentVideo.sources}
+              embedUrl={currentVideo.embedUrl}
               poster={currentVideo.poster}
-              className={mediaClassName}
+              className={`absolute inset-0 h-full w-full ${
+                currentAspectRatio && currentAspectRatio < 0.95 ? "object-cover" : "object-contain"
+              }`}
               autoPlay={isPlaying}
               loop
               muted={isMuted}
               preload="auto"
+              fill
               onClick={() => setIsPlaying((value) => !value)}
               onMetadata={({ aspectRatio }) => {
                 setAspectRatioById((prev) =>
@@ -147,7 +150,7 @@ export function VideoFeed() {
                 removeVideo(failedId);
               }}
             />
-          </AspectRatioGuard>
+          </div>
 
           <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/70" />
 
