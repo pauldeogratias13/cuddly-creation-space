@@ -5,7 +5,11 @@ export const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.E
 export const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
 
 export const createSupabaseClient = () => {
-  return createClient<Database>(supabaseUrl, supabaseAnonKey);
+  return createClient<Database>(supabaseUrl, supabaseAnonKey, {
+    db: {
+      schema: 'public'
+    }
+  });
 };
 
 export const supabase = createSupabaseClient();

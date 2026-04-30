@@ -13,7 +13,7 @@ export interface Database {
           updated_at: string;
         };
         Insert: {
-          id: string;
+          id?: string;
           username?: string | null;
           full_name?: string | null;
           avatar_url?: string | null;
@@ -90,6 +90,7 @@ export interface Database {
       social_posts: {
         Row: {
           id: string;
+          user_id: string;
           text: string;
           likes_count: number;
           created_at: string;
@@ -97,6 +98,7 @@ export interface Database {
         };
         Insert: {
           id?: string;
+          user_id: string;
           text: string;
           likes_count?: number;
           created_at?: string;
@@ -104,6 +106,7 @@ export interface Database {
         };
         Update: {
           id?: string;
+          user_id?: string;
           text?: string;
           likes_count?: number;
           updated_at?: string;
