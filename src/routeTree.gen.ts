@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppProfileRouteImport } from './routes/app.profile'
 import { Route as ApiVideosSearchRouteImport } from './routes/api.videos.search'
+import { Route as ApiPublicHooksSyncYoutubeRouteImport } from './routes/api/public/hooks/sync-youtube'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -46,6 +47,12 @@ const ApiVideosSearchRoute = ApiVideosSearchRouteImport.update({
   path: '/api/videos/search',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksSyncYoutubeRoute =
+  ApiPublicHooksSyncYoutubeRouteImport.update({
+    id: '/api/public/hooks/sync-youtube',
+    path: '/api/public/hooks/sync-youtube',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByFullPath {
   '/app/profile': typeof AppProfileRoute
   '/app/': typeof AppIndexRoute
   '/api/videos/search': typeof ApiVideosSearchRoute
+  '/api/public/hooks/sync-youtube': typeof ApiPublicHooksSyncYoutubeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -61,6 +69,7 @@ export interface FileRoutesByTo {
   '/app/profile': typeof AppProfileRoute
   '/app': typeof AppIndexRoute
   '/api/videos/search': typeof ApiVideosSearchRoute
+  '/api/public/hooks/sync-youtube': typeof ApiPublicHooksSyncYoutubeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -70,6 +79,7 @@ export interface FileRoutesById {
   '/app/profile': typeof AppProfileRoute
   '/app/': typeof AppIndexRoute
   '/api/videos/search': typeof ApiVideosSearchRoute
+  '/api/public/hooks/sync-youtube': typeof ApiPublicHooksSyncYoutubeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -80,8 +90,15 @@ export interface FileRouteTypes {
     | '/app/profile'
     | '/app/'
     | '/api/videos/search'
+    | '/api/public/hooks/sync-youtube'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/app/profile' | '/app' | '/api/videos/search'
+  to:
+    | '/'
+    | '/auth'
+    | '/app/profile'
+    | '/app'
+    | '/api/videos/search'
+    | '/api/public/hooks/sync-youtube'
   id:
     | '__root__'
     | '/'
@@ -90,6 +107,7 @@ export interface FileRouteTypes {
     | '/app/profile'
     | '/app/'
     | '/api/videos/search'
+    | '/api/public/hooks/sync-youtube'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -97,6 +115,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRoute
   ApiVideosSearchRoute: typeof ApiVideosSearchRoute
+  ApiPublicHooksSyncYoutubeRoute: typeof ApiPublicHooksSyncYoutubeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -143,6 +162,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiVideosSearchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/sync-youtube': {
+      id: '/api/public/hooks/sync-youtube'
+      path: '/api/public/hooks/sync-youtube'
+      fullPath: '/api/public/hooks/sync-youtube'
+      preLoaderRoute: typeof ApiPublicHooksSyncYoutubeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -163,6 +189,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRoute,
   ApiVideosSearchRoute: ApiVideosSearchRoute,
+  ApiPublicHooksSyncYoutubeRoute: ApiPublicHooksSyncYoutubeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
