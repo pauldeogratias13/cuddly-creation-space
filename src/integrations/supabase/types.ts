@@ -230,6 +230,60 @@ export type Database = {
         }
         Relationships: []
       }
+      public_videos: {
+        Row: {
+          author: string | null
+          category: string
+          created_at: string
+          description: string | null
+          duration_label: string | null
+          id: string
+          is_active: boolean
+          kind: string
+          page_url: string | null
+          poster_url: string | null
+          provider: string
+          sort_order: number
+          source_url: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author?: string | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          duration_label?: string | null
+          id?: string
+          is_active?: boolean
+          kind?: string
+          page_url?: string | null
+          poster_url?: string | null
+          provider: string
+          sort_order?: number
+          source_url: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author?: string | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          duration_label?: string | null
+          id?: string
+          is_active?: boolean
+          kind?: string
+          page_url?: string | null
+          poster_url?: string | null
+          provider?: string
+          sort_order?: number
+          source_url?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       social_comments: {
         Row: {
           created_at: string
