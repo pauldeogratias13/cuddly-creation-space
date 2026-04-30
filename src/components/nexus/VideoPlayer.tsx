@@ -22,6 +22,9 @@ type VideoPlayerProps = {
    *  video metadata loads — avoids layout jumps. Defaults to 16/9. */
   initialAspectRatio?: number;
   emptyLabel?: string;
+  /** When true, fill the parent container (height + width) instead of
+   *  reserving space by aspect ratio. Use this for full-screen feeds. */
+  fill?: boolean;
 };
 
 export function VideoPlayer({
@@ -43,6 +46,7 @@ export function VideoPlayer({
   onDimensions,
   initialAspectRatio = 16 / 9,
   emptyLabel = "No video source available.",
+  fill = false,
 }: VideoPlayerProps) {
   if (embedUrl) {
     // Normalise any YouTube URL variant into an embed URL with autoplay/mute params
@@ -82,7 +86,10 @@ export function VideoPlayer({
     };
 
     return (
-      <div className="relative w-full" style={{ aspectRatio: initialAspectRatio }}>
+      <div
+        className={fill ? "relative h-full w-full" : "relative w-full"}
+        style={fill ? undefined : { aspectRatio: initialAspectRatio }}
+      >
         <iframe
           src={buildEmbedSrc(embedUrl)}
           title="Embedded video player"
@@ -163,8 +170,8 @@ export function VideoPlayer({
   if (!safeSources.length) {
     return (
       <div
-        className="flex items-center justify-center bg-muted/20 px-4 text-center text-sm text-muted-foreground"
-        style={{ aspectRatio: initialAspectRatio }}
+        className={`flex items-center justify-center bg-muted/20 px-4 text-center text-sm text-muted-foreground ${fill ? "h-full w-full" : ""}`}
+        style={fill ? undefined : { aspectRatio: initialAspectRatio }}
       >
         {emptyLabel}
       </div>
@@ -173,13 +180,16 @@ export function VideoPlayer({
 
   // Reserve the box at the current best-known aspect ratio so the layout does
   // not jump when intrinsic dimensions arrive via `loadedmetadata`.
-  const wrapperStyle: CSSProperties = { aspectRatio };
+  const wrapperStyle: CSSProperties = fill ? {} : { aspectRatio };
 
   return (
-    <div className="relative w-full" style={wrapperStyle}>
+    <div
+      className={fill ? "relative h-full w-full" : "relative w-full"}
+      style={wrapperStyle}
+    >
       <video
         ref={videoRef}
-        className={className ?? "h-full w-full object-contain"}
+        className={className ?? (fill ? "absolute inset-0 h-full w-full object-contain" : "h-full w-full object-contain")}
         controls={controls}
         autoPlay={autoPlay}
         loop={loop}
