@@ -276,7 +276,7 @@ export function SuperAppWorkspace({ name }: { name: string }) {
       setStreamHasMore(true);
       try {
         const needle = streamSearch.trim();
-        let q = supabase
+        let q = supabaseTyped
           .from("public_videos")
           .select("id,title,description,author,provider,source_url,poster_url,page_url,kind,category,duration_label")
           .eq("is_active", true)
@@ -335,7 +335,7 @@ export function SuperAppWorkspace({ name }: { name: string }) {
         try {
           const needle = streamSearch.trim();
           const from = (nextPage - 1) * 12;
-          let q = supabase
+          let q = supabaseTyped
             .from("public_videos")
             .select("id,title,description,author,provider,source_url,poster_url,page_url,kind,category,duration_label")
             .eq("is_active", true)
