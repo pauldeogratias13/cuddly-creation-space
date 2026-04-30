@@ -289,7 +289,7 @@ export function SuperAppWorkspace({ name }: { name: string }) {
         }
         const { data: rows, error: dbErr } = await q;
         if (dbErr) throw dbErr;
-        const mapped: StreamItem[] = (rows ?? []).map((row) => ({
+        const mapped: StreamItem[] = (rows ?? []).map((row: any) => ({
           id: row.id,
           title: row.title,
           description: row.description ?? "Curated public video.",
@@ -348,7 +348,7 @@ export function SuperAppWorkspace({ name }: { name: string }) {
           }
           const { data: rows, error: dbErr } = await q;
           if (dbErr) throw dbErr;
-          const mapped: StreamItem[] = (rows ?? []).map((row) => ({
+          const mapped: StreamItem[] = (rows ?? []).map((row: any) => ({
             id: row.id,
             title: row.title,
             description: row.description ?? "Curated public video.",
