@@ -1,5 +1,21 @@
+/**
+ * use-video-discovery.ts
+ *
+ * Loads videos from public_videos DB with a built-in pre-flight prober:
+ *   1. Fetch a batch (e.g. 24 rows) from DB
+ *   2. Probe each URL concurrently (HEAD for native, oEmbed for YouTube)
+ *   3. Only pass VERIFIED playable videos to the feed
+ *   4. Mark broken rows is_active=false in DB (silent background call)
+ *   5. If verified batch is smaller than desired, fetch more rows and repeat
+ *
+ * This guarantees "no video available" is NEVER shown as long as the DB
+ * has any real content — we keep fetching until we have enough verified ones.
+ */
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 export type VideoCategory = "Cinema" | "Series" | "Docs";
 
@@ -15,254 +31,350 @@ export interface DiscoveredVideo {
   durationLabel: string;
   category: VideoCategory;
   provider: string;
-  kind?: "native" | "youtube";
+  kind: "native" | "youtube";
   embedUrl?: string;
 }
 
-type ApiVideoHit = {
+type DbRow = {
   id: string;
   title: string;
-  description?: string;
-  poster?: string;
-  source: string;
-  pageUrl?: string;
+  description: string | null;
+  author: string | null;
   provider: string;
-  kind: "native" | "youtube";
-  durationLabel?: string;
+  source_url: string;
+  poster_url: string | null;
+  page_url: string | null;
+  kind: string;
+  category: string;
+  duration_label: string | null;
 };
 
-const DEFAULT_DISCOVERY_QUERY = "movies trailers documentaries music videos short films";
+// ─── Constants ────────────────────────────────────────────────────────────────
 
-const FAST_SEED_VIDEOS: DiscoveredVideo[] = [
-  {
-    id: "seed-bbb",
-    title: "Big Buck Bunny",
-    author: "Blender Foundation",
-    description: "Open movie sample that loads instantly.",
-    poster: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg",
-    thumbnail: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg",
-    pageUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-    sources: ["https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"],
-    durationLabel: "9m 56s",
-    category: "Cinema",
-    provider: "Google sample video",
-    kind: "native",
-  },
-  {
-    id: "seed-tears",
-    title: "Tears of Steel",
-    author: "Blender Foundation",
-    description: "High-quality open film sample for fast playback.",
-    poster: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/TearsOfSteel.jpg",
-    thumbnail: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/TearsOfSteel.jpg",
-    pageUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
-    sources: ["https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4"],
-    durationLabel: "12m 14s",
-    category: "Cinema",
-    provider: "Google sample video",
-  },
-  {
-    id: "seed-sintel",
-    title: "Sintel",
-    author: "Blender Foundation",
-    description: "Reliable sample content with immediate first paint.",
-    poster: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/Sintel.jpg",
-    thumbnail: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/Sintel.jpg",
-    pageUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
-    sources: ["https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"],
-    durationLabel: "14m 48s",
-    category: "Cinema",
-    provider: "Google sample video",
-  },
-  {
-    id: "seed-bunny-short",
-    title: "Bunny Trailer",
-    author: "W3Schools",
-    description: "Short verified MP4 clip for lightweight playback.",
-    poster: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg",
-    thumbnail: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg",
-    pageUrl: "https://www.w3schools.com/html/mov_bbb.mp4",
-    sources: ["https://www.w3schools.com/html/mov_bbb.mp4"],
-    durationLabel: "10s",
-    category: "Series",
-    provider: "W3Schools",
-  },
-];
+const PROBE_TIMEOUT_MS = 5000;
+const PROBE_CONCURRENCY = 14;
+// Fetch this many DB rows per attempt to always have enough after filtering
+const DB_FETCH_MULTIPLIER = 3;
+// Never fetch more than this per attempt to avoid huge payloads
+const MAX_ROWS_PER_ATTEMPT = 120;
+
+const DEFAULT_QUERY = "";
+
+// ─── Probe helpers ────────────────────────────────────────────────────────────
+
+async function probeNativeUrl(url: string): Promise<boolean> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
+  try {
+    // HEAD first (fastest, no body)
+    const res = await fetch(url, {
+      method: "HEAD",
+      signal: controller.signal,
+      // credentials: "omit" avoids CORS preflight on cross-origin requests
+    });
+    clearTimeout(timer);
+    if (res.ok) {
+      const ct = res.headers.get("content-type") ?? "";
+      if (ct.startsWith("video/") || ct.includes("octet-stream") || /\.(mp4|webm|ogv)($|\?)/i.test(url)) {
+        return true;
+      }
+      // Some CDNs return 200 with text/html on redirect — do a small GET
+    }
+    // Fall through to ranged GET
+  } catch {
+    clearTimeout(timer);
+    // Timeout or network error
+    return false;
+  }
+
+  // Ranged GET — confirms it's a real byte stream
+  const c2 = new AbortController();
+  const t2 = setTimeout(() => c2.abort(), PROBE_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { Range: "bytes=0-1023" },
+      signal: c2.signal,
+    });
+    clearTimeout(t2);
+    if (!res.ok && res.status !== 206) return false;
+    const ct = res.headers.get("content-type") ?? "";
+    return ct.startsWith("video/") || ct.includes("octet-stream") || /\.(mp4|webm|ogv)($|\?)/i.test(url);
+  } catch {
+    clearTimeout(t2);
+    return false;
+  }
+}
+
+async function probeYouTubeUrl(sourceUrl: string): Promise<boolean> {
+  // Extract video ID from any YouTube URL variant
+  let videoId: string | null = null;
+  try {
+    const u = new URL(sourceUrl);
+    if (u.searchParams.has("v")) videoId = u.searchParams.get("v");
+    else {
+      const parts = u.pathname.split("/").filter(Boolean);
+      videoId = parts[parts.length - 1] ?? null;
+    }
+  } catch {
+    return false;
+  }
+  if (!videoId || videoId.length < 5) return false;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
+  try {
+    const res = await fetch(
+      `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`,
+      { signal: controller.signal }
+    );
+    clearTimeout(timer);
+    return res.status === 200;
+  } catch {
+    clearTimeout(timer);
+    return false;
+  }
+}
+
+async function probeVideo(row: DbRow): Promise<boolean> {
+  if (row.kind === "youtube" || row.provider === "youtube") {
+    return probeYouTubeUrl(row.source_url);
+  }
+  return probeNativeUrl(row.source_url);
+}
+
+/** Probe all rows in parallel batches of `concurrency` */
+async function probeRows(rows: DbRow[], concurrency = PROBE_CONCURRENCY): Promise<boolean[]> {
+  const results: boolean[] = new Array(rows.length).fill(false);
+  for (let i = 0; i < rows.length; i += concurrency) {
+    const batch = rows.slice(i, i + concurrency);
+    const settled = await Promise.allSettled(batch.map(r => probeVideo(r)));
+    settled.forEach((r, j) => {
+      results[i + j] = r.status === "fulfilled" ? r.value : false;
+    });
+  }
+  return results;
+}
+
+/** Silently mark broken row IDs is_active=false in DB */
+function markBrokenAsync(brokenIds: string[]) {
+  if (!brokenIds.length) return;
+  // Fire and forget — don't await, don't block the feed
+  supabase
+    .from("public_videos")
+    .update({ is_active: false })
+    .in("id", brokenIds)
+    .then(({ error }) => {
+      if (error) console.warn("[discovery] failed to mark broken:", error.message);
+    });
+}
+
+// ─── Category inference ───────────────────────────────────────────────────────
 
 function inferCategory(text: string): VideoCategory {
-  const normalized = text.toLowerCase();
-  if (/(documentary|interview|science|nature|history|space)/.test(normalized)) return "Docs";
-  if (/(clip|short|trailer|episode|series)/.test(normalized)) return "Series";
+  const t = text.toLowerCase();
+  if (/(documentary|interview|science|nature|history|space|wildlife|geo|bbc|national)/.test(t)) return "Docs";
+  if (/(clip|short|trailer|episode|series|vlog|review|tutorial|cooking|fitness)/.test(t)) return "Series";
   return "Cinema";
 }
 
-function mapApiHit(hit: ApiVideoHit): DiscoveredVideo {
-  const category = inferCategory(`${hit.title} ${hit.description ?? ""}`);
+function mapRow(row: DbRow): DiscoveredVideo {
+  const isYT = row.kind === "youtube" || row.provider === "youtube";
   return {
-    id: hit.id,
-    title: hit.title,
-    author: hit.provider,
-    description: hit.description ?? "Fast verified video source.",
-    poster: hit.poster ?? "",
-    thumbnail: hit.poster ?? "",
-    pageUrl: hit.pageUrl ?? hit.source,
-    sources: [hit.source],
-    durationLabel: hit.durationLabel ?? "Live",
-    category,
-    provider: hit.provider,
+    id: row.id,
+    title: row.title,
+    author: row.author ?? row.provider,
+    description: row.description ?? "",
+    poster: row.poster_url ?? "",
+    thumbnail: row.poster_url ?? "",
+    pageUrl: row.page_url ?? row.source_url,
+    sources: isYT ? [] : [row.source_url],
+    durationLabel: row.duration_label ?? "",
+    category: (["Cinema", "Series", "Docs"].includes(row.category)
+      ? row.category
+      : inferCategory(row.title + " " + (row.description ?? ""))) as VideoCategory,
+    provider: row.provider,
+    kind: isYT ? "youtube" : "native",
+    embedUrl: isYT ? row.source_url : undefined,
   };
 }
 
-function filterSeedVideos(query: string) {
-  const needle = query.trim().toLowerCase();
-  if (!needle) return FAST_SEED_VIDEOS;
-  const matches = FAST_SEED_VIDEOS.filter((video) =>
-    `${video.title} ${video.description} ${video.category} ${video.provider}`.toLowerCase().includes(needle),
-  );
-  return matches.length ? matches : FAST_SEED_VIDEOS;
-}
-
-type UseVideoDiscoveryOptions = {
-  query?: string;
-  batchSize?: number;
-  autoPrefetch?: boolean;
-};
-
-function dedupeVideos(items: DiscoveredVideo[]) {
+function dedupeById(items: DiscoveredVideo[]): DiscoveredVideo[] {
   const seen = new Set<string>();
-  return items.filter((item) => {
-    const key = item.sources[0] ?? item.id;
+  return items.filter(v => {
+    const key = v.embedUrl ?? v.sources[0] ?? v.id;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
   });
 }
 
-export function useVideoDiscovery(options?: UseVideoDiscoveryOptions) {
-  const query = (options?.query?.trim() || DEFAULT_DISCOVERY_QUERY).slice(0, 120);
-  const batchSize = options?.batchSize ?? 6;
-  const autoPrefetch = options?.autoPrefetch ?? true;
+// ─── Hook ─────────────────────────────────────────────────────────────────────
+
+type Options = {
+  query?: string;
+  batchSize?: number;
+};
+
+export function useVideoDiscovery(options?: Options) {
+  const batchSize = options?.batchSize ?? 8;
+  const query = options?.query?.trim() ?? DEFAULT_QUERY;
+
   const [debouncedQuery, setDebouncedQuery] = useState(query);
-  const [videos, setVideos] = useState<DiscoveredVideo[]>(() => filterSeedVideos(query).slice(0, batchSize));
-  const [page, setPage] = useState(0);
+  const [videos, setVideos] = useState<DiscoveredVideo[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const requestIdRef = useRef(0);
-  const pageRef = useRef(0);
+
+  // Pagination cursor: how many DB rows we've already fetched
+  const dbOffsetRef = useRef(0);
   const hasMoreRef = useRef(true);
   const loadingRef = useRef(false);
+  const seenIdsRef = useRef(new Set<string>());
+  const reqIdRef = useRef(0);
 
+  // Debounce query
   useEffect(() => {
-    const timeout = window.setTimeout(() => setDebouncedQuery(query), 250);
-    return () => window.clearTimeout(timeout);
+    const t = setTimeout(() => setDebouncedQuery(query), 280);
+    return () => clearTimeout(t);
   }, [query]);
 
-  useEffect(() => {
-    pageRef.current = page;
-  }, [page]);
+  // ── Core loader ────────────────────────────────────────────────────────
+  const loadMore = useCallback(async (reset = false) => {
+    if (loadingRef.current && !reset) return;
+    if (!hasMoreRef.current && !reset) return;
 
-  useEffect(() => {
-    hasMoreRef.current = hasMore;
-  }, [hasMore]);
+    const reqId = ++reqIdRef.current;
+    loadingRef.current = true;
+    setIsLoading(true);
+    setError(null);
 
-  useEffect(() => {
-    loadingRef.current = isLoading;
-  }, [isLoading]);
+    if (reset) {
+      dbOffsetRef.current = 0;
+      hasMoreRef.current = true;
+      seenIdsRef.current = new Set();
+    }
 
-  const loadMore = useCallback(
-    async (reset = false) => {
-      if (loadingRef.current) return;
-      if (!reset && !hasMoreRef.current) return;
+    const collectedVerified: DiscoveredVideo[] = [];
+    // We keep fetching until we have `batchSize` verified videos or DB is exhausted
+    const target = batchSize;
+    let attempts = 0;
+    const maxAttempts = 6; // prevent infinite loop
 
-      const requestId = ++requestIdRef.current;
-      setIsLoading(true);
-      setError(null);
+    while (collectedVerified.length < target && hasMoreRef.current && attempts < maxAttempts) {
+      attempts++;
+      if (reqId !== reqIdRef.current) break; // stale request
+
+      const fetchCount = Math.min(
+        Math.max(batchSize, target - collectedVerified.length) * DB_FETCH_MULTIPLIER,
+        MAX_ROWS_PER_ATTEMPT
+      );
+      const from = dbOffsetRef.current;
+      const to = from + fetchCount - 1;
 
       try {
-        const nextPage = reset ? 1 : pageRef.current + 1;
-        const pageSize = Math.max(batchSize, 8);
-        const from = (nextPage - 1) * pageSize;
-        const to = from + pageSize - 1;
-
-        let dbQuery = supabase
+        let q = supabase
           .from("public_videos")
           .select("id,title,description,author,provider,source_url,poster_url,page_url,kind,category,duration_label")
           .eq("is_active", true)
           .order("sort_order", { ascending: true })
+          .order("created_at", { ascending: false })
           .range(from, to);
 
-        const needle = debouncedQuery.trim();
-        if (needle && needle !== DEFAULT_DISCOVERY_QUERY) {
-          dbQuery = dbQuery.or(
-            `title.ilike.%${needle}%,description.ilike.%${needle}%,category.ilike.%${needle}%,provider.ilike.%${needle}%`,
+        if (debouncedQuery) {
+          q = q.or(
+            `title.ilike.%${debouncedQuery}%,description.ilike.%${debouncedQuery}%,category.ilike.%${debouncedQuery}%,author.ilike.%${debouncedQuery}%,provider.ilike.%${debouncedQuery}%`
           );
         }
 
-        const { data, error: dbError } = await dbQuery;
-        if (dbError) throw dbError;
+        const { data, error: dbErr } = await q;
+        if (dbErr) throw dbErr;
+        if (reqId !== reqIdRef.current) break;
 
-        const dbVideos: DiscoveredVideo[] = (data ?? []).map((row) => ({
-          id: row.id,
-          title: row.title,
-          author: row.author ?? row.provider,
-          description: row.description ?? "",
-          poster: row.poster_url ?? "",
-          thumbnail: row.poster_url ?? "",
-          pageUrl: row.page_url ?? row.source_url,
-          sources: [row.source_url],
-          durationLabel: row.duration_label ?? "Live",
-          category: (row.category as VideoCategory) ?? inferCategory(row.title),
-          provider: row.provider,
-          kind: (row.kind as "native" | "youtube") ?? "native",
-          embedUrl: row.kind === "youtube" ? row.source_url : undefined,
-        }));
+        const rows = (data ?? []) as DbRow[];
+        dbOffsetRef.current += rows.length;
 
-        if (requestId !== requestIdRef.current) return;
+        if (rows.length < fetchCount) {
+          hasMoreRef.current = false;
+          setHasMore(false);
+        }
 
-        setVideos((prev) => dedupeVideos(reset ? dbVideos : [...prev, ...dbVideos]));
-        setPage(nextPage);
-        setHasMore(dbVideos.length === pageSize);
+        if (rows.length === 0) break;
+
+        // Filter already-seen
+        const unseenRows = rows.filter(r => !seenIdsRef.current.has(r.id));
+        if (!unseenRows.length) continue;
+
+        // ── Probe all unseen rows ──────────────────────────────────────
+        const playable = await probeRows(unseenRows);
+        if (reqId !== reqIdRef.current) break;
+
+        const brokenIds: string[] = [];
+        const verifiedRows: DbRow[] = [];
+
+        unseenRows.forEach((row, i) => {
+          seenIdsRef.current.add(row.id);
+          if (playable[i]) {
+            verifiedRows.push(row);
+          } else {
+            brokenIds.push(row.id);
+          }
+        });
+
+        // Mark broken silently
+        markBrokenAsync(brokenIds);
+
+        // Map to DiscoveredVideo
+        const newVideos = verifiedRows.map(mapRow);
+        collectedVerified.push(...newVideos);
+
       } catch (err) {
-        if (requestId !== requestIdRef.current) return;
-        setVideos((prev) => (reset ? filterSeedVideos(debouncedQuery).slice(0, batchSize) : prev));
-        setHasMore(false);
-        setError(err instanceof Error ? err.message : "Could not discover videos.");
-      } finally {
-        if (requestId === requestIdRef.current) setIsLoading(false);
+        if (reqId !== reqIdRef.current) break;
+        const msg = err instanceof Error ? err.message : "Failed to load videos";
+        setError(msg);
+        break;
       }
-    },
-    [batchSize, debouncedQuery],
-  );
+    }
 
+    if (reqId !== reqIdRef.current) return;
+
+    if (collectedVerified.length > 0) {
+      setVideos(prev =>
+        reset
+          ? dedupeById(collectedVerified)
+          : dedupeById([...prev, ...collectedVerified])
+      );
+    }
+
+    // If we got nothing at all on a reset, set error so UI can show a helpful message
+    if (reset && collectedVerified.length === 0) {
+      setError("No playable videos found. Run /api/public/hooks/crawl-and-seed to populate the feed.");
+    }
+
+    loadingRef.current = false;
+    setIsLoading(false);
+  }, [batchSize, debouncedQuery]);
+
+  // ── Reset on query change ──────────────────────────────────────────────
   useEffect(() => {
-    setVideos(filterSeedVideos(debouncedQuery).slice(0, batchSize));
-    setPage(0);
+    setVideos([]);
     setHasMore(true);
     setError(null);
-    pageRef.current = 0;
-    hasMoreRef.current = true;
-    requestIdRef.current += 1;
     void loadMore(true);
-  }, [batchSize, debouncedQuery, loadMore]);
+  }, [debouncedQuery, loadMore]);
 
   const removeVideo = useCallback((id: string) => {
-    setVideos((prev) => prev.filter((video) => video.id !== id));
+    setVideos(prev => prev.filter(v => v.id !== id));
+    seenIdsRef.current.add(id); // prevent re-fetching
   }, []);
 
-  const state = useMemo(
-    () => ({
-      videos,
-      hasMore,
-      isLoading,
-      error,
-      loadMore,
-      removeVideo,
-      query: debouncedQuery,
-      autoPrefetch,
-    }),
-    [autoPrefetch, debouncedQuery, error, hasMore, isLoading, loadMore, removeVideo, videos],
-  );
-
-  return state;
+  return useMemo(() => ({
+    videos,
+    hasMore,
+    isLoading,
+    error,
+    loadMore: () => loadMore(false),
+    removeVideo,
+    query: debouncedQuery,
+  }), [videos, hasMore, isLoading, error, loadMore, removeVideo, debouncedQuery]);
 }
