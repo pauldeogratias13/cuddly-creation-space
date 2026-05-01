@@ -193,8 +193,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
-      - name: Setup Expo CLI
-        run: npm install -g @expo/cli@latest
+      - name: Setup Expo & EAS CLI
+        run: npm install -g @expo/cli@latest eas-cli@latest
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
@@ -204,6 +204,8 @@ jobs:
 
       - name: Build mobile app
         run: pnpm --filter mobile build
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
       - name: Upload mobile build artifacts
         uses: actions/upload-artifact@v4

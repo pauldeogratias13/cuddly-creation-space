@@ -98,10 +98,9 @@ jobs:
       - name: Build Android APK
         run: pnpm --filter mobile build:android
         env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
-          EAS_BUILD_USERNAME: ${{ secrets.EAS_BUILD_USERNAME }}
-          EAS_BUILD_PASSWORD: ${{ secrets.EAS_BUILD_PASSWORD }}
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
@@ -153,10 +152,9 @@ jobs:
       - name: Build iOS IPA
         run: pnpm --filter mobile build:ios
         env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
-          EAS_BUILD_USERNAME: ${{ secrets.EAS_BUILD_USERNAME }}
-          EAS_BUILD_PASSWORD: ${{ secrets.EAS_BUILD_PASSWORD }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
@@ -175,9 +173,11 @@ jobs:
     if: always()
     steps:
       - name: Notify Slack
+        if: ${{ secrets.SLACK_WEBHOOK_URL != '' }}
+        continue-on-error: true
         uses: 8398a7/action-slack@v3
         with:
           status: ${{ job.status }}
           channel: '#deployments'
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
