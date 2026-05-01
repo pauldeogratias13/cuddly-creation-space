@@ -18,7 +18,6 @@
       }
     },
     "simulator": {
-      "prebuildCommand": "bash eas-hooks/prebuild-ios.sh",
       "ios": {
         "simulator": true,
         "buildConfiguration": "Debug"
@@ -29,7 +28,6 @@
       }
     },
     "production": {
-      "prebuildCommand": "bash eas-hooks/prebuild.sh",
       "android": {
         "buildType": "apk"
       },
