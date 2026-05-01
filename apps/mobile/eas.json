@@ -17,6 +17,16 @@
         "buildConfiguration": "Debug"
       }
     },
+    "simulator": {
+      "ios": {
+        "simulator": true,
+        "buildConfiguration": "Debug"
+      },
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "${EXPO_PUBLIC_SUPABASE_URL}",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "${EXPO_PUBLIC_SUPABASE_ANON_KEY}"
+      }
+    },
     "production": {
       "android": {
         "buildType": "apk"
@@ -35,9 +45,6 @@
       "android": {
         "serviceAccountKeyPath": "./google-service-account.json",
         "track": "production"
-      },
-      "ios": {
-        "appleId": "${APPLE_ID}"
       }
     }
   }

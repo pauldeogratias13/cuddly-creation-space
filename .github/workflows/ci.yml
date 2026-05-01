@@ -203,9 +203,11 @@ jobs:
         run: pnpm --filter shared build
 
       - name: Build mobile app
-        run: pnpm --filter mobile build
+        run: pnpm --filter mobile build:android
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
 
       - name: Upload mobile build artifacts
         uses: actions/upload-artifact@v4

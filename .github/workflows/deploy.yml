@@ -149,15 +149,12 @@ jobs:
       - name: Build shared package
         run: pnpm --filter shared build
 
-      - name: Build iOS IPA
+      - name: Build iOS Simulator
         run: pnpm --filter mobile build:ios
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
       - name: Upload iOS IPA
         uses: actions/upload-artifact@v4
