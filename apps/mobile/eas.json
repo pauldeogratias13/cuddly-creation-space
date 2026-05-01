@@ -28,8 +28,7 @@
       }
     },
     "production": {
-      "image": "ubuntu-22.04-jdk-17-ndk-r23c",
-      "prebuildCommand": "bash eas-hooks/pre-install.sh",
+      "prebuildCommand": "expo prebuild --clean && node eas-hooks/pin-gradle.js",
       "android": {
         "buildType": "apk"
       },

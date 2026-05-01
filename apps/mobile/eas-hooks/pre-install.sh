@@ -1,9 +1,20 @@
 #!/bin/bash
-# Pins Gradle wrapper to 8.6 which is compatible with react-native 0.74.x
+set -e
+
+echo "📦 Patching gradle-wrapper.properties to use Gradle 8.6 (compatible with RN 0.74)..."
+
 GRADLE_WRAPPER="android/gradle/wrapper/gradle-wrapper.properties"
-if [ -f "$GRADLE_WRAPPER" ]; then
-  sed -i 's|gradle-[0-9]*\.[0-9]*\.[0-9]*-all|gradle-8.6-all|g' "$GRADLE_WRAPPER"
-  echo "✅ Pinned Gradle wrapper to 8.6"
-else
-  echo "⚠️  gradle-wrapper.properties not found, skipping"
-fi
+
+# Write the gradle wrapper properties directly with the correct version
+mkdir -p android/gradle/wrapper
+cat > "$GRADLE_WRAPPER" << 'EOF'
+distributionBase=GRADLE_USER_HOME
+distributionPath=wrapper/dists
+distributionUrl=https\://services.gradle.org/distributions/gradle-8.6-all.zip
+networkTimeout=10000
+validateDistributionUrl=true
+zipStoreBase=GRADLE_USER_HOME
+zipStorePath=wrapper/dists
+EOF
+
+echo "✅ Gradle wrapper pinned to 8.6"
