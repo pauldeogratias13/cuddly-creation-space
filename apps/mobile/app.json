@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "NEXUS",
-    "slug": "nexus-super-app",
+    "slug": "nexus",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
