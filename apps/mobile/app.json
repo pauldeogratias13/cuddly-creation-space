@@ -54,13 +54,11 @@
         }
       ],
       "expo-secure-store",
-      "expo-local-authentication",
-      "expo-sharing",
-      "expo-location"
+      "expo-local-authentication"
     ],
     "extra": {
       "eas": {
-        "projectId": "your-eas-project-id"
+        "projectId": "b98591a5-4c40-4340-ad74-438add4c5e1e"
       }
     },
     "runtimeVersion": {
@@ -68,7 +66,7 @@
     },
     "updates": {
       "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/your-update-url"
+      "url": "https://u.expo.dev/b98591a5-4c40-4340-ad74-438add4c5e1e"
     }
   }
 }
