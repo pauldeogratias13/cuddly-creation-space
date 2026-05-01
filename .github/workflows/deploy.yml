@@ -86,8 +86,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
-      - name: Setup Expo CLI
-        run: npm install -g @expo/cli@latest
+      - name: Setup Expo & EAS CLI
+        run: npm install -g @expo/cli@latest eas-cli@latest
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
@@ -141,8 +141,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
-      - name: Setup Expo CLI
-        run: npm install -g @expo/cli@latest
+      - name: Setup Expo & EAS CLI
+        run: npm install -g @expo/cli@latest eas-cli@latest
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
