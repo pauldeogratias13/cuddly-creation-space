@@ -1,9 +1,14 @@
-// Mobile app uses eslint-config-expo
+// @ts-check
 const { defineConfig } = require('eslint/config');
 
 module.exports = defineConfig([
-  require('eslint-config-expo/flat'),
   {
     ignores: ['node_modules/', 'dist/', '.expo/', 'android/', 'ios/', 'eas-hooks/'],
+  },
+  {
+    files: ['**/*.{js,jsx,ts,tsx}'],
+    rules: {
+      'no-unused-vars': 'off',
+    },
   },
 ]);

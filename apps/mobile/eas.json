@@ -18,6 +18,7 @@
       }
     },
     "simulator": {
+      "prebuildCommand": "bash eas-hooks/prebuild-ios.sh",
       "ios": {
         "simulator": true,
         "buildConfiguration": "Debug"
@@ -28,7 +29,7 @@
       }
     },
     "production": {
-      "prebuildCommand": "expo prebuild --clean && node eas-hooks/pin-gradle.js",
+      "prebuildCommand": "bash eas-hooks/prebuild.sh",
       "android": {
         "buildType": "apk"
       },
