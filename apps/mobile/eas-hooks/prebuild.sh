@@ -1,10 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "🔧 Running expo prebuild..."
-npx expo prebuild --clean
-
-echo "📦 Patching Gradle wrapper to 8.6..."
+echo "📦 Patching Gradle wrapper to 8.6 (compatible with RN 0.74)..."
 GRADLE_WRAPPER="android/gradle/wrapper/gradle-wrapper.properties"
 
 if [ -f "$GRADLE_WRAPPER" ]; then
@@ -12,6 +9,6 @@ if [ -f "$GRADLE_WRAPPER" ]; then
   echo "✅ Gradle pinned to 8.6"
   cat "$GRADLE_WRAPPER"
 else
-  echo "❌ gradle-wrapper.properties not found!"
+  echo "❌ gradle-wrapper.properties not found - prebuild may not have run yet"
   exit 1
 fi

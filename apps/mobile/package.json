@@ -69,71 +69,13 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.0",
+    "@expo/eas-json": "^0.3.0",
     "@types/react": "~18.3.12",
     "@types/react-native": "0.73.0",
     "eslint": "^9.32.0",
     "eslint-config-expo": "~7.1.0",
     "prettier": "^3.3.3",
-    "typescript": "^5.8.3",
-    "@expo/eas-json": "^0.3.0",
-    "tailwindcss": "^3.4.0"
-  },
-  "expo": {
-    "name": "NEXUS",
-    "slug": "nexus-super-app",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "automatic",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.nexus.superapp"
-    },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "package": "com.nexus.superapp"
-    },
-    "web": {
-      "favicon": "./assets/favicon.png",
-      "bundler": "metro"
-    },
-    "plugins": [
-      "expo-router",
-      [
-        "expo-camera",
-        {
-          "cameraPermission": "Allow NEXUS to access your camera"
-        }
-      ],
-      [
-        "expo-secure-store",
-        {
-          "faceId": "Allow NEXUS to use Face ID"
-        }
-      ],
-      [
-        "expo-notifications",
-        {
-          "icon": {
-            "color": "#ffffff"
-          }
-        }
-      ]
-    ],
-    "scheme": "nexus",
-    "experiments": {
-      "typedRoutes": true
-    }
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.8.3"
   }
 }
