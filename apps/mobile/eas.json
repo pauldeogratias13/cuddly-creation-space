@@ -36,9 +36,7 @@
         "track": "production"
       },
       "ios": {
-        "appleId": "${APPLE_ID}",
-        "appleIdPassword": "${APPLE_ID_PASSWORD}",
-        "teamId": "${APPLE_TEAM_ID}"
+        "appleId": "${APPLE_ID}"
       }
     }
   }
