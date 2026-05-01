@@ -29,11 +29,13 @@
     },
     "production": {
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease"
       },
       "ios": {
         "buildConfiguration": "Release"
       },
+      "prebuildCommand": "npx expo prebuild --platform android --no-install && sed -i 's|distributionUrl=.*|distributionUrl=https\\\\://services.gradle.org/distributions/gradle-8.6-all.zip|' android/gradle/wrapper/gradle-wrapper.properties && echo '✅ Gradle pinned to 8.6' && cat android/gradle/wrapper/gradle-wrapper.properties",
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "${EXPO_PUBLIC_SUPABASE_URL}",
         "EXPO_PUBLIC_SUPABASE_ANON_KEY": "${EXPO_PUBLIC_SUPABASE_ANON_KEY}"
