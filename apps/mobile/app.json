@@ -2,6 +2,7 @@
   "expo": {
     "name": "NEXUS",
     "slug": "nexus",
+    "scheme": "nexus",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
