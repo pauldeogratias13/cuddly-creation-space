@@ -31,6 +31,7 @@
     }
   },
   "dependencies": {
+    "@babel/runtime": "^7.25.0",
     "@expo/vector-icons": "~14.0.4",
     "@nexus/shared": "workspace:*",
     "@react-native-async-storage/async-storage": "1.23.1",
