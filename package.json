@@ -10,7 +10,7 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "vite",
+    "dev": "cd apps/web && bun run vite",
     "dev:mobile": "pnpm --filter @nexus/mobile start",
     "build": "vite build",
     "build:monorepo": "pnpm -r --filter ./packages/** build && pnpm --filter @nexus/web build",
