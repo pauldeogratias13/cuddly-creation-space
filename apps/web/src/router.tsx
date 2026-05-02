@@ -65,3 +65,6 @@ export const getRouter = () => {
 
   return router;
 };
+
+// Export a singleton instance to avoid re-creation during HMR
+export const router = getRouter();
