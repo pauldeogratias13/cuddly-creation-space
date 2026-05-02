@@ -99,6 +99,33 @@ export type Database = {
         }
         Relationships: []
       }
+      commerce_cart_items: {
+        Row: {
+          product_id: string
+          product_name: string
+          quantity: number
+          unit_price: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          product_id: string
+          product_name: string
+          quantity?: number
+          unit_price: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          product_id?: string
+          product_name?: string
+          quantity?: number
+          unit_price?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       commerce_order_items: {
         Row: {
           created_at: string
@@ -161,6 +188,131 @@ export type Database = {
         }
         Relationships: []
       }
+      creator_earnings: {
+        Row: {
+          amount: number
+          created_at: string | null
+          creator_id: string
+          currency: string
+          description: string | null
+          id: string
+          processed_at: string | null
+          reference_id: string | null
+          type: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          creator_id: string
+          currency?: string
+          description?: string | null
+          id?: string
+          processed_at?: string | null
+          reference_id?: string | null
+          type: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          creator_id?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          processed_at?: string | null
+          reference_id?: string | null
+          type?: string
+        }
+        Relationships: []
+      }
+      creator_subscriptions: {
+        Row: {
+          active: boolean | null
+          auto_renew: boolean | null
+          cancel_at_period_end: boolean | null
+          created_at: string | null
+          creator_id: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          subscriber_id: string
+          tier_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          auto_renew?: boolean | null
+          cancel_at_period_end?: boolean | null
+          created_at?: string | null
+          creator_id: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          subscriber_id: string
+          tier_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          auto_renew?: boolean | null
+          cancel_at_period_end?: boolean | null
+          created_at?: string | null
+          creator_id?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          subscriber_id?: string
+          tier_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_subscriptions_tier_id_fkey"
+            columns: ["tier_id"]
+            isOneToOne: false
+            referencedRelation: "creator_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      creator_tiers: {
+        Row: {
+          benefits: Json | null
+          created_at: string | null
+          creator_id: string
+          currency: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          price: number
+          updated_at: string | null
+        }
+        Insert: {
+          benefits?: Json | null
+          created_at?: string | null
+          creator_id: string
+          currency?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          price: number
+          updated_at?: string | null
+        }
+        Update: {
+          benefits?: Json | null
+          created_at?: string | null
+          creator_id?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          price?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       gaming_scores: {
         Row: {
           high_score: number
@@ -176,6 +328,60 @@ export type Database = {
           high_score?: number
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      gated_content: {
+        Row: {
+          access_level: string
+          content_text: string | null
+          content_type: string
+          content_url: string | null
+          created_at: string | null
+          creator_id: string
+          currency: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          price: number | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string | null
+          view_count: number | null
+        }
+        Insert: {
+          access_level?: string
+          content_text?: string | null
+          content_type: string
+          content_url?: string | null
+          created_at?: string | null
+          creator_id: string
+          currency?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          price?: number | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string | null
+          view_count?: number | null
+        }
+        Update: {
+          access_level?: string
+          content_text?: string | null
+          content_type?: string
+          content_url?: string | null
+          created_at?: string | null
+          creator_id?: string
+          currency?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          price?: number | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string | null
+          view_count?: number | null
         }
         Relationships: []
       }
@@ -381,6 +587,39 @@ export type Database = {
         }
         Relationships: []
       }
+      tips: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string
+          from_user_id: string
+          id: string
+          is_anonymous: boolean | null
+          message: string | null
+          to_user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          currency?: string
+          from_user_id: string
+          id?: string
+          is_anonymous?: boolean | null
+          message?: string | null
+          to_user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string
+          from_user_id?: string
+          id?: string
+          is_anonymous?: boolean | null
+          message?: string | null
+          to_user_id?: string
+        }
+        Relationships: []
+      }
       user_follows: {
         Row: {
           created_at: string | null
@@ -525,6 +764,15 @@ export type Database = {
           following_count: number
           posts_count: number
           total_likes: number
+        }[]
+      }
+      get_creator_subscription_stats: {
+        Args: { creator_id: string }
+        Returns: {
+          active_subscribers: number
+          monthly_earnings: number
+          total_earnings: number
+          total_subscribers: number
         }[]
       }
     }
