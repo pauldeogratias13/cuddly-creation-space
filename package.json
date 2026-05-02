@@ -1,23 +1,35 @@
+
 {
   "name": "nexus-super-app",
   "private": true,
-  "sideEffects": false,
+  "version": "1.0.0",
   "type": "module",
+  "sideEffects": false,
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
   "scripts": {
-    "dev": "pnpm --filter web dev",
-    "build": "npm run build -w @nexus/shared && npm run build -w @nexus/web",
-    "build:mobile": "npm run build -w @nexus/shared && npm run build -w @nexus/mobile",
-    "build:all": "npm run build -w @nexus/shared && npm run build -w @nexus/web && npm run build -w @nexus/mobile",
-    "preview": "pnpm --filter web preview",
+    "dev": "pnpm --filter @nexus/web dev",
+    "dev:mobile": "pnpm --filter @nexus/mobile start",
+    "build": "pnpm -r --filter ./packages/** build && pnpm --filter @nexus/web build",
+    "build:web": "pnpm --filter @nexus/web build",
+    "build:mobile": "pnpm -r --filter ./packages/** build && pnpm --filter @nexus/mobile build",
+    "build:all": "pnpm -r build",
+    "preview": "pnpm --filter @nexus/web preview",
     "lint": "pnpm -r lint",
-    "format": "prettier --write .",
+    "lint:fix": "pnpm -r lint --fix",
     "type-check": "pnpm -r type-check",
-    "test": "echo \"No tests configured\"",
-    "clean": "pnpm -r clean"
+    "test": "pnpm -r test",
+    "test:watch": "pnpm -r test --watch",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "clean": "pnpm -r clean && rimraf node_modules .turbo dist build coverage",
+    "deps:check": "pnpm outdated && pnpm audit",
+    "deadcode": "knip",
+    "doctor": "pnpm format:check && pnpm lint && pnpm type-check && pnpm build:all && pnpm deadcode",
+    "reinstall": "rimraf node_modules pnpm-lock.yaml && pnpm install",
+    "ci": "pnpm install --frozen-lockfile && pnpm doctor"
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
@@ -28,13 +40,21 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^15.14.0",
+    "knip": "^5.61.3",
     "prettier": "^3.7.3",
+    "rimraf": "^6.0.1",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1"
   },
   "engines": {
-    "node": ">=18.0.0",
-    "pnpm": ">=8.0.0"
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
   },
-  "packageManager": "pnpm@9.0.0"
+  "packageManager": "pnpm@9.0.0",
+  "pnpm": {
+    "onlyBuiltDependencies": [],
+    "overrides": {},
+    "ignoredBuiltDependencies": []
+  }
 }
+

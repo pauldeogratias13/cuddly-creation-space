@@ -3,8 +3,12 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@nexus/shared": ["../../packages/shared/src"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@nexus/shared": [
+        "../../packages/shared/src"
+      ]
     },
     "allowJs": true,
     "jsx": "react-native",
@@ -14,7 +18,8 @@
   "include": [
     "app/**/*",
     "*.ts",
-    "*.tsx"
+    "*.tsx",
+    "nativewind-env.d.ts"
   ],
   "exclude": [
     "node_modules",

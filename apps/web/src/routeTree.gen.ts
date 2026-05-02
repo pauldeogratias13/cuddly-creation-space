@@ -13,7 +13,9 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppSocialRouteImport } from './routes/app.social'
 import { Route as AppProfileRouteImport } from './routes/app.profile'
+import { Route as AppProfileIdRouteImport } from './routes/app.profile.$id'
 import { Route as ApiVideosSearchRouteImport } from './routes/api.videos.search'
 import { Route as ApiPublicHooksTestVideosRouteImport } from './routes/api/public/hooks/test-videos'
 import { Route as ApiPublicHooksSyncYoutubeRouteImport } from './routes/api/public/hooks/sync-youtube'
@@ -40,10 +42,20 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSocialRoute = AppSocialRouteImport.update({
+  id: '/social',
+  path: '/social',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppProfileRoute = AppProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
   getParentRoute: () => AppRoute,
+} as any)
+const AppProfileIdRoute = AppProfileIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppProfileRoute,
 } as any)
 const ApiVideosSearchRoute = ApiVideosSearchRouteImport.update({
   id: '/api/videos/search',
@@ -79,9 +91,11 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
-  '/app/profile': typeof AppProfileRoute
+  '/app/profile': typeof AppProfileRouteWithChildren
+  '/app/social': typeof AppSocialRoute
   '/app/': typeof AppIndexRoute
   '/api/videos/search': typeof ApiVideosSearchRoute
+  '/app/profile/$id': typeof AppProfileIdRoute
   '/api/public/hooks/crawl-and-seed': typeof ApiPublicHooksCrawlAndSeedRoute
   '/api/public/hooks/purge-broken': typeof ApiPublicHooksPurgeBrokenRoute
   '/api/public/hooks/sync-youtube': typeof ApiPublicHooksSyncYoutubeRoute
@@ -90,9 +104,11 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/app/profile': typeof AppProfileRoute
+  '/app/profile': typeof AppProfileRouteWithChildren
+  '/app/social': typeof AppSocialRoute
   '/app': typeof AppIndexRoute
   '/api/videos/search': typeof ApiVideosSearchRoute
+  '/app/profile/$id': typeof AppProfileIdRoute
   '/api/public/hooks/crawl-and-seed': typeof ApiPublicHooksCrawlAndSeedRoute
   '/api/public/hooks/purge-broken': typeof ApiPublicHooksPurgeBrokenRoute
   '/api/public/hooks/sync-youtube': typeof ApiPublicHooksSyncYoutubeRoute
@@ -103,9 +119,11 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
-  '/app/profile': typeof AppProfileRoute
+  '/app/profile': typeof AppProfileRouteWithChildren
+  '/app/social': typeof AppSocialRoute
   '/app/': typeof AppIndexRoute
   '/api/videos/search': typeof ApiVideosSearchRoute
+  '/app/profile/$id': typeof AppProfileIdRoute
   '/api/public/hooks/crawl-and-seed': typeof ApiPublicHooksCrawlAndSeedRoute
   '/api/public/hooks/purge-broken': typeof ApiPublicHooksPurgeBrokenRoute
   '/api/public/hooks/sync-youtube': typeof ApiPublicHooksSyncYoutubeRoute
@@ -118,8 +136,10 @@ export interface FileRouteTypes {
     | '/app'
     | '/auth'
     | '/app/profile'
+    | '/app/social'
     | '/app/'
     | '/api/videos/search'
+    | '/app/profile/$id'
     | '/api/public/hooks/crawl-and-seed'
     | '/api/public/hooks/purge-broken'
     | '/api/public/hooks/sync-youtube'
@@ -129,8 +149,10 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/app/profile'
+    | '/app/social'
     | '/app'
     | '/api/videos/search'
+    | '/app/profile/$id'
     | '/api/public/hooks/crawl-and-seed'
     | '/api/public/hooks/purge-broken'
     | '/api/public/hooks/sync-youtube'
@@ -141,8 +163,10 @@ export interface FileRouteTypes {
     | '/app'
     | '/auth'
     | '/app/profile'
+    | '/app/social'
     | '/app/'
     | '/api/videos/search'
+    | '/app/profile/$id'
     | '/api/public/hooks/crawl-and-seed'
     | '/api/public/hooks/purge-broken'
     | '/api/public/hooks/sync-youtube'
@@ -190,12 +214,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/social': {
+      id: '/app/social'
+      path: '/social'
+      fullPath: '/app/social'
+      preLoaderRoute: typeof AppSocialRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/profile': {
       id: '/app/profile'
       path: '/profile'
       fullPath: '/app/profile'
       preLoaderRoute: typeof AppProfileRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/app/profile/$id': {
+      id: '/app/profile/$id'
+      path: '/$id'
+      fullPath: '/app/profile/$id'
+      preLoaderRoute: typeof AppProfileIdRouteImport
+      parentRoute: typeof AppProfileRoute
     }
     '/api/videos/search': {
       id: '/api/videos/search'
@@ -235,13 +273,27 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AppProfileRouteChildren {
+  AppProfileIdRoute: typeof AppProfileIdRoute
+}
+
+const AppProfileRouteChildren: AppProfileRouteChildren = {
+  AppProfileIdRoute: AppProfileIdRoute,
+}
+
+const AppProfileRouteWithChildren = AppProfileRoute._addFileChildren(
+  AppProfileRouteChildren,
+)
+
 interface AppRouteChildren {
-  AppProfileRoute: typeof AppProfileRoute
+  AppProfileRoute: typeof AppProfileRouteWithChildren
+  AppSocialRoute: typeof AppSocialRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
-  AppProfileRoute: AppProfileRoute,
+  AppProfileRoute: AppProfileRouteWithChildren,
+  AppSocialRoute: AppSocialRoute,
   AppIndexRoute: AppIndexRoute,
 }
 

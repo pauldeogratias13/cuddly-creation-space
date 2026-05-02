@@ -2729,7 +2729,7 @@ export function SuperAppWorkspace({ name }: { name: string }) {
               </div>
             )}
 
-            {activeTab === "social" && (
+            {/* {activeTab === "social" && (
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Social Feed</h3>
                 <input
@@ -2916,7 +2916,26 @@ export function SuperAppWorkspace({ name }: { name: string }) {
                   ))}
                 </div>
               </div>
-            )}
+            )} */}
+
+            {activeTab === "social" && (
+  <div className="flex flex-col items-center justify-center py-16 text-center gap-6">
+    <div className="h-20 w-20 rounded-2xl bg-primary/10 border border-primary/20 grid place-items-center shadow-glow-cyan">
+      <Sparkles className="h-10 w-10 text-primary" />
+    </div>
+    <div>
+      <h3 className="text-2xl font-bold mb-2">Social Feed</h3>
+      <p className="text-sm text-muted-foreground max-w-xs">
+        Intent-first · Stories · Polls · Reputation · Community Spaces · No rage-bait
+      </p>
+    </div>
+    <Link to="/app/social" className="flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 transition-opacity shadow-glow-cyan">
+      <Sparkles className="h-4 w-4" />
+      Open Social Feed →
+    </Link>
+    <p className="text-xs text-muted-foreground/50">80% creator revenue · Anonymous mode · AI Twin ranking</p>
+  </div>
+)}
 
             {activeTab === "streaming" && (
               <div className="space-y-4">

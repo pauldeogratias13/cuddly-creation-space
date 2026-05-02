@@ -432,6 +432,13 @@ export interface CreatorStats {
   following_count: number;
   posts_count: number;
   total_likes: number;
+  total_subscribers?: number;
+  active_subscribers?: number;
+  total_earnings?: number;
+  monthly_earnings?: number;
+  total_views?: number;
+  reputation_score?: number;
+  domain_expertise?: string[];
 }
 
 export interface Video {
@@ -449,6 +456,32 @@ export interface Video {
   social_post?: SocialPost;
 }
 
+// ── Social Intent System ────────────────────────────────────────────────────
+export type IntentMode = "all" | "learn" | "chill" | "explore" | "create" | "shop";
+
+export interface PollOption {
+  id: string;
+  label: string;
+  votes: number;
+}
+
+export interface Poll {
+  options: PollOption[];
+  total: number;
+  voted_option: string | null;
+  ends_at: string | null;
+}
+
+export interface CommunitySpace {
+  id: string;
+  name: string;
+  topic: string;
+  emoji: string;
+  members: number;
+  isLive: boolean;
+  intent: IntentMode;
+}
+
 export interface SocialPost {
   id: string;
   user_id: string;
@@ -460,6 +493,14 @@ export interface SocialPost {
   video?: Video;
   comments?: SocialComment[];
   is_liked?: boolean;
+  is_bookmarked?: boolean;
+  is_anonymous?: boolean;
+  intent_tag?: IntentMode | null;
+  poll?: Poll | null;
+  reputation_score?: number | null;
+  domain_tag?: string | null;
+  fork_depth?: number;
+  fork_parent_id?: string | null;
 }
 
 export interface SocialComment {
@@ -540,6 +581,89 @@ export interface CommerceCartItem {
   price: number;
   created_at: string;
   updated_at: string;
+}
+
+// Creator Monetization Types
+export interface CreatorTier {
+  id: string;
+  creator_id: string;
+  name: string;
+  description: string;
+  price: number;
+  currency: string;
+  benefits: string[];
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreatorSubscription {
+  id: string;
+  subscriber_id: string;
+  creator_id: string;
+  tier_id: string | null;
+  active: boolean;
+  auto_renew: boolean;
+  current_period_start: string;
+  current_period_end: string | null;
+  cancel_at_period_end: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Tip {
+  id: string;
+  from_user_id: string;
+  to_user_id: string;
+  amount: number;
+  currency: string;
+  message: string;
+  is_anonymous: boolean;
+  created_at: string;
+}
+
+export interface GatedContent {
+  id: string;
+  creator_id: string;
+  title: string;
+  description: string;
+  content_type: "post" | "video" | "article" | "file";
+  content_url: string | null;
+  content_text: string | null;
+  thumbnail_url: string | null;
+  access_level: "subscribers" | "paid" | "custom";
+  price: number;
+  currency: string;
+  is_active: boolean;
+  view_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreatorEarning {
+  id: string;
+  creator_id: string;
+  type: "subscription" | "tip" | "gated_content" | "brand_deal";
+  amount: number;
+  currency: string;
+  description: string;
+  reference_id: string | null;
+  processed_at: string | null;
+  created_at: string;
+}
+
+export interface CreatorStats {
+  followers_count: number;
+  following_count: number;
+  posts_count: number;
+  total_likes: number;
+  total_views: number;
+  reputation_score: number;
+  domain_expertise: string[];
+  total_subscribers: number;
+  active_subscribers: number;
+  total_earnings: number;
+  monthly_earnings: number;
 }
 
 // UI State Types

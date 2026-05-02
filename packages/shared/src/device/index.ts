@@ -6,7 +6,7 @@ import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import * as Sharing from "expo-sharing";
 import * as Linking from "expo-linking";
-import { Platform } from "react-native";
+import { Platform } from "../platform-shim";
 
 type NotificationData = Record<string, unknown>;
 type NativeFormDataFile = {
