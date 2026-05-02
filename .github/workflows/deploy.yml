@@ -59,7 +59,7 @@ jobs:
     name: Build Android
     runs-on: ubuntu-latest
     environment: production
-    steps:
+    if: false # Disabled to preserve EAS free tier limits - re-enable when ready to ship
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -167,7 +167,7 @@ jobs:
   notify:
     name: Notify
     runs-on: ubuntu-latest
-    needs: [deploy-web, build-android]
+    needs: [deploy-web]
     if: always()
     steps:
       - name: Notify Slack
